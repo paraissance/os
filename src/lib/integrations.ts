@@ -38,11 +38,12 @@ export function listIntegrations(): Integration[] {
       name: "OS Analytics",
       category: "Analytics",
       phase: 1,
-      description: "Every business from the WordPress plugin: leads, spend, pipeline, site renewals, social, campaigns, tasks and subscriptions. Read-only.",
+      description:
+        "Every business from the WordPress plugin: profile, links, leads, spend, pipeline, website and logins, social, campaigns, tasks and subscriptions. Read-only.",
       status: env.osAnalytics ? "connected" : "not_configured",
       envVars: ["OS_ANALYTICS_URL", "OS_ANALYTICS_KEY"],
       setup:
-        "Install OS Analytics 1.2.0+ on the WordPress site, then Settings → JodyOS connection → Generate key. Add the endpoint and key in Vercel and redeploy.",
+        "Install OS Analytics 1.3.0+ on the WordPress site, then Settings → JodyOS connection → Generate key. Add the endpoint and key in Vercel and redeploy.",
     },
     {
       id: "openai",

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 import { requireUser } from "@/lib/auth/current-user";
+import { businessHref } from "@/lib/business-sections";
 import { envStatus } from "@/lib/env";
 import { formatDateTime } from "@/lib/format";
 import { formatMoney, listBusinesses, settle, type BusinessSummary } from "@/lib/os-analytics";
@@ -17,7 +18,7 @@ export default function BusinessesPage() {
       <PageHeader
         eyebrow="Business"
         title="Businesses"
-        description="Live from OS Analytics. Numbers cover the last 30 days, compared with the 30 days before."
+        description="Every business side by side, live from OS Analytics. Numbers cover the last 30 days, compared with the 30 days before. Open one for its full tab on the dashboard."
       />
       <Suspense fallback={<Skeleton className="h-96" />}>
         <BusinessTable />
@@ -102,7 +103,7 @@ async function BusinessTable() {
         <ul>
           {[...active, ...paused].map((b) => (
             <li key={b.slug} className="border-b border-hair">
-              <Link href={`/businesses/${b.slug}`} className={`group grid gap-x-4 gap-y-1 py-4 hover:bg-wash md:items-center ${cols}`}>
+              <Link href={businessHref(b.slug)} className={`group grid gap-x-4 gap-y-1 py-4 hover:bg-wash md:items-center ${cols}`}>
                 <div className="min-w-0">
                   <p className="flex items-center gap-2 text-lg font-bold leading-tight tracking-[-0.02em] group-hover:underline group-hover:underline-offset-4">
                     {b.name}

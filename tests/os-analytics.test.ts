@@ -34,6 +34,49 @@ describe("contract with the plugin", () => {
     delete broken.businesses[0].last30.leads;
     expect(mod.businessListSchema.safeParse(broken).success).toBe(false);
   });
+
+  it("rejects a 1.2.0 detail response, which has no profile or links", () => {
+    const old = structuredClone(detailFixture) as Record<string, unknown>;
+    delete old.about;
+    delete old.adminLinks;
+    expect(mod.businessDetailSchema.safeParse(old).success).toBe(false);
+  });
+
+  it("reads the profile, links, subscriptions and newest leads", () => {
+    const b = mod.businessDetailSchema.parse(detailFixture);
+    expect(b.about?.cta).toEqual({ label: "Get leads", url: "https://leads.example.com/start" });
+    expect(b.about?.questions).toHaveLength(2);
+    expect(b.site?.importantLinks.map((l) => l.label)).toEqual(["cPanel", "status.example.net", "Monitoring"]);
+    expect(b.site?.registrarLoginUrl).toBe("https://registrar.example/login");
+    expect(b.spending?.subscriptions.map((s) => [s.name, s.monthly, s.loginUrl])).toEqual([
+      ["Example Scheduler", 29, "https://scheduler.example/login"],
+      ["Example Host", 10, null],
+      ["Example Writer", 0, null],
+    ]);
+    expect(b.recentLeads[0]).toMatchObject({ name: "Sam Example", place: "Tacoma, WA" });
+    expect(Object.keys(b.adminLinks)).toHaveLength(9);
+  });
+
+  it("never lets a non-http link through to an href", () => {
+    const evil = structuredClone(detailFixture);
+    evil.about.links.push({ label: "Bad", url: "javascript:alert(1)" });
+    evil.about.cta = { label: "Bad", url: "javascript:alert(1)" };
+    evil.about.questions[0].link = { label: "Bad", url: "data:text/html,hi" };
+    evil.site.hostingLoginUrl = "javascript:alert(1)";
+    evil.site.importantLinks.push({ label: "Bad", url: "vbscript:x" });
+    evil.spending.subscriptions[0].loginUrl = "javascript:alert(1)";
+    evil.topPosts[0].url = "javascript:alert(1)";
+    (evil.adminLinks as Record<string, string>).leads = "javascript:alert(1)";
+
+    const b = mod.businessDetailSchema.parse(evil);
+    expect(JSON.stringify(b)).not.toMatch(/javascript:|data:text|vbscript:/);
+    expect(b.about?.links).toHaveLength(2);
+    expect(b.about?.cta).toBeNull();
+    expect(b.about?.questions[0].link).toBeNull();
+    expect(b.site?.hostingLoginUrl).toBeNull();
+    expect(b.site?.importantLinks).toHaveLength(3);
+    expect(b.adminLinks.leads).toBeUndefined();
+  });
 });
 
 describe("client", () => {
@@ -100,7 +143,15 @@ describe("attention items", () => {
       ["warning", "Example Scheduler renews in 5 days"],
       ["warning", "Example Leads Co: Domain expires in 10 days"],
     ]);
-    expect(items[0].href).toBe("/businesses/example-leads");
+    // Renewals open the business's Website tab; a shared tool opens the spending overview.
+    expect(items.map((i) => i.href)).toEqual(["/?b=example-leads&s=website", "/#spending", "/?b=example-leads&s=website"]);
+  });
+
+  it("links a subscription that belongs to one business to its Money tab", () => {
+    const list = mod.businessListSchema.parse(structuredClone(listFixture));
+    list.businesses[0].renewals = [];
+    list.spending!.upcomingRenewals = [{ name: "Example Host", category: "hosting", amount: 120, currency: "USD", cycle: "yearly", nextRenewal: "2026-10-12", shared: false }];
+    expect(mod.businessAttention(list, today)).toMatchObject([{ title: "Example Host renews in 2 days", href: "/?b=example-leads&s=money" }]);
   });
 
   it("flags a lead drop of half or more, but not on a tiny baseline", () => {
@@ -109,7 +160,7 @@ describe("attention items", () => {
     list.businesses[0].renewals = [];
     list.businesses[0].previous30.leads = 100;
     list.businesses[0].last30.leads = 42;
-    expect(mod.businessAttention(list, today).map((i) => i.title)).toEqual(["Example Leads Co: leads down 58%"]);
+    expect(mod.businessAttention(list, today).map((i) => i.title)).toEqual(["Example Leads Co: Leads down 58%"]);
     list.businesses[0].previous30.leads = 6;
     list.businesses[0].last30.leads = 1;
     expect(mod.businessAttention(list, today)).toEqual([]);
@@ -120,6 +171,35 @@ describe("attention items", () => {
     list.spending = null;
     list.businesses = list.businesses.map((b) => ({ ...b, active: false }));
     expect(mod.businessAttention(list, today)).toEqual([]);
+  });
+
+  it("inside a business: drops the name and adds overdue tasks and failed posts", () => {
+    const b = mod.businessDetailSchema.parse(detailFixture);
+    expect(mod.detailAttention(b, today).map((i) => [i.level, i.title, i.href])).toEqual([
+      ["critical", "SSL certificate expired", "/?b=example-leads&s=website"],
+      ["warning", "Example Scheduler renews in 5 days", "/?b=example-leads&s=money"],
+      ["warning", "Domain expires in 10 days", "/?b=example-leads&s=website"],
+      ["warning", "2 overdue tasks", "/?b=example-leads"],
+      ["warning", "2 social posts failed to publish", "/?b=example-leads&s=marketing"],
+    ]);
+  });
+
+  it("inside a business: nothing to flag means an empty list", () => {
+    const b = mod.businessDetailSchema.parse(structuredClone(detailFixture));
+    b.renewals = [];
+    b.tasks.overdue = 0;
+    b.publisher!.failed = 0;
+    b.spending!.upcomingRenewals = [];
+    expect(mod.detailAttention(b, today)).toEqual([]);
+    b.tasks.overdue = 1;
+    expect(mod.detailAttention(b, today).map((i) => i.title)).toEqual(["1 overdue task"]);
+  });
+
+  it("counts days to a date in UTC", () => {
+    expect(mod.daysUntil("2026-10-15", today)).toBe(5);
+    expect(mod.daysUntil("2026-10-10", today)).toBe(0);
+    expect(mod.daysUntil("2026-10-01", today)).toBe(-9);
+    expect(mod.daysUntil("not a date", today)).toBeNull();
   });
 });
 

@@ -2,7 +2,7 @@
 
 A private, modular AI operating system: one dashboard and one AI coordinator (Jody Core) for every brand, website, social channel, analytics account, tool and automation.
 
-**Status: Phase 1 (Foundation) plus Businesses.** The app shell, sign-in, database, settings, activity log and a basic AI chat work today. **Businesses** shows every business live from the OS Analytics WordPress plugin (leads, spend, pipeline, site renewals, social, campaigns, tasks, subscriptions) and feeds the dashboard. Websites, social, analytics, tasks, automations, agents and memory show their plan and the phase that delivers them; none of them shows sample data.
+**Status: Phase 1 (Foundation) plus Businesses.** The app shell, sign-in, database, settings, activity log and a basic AI chat work today. The **dashboard** has a tab for every business, live from the OS Analytics WordPress plugin (1.3.0+): summary, about, links, money and subscriptions, website and logins, marketing, and leads, each in plain words. Websites, social, analytics, tasks, automations, agents and memory show their plan and the phase that delivers them; none of them shows sample data.
 
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the stack, data model, deployment plan and phase plan.
 

@@ -30,10 +30,12 @@ const nextConfig: NextConfig = {
     return [{ source: "/:path*", headers: securityHeaders }];
   },
   async redirects() {
-    // "Brands" was renamed "Businesses".
     return [
+      // "Brands" was renamed "Businesses".
       { source: "/brands", destination: "/businesses", permanent: true },
-      { source: "/brands/:slug", destination: "/businesses/:slug", permanent: true },
+      { source: "/brands/:slug", destination: "/?b=:slug", permanent: true },
+      // Each business now lives in its own dashboard tab.
+      { source: "/businesses/:slug", destination: "/?b=:slug", permanent: false },
     ];
   },
 };

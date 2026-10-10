@@ -1,4 +1,4 @@
-import { percentChange } from "@/lib/os-analytics";
+import { PLUGIN_MIN_VERSION, percentChange } from "@/lib/os-analytics";
 import { cx } from "@/components/ui/primitives";
 
 /** "↑ 40%" / "↓ 20%" / "new" against the previous period. */
@@ -58,7 +58,7 @@ export function OsAnalyticsSetup() {
     <div className="border border-ink p-5">
       <p className="font-semibold">Connect OS Analytics to see your businesses here.</p>
       <ol className="mt-3 list-decimal space-y-1.5 pl-5 text-sm leading-relaxed text-muted">
-        <li>Install OS Analytics 1.2.0 or later on the WordPress site that holds your businesses.</li>
+        <li>Install OS Analytics {PLUGIN_MIN_VERSION} or later on the WordPress site that holds your businesses.</li>
         <li>In WordPress: OS Analytics → Settings → JodyOS connection → Generate key.</li>
         <li>
           In Vercel, add <code className="font-mono text-ink">OS_ANALYTICS_URL</code> (the endpoint shown there) and{" "}

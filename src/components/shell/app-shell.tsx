@@ -58,8 +58,8 @@ function NavGroups({ activePath, onNavigate }: { activePath: string | null; onNa
 }
 
 /**
- * Reads the current path. On pages with a dynamic segment (/businesses/[slug])
- * the path is request-time data, so it sits behind its own Suspense boundary:
+ * Reads the current path. On pages with a dynamic segment the path is
+ * request-time data, so it sits behind its own Suspense boundary:
  * the plain nav is part of the instant static shell and the highlight streams in.
  */
 function ActiveNav({ onNavigate }: { onNavigate?: () => void }) {

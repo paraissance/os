@@ -49,6 +49,53 @@
             "daysLeft": -9
         }
     ],
+    "about": {
+        "name": "Example Leads Co",
+        "tagline": "Lead generation services",
+        "greeting": "Hi! I can explain how Example Leads Co works.",
+        "note": "General info only.",
+        "cta": {
+            "label": "Get leads",
+            "url": "https://leads.example.com/start"
+        },
+        "links": [
+            {
+                "label": "Pricing",
+                "url": "https://leads.example.com/pricing"
+            },
+            {
+                "label": "partner.example.org",
+                "url": "https://partner.example.org/"
+            }
+        ],
+        "questions": [
+            {
+                "question": "How does it work?",
+                "answer": "We send buyer and seller leads every week.",
+                "link": {
+                    "label": "Learn more",
+                    "url": "https://leads.example.com/how"
+                }
+            },
+            {
+                "question": "Is there a contract?",
+                "answer": "No long-term contract.",
+                "link": null
+            }
+        ],
+        "knowledge": "# ABOUT EXAMPLE LEADS CO\nExample Leads Co sends real estate leads to agents.\n\n# ADDITIONAL KNOWLEDGE (added by admin)\nOpen Monday to Friday."
+    },
+    "adminLinks": {
+        "dashboard": "https://wp.example/wp-admin/admin.php?page=jdy-dashboard&brand=4",
+        "leads": "https://wp.example/wp-admin/admin.php?page=jdy-leads&brand=4",
+        "campaigns": "https://wp.example/wp-admin/admin.php?page=jdy-campaigns&brand=4",
+        "content": "https://wp.example/wp-admin/admin.php?page=jdy-content&brand=4",
+        "publisher": "https://wp.example/wp-admin/admin.php?page=jdy-publisher&brand=4",
+        "social": "https://wp.example/wp-admin/admin.php?page=jdy-social&brand=4",
+        "sites": "https://wp.example/wp-admin/admin.php?page=jdy-sites&brand=4",
+        "spending": "https://wp.example/wp-admin/admin.php?page=jdy-spending&brand=4",
+        "tasks": "https://wp.example/wp-admin/admin.php?page=jdy-tasks&brand=4"
+    },
     "pipeline": {
         "new": 20,
         "contacted": 0,
@@ -57,6 +104,13 @@
         "approved": 0,
         "closed": 7,
         "lost": 0
+    },
+    "funnel": {
+        "impressions": 5000,
+        "clicks": 240,
+        "leads": 42,
+        "appointments": 6,
+        "loansFunded": 1
     },
     "trend": [
         {
@@ -180,13 +234,75 @@
             "leads": 1
         }
     ],
+    "audience": {
+        "region": [
+            {
+                "label": "Washington",
+                "value": 30
+            },
+            {
+                "label": "Unknown",
+                "value": 12
+            }
+        ],
+        "age": [
+            {
+                "label": "35-44",
+                "value": 20
+            }
+        ],
+        "device": [
+            {
+                "label": "mobile",
+                "value": 33
+            }
+        ],
+        "platform": [
+            {
+                "label": "facebook",
+                "value": 25
+            }
+        ]
+    },
+    "recentLeads": [
+        {
+            "name": "Sam Example",
+            "source": "facebook_lead_ads",
+            "platform": "facebook",
+            "status": "new",
+            "place": "Tacoma, WA",
+            "createdAt": "2026-10-09T18:45:00-07:00"
+        },
+        {
+            "name": null,
+            "source": "manual",
+            "platform": null,
+            "status": "new",
+            "place": null,
+            "createdAt": null
+        }
+    ],
+    "appointments": [
+        {
+            "at": "2026-10-12T14:00:00-07:00",
+            "name": "Sam Example"
+        }
+    ],
     "site": {
         "domain": "leads.example.com",
         "registrar": "Example Registrar",
         "registrarAccount": "Owner registrar account",
+        "registrarLoginUrl": "https://registrar.example/login",
         "domainAutoRenew": false,
+        "nameservers": [
+            "ns1.example",
+            "ns2.example"
+        ],
         "hostingProvider": "Example Host",
         "hostingPlan": "Business",
+        "hostingLoginUrl": "https://host.example/login",
+        "hostingAccount": "Owner hosting account",
+        "serverIp": "192.0.2.44",
         "sslProvider": "Let's Encrypt",
         "domainExpiry": "2026-10-20",
         "hostingExpiry": "2027-03-01",
@@ -195,7 +311,22 @@
         "phpVersion": "8.2",
         "activeTheme": "Astra Child",
         "lastBackupAt": "2026-10-09",
-        "warnDays": 30
+        "warnDays": 30,
+        "importantLinks": [
+            {
+                "label": "cPanel",
+                "url": "https://cpanel.example.com/"
+            },
+            {
+                "label": "status.example.net",
+                "url": "https://status.example.net/"
+            },
+            {
+                "label": "Monitoring",
+                "url": "https://uptime.example/x"
+            }
+        ],
+        "notes": "Renew hosting before March."
     },
     "social": [
         {
@@ -210,15 +341,69 @@
             "followers": 3400
         }
     ],
+    "topPosts": [
+        {
+            "title": "Open house this weekend",
+            "platform": "facebook",
+            "url": "https://facebook.example/post/1",
+            "publishedAt": "2026-10-02T09:30:00-07:00",
+            "impressions": 3000,
+            "reach": 2100,
+            "clicks": 120,
+            "engagements": 62,
+            "leads": 9
+        }
+    ],
+    "publisher": {
+        "queued": 4,
+        "sent": 1,
+        "published": 30,
+        "failed": 2,
+        "cancelled": 0,
+        "next": "2026-10-11T16:00:00+00:00",
+        "upcoming": [
+            {
+                "title": "Spring buyers guide",
+                "platform": "instagram",
+                "label": "Instagram",
+                "scheduledAt": "2026-10-11T16:00:00+00:00"
+            },
+            {
+                "title": "Fallback title",
+                "platform": "facebook",
+                "label": "Facebook",
+                "scheduledAt": "2026-10-12T16:00:00+00:00"
+            }
+        ],
+        "accounts": [
+            {
+                "platform": "facebook",
+                "label": "Example Leads page"
+            },
+            {
+                "platform": "instagram",
+                "label": "Instagram"
+            }
+        ],
+        "library": {
+            "total": 14,
+            "images": 10,
+            "videos": 3,
+            "unused": 5
+        }
+    },
     "campaigns": [
         {
             "name": "Autumn campaign",
             "channel": "facebook",
+            "objective": "leads",
             "status": "active",
             "startDate": "2026-09-01",
             "endDate": null,
             "budget": 1000,
             "spend": 420.5,
+            "impressions": 9000,
+            "clicks": 310,
             "leads": 33,
             "conversions": 4,
             "revenue": 0
@@ -230,12 +415,40 @@
         "completed": 0,
         "failed": 0,
         "skipped": 0,
-        "overdue": 2
+        "overdue": 2,
+        "open": [
+            {
+                "title": "Call back new leads",
+                "status": "pending",
+                "assignee": "Alex",
+                "dueAt": "2026-10-08T09:00:00-07:00",
+                "overdue": true
+            },
+            {
+                "title": "Weekly report",
+                "status": "in_progress",
+                "assignee": null,
+                "dueAt": null,
+                "overdue": false
+            }
+        ]
     },
     "spending": {
         "monthlyTotal": 312.5,
         "yearlyTotal": 3750,
         "activeSubscriptions": 6,
+        "byCategory": [
+            {
+                "category": "social",
+                "label": "Social media",
+                "monthly": 29
+            },
+            {
+                "category": "hosting",
+                "label": "Hosting / Domain",
+                "monthly": 10
+            }
+        ],
         "upcomingRenewals": [
             {
                 "name": "Example Scheduler",
@@ -245,6 +458,53 @@
                 "cycle": "monthly",
                 "nextRenewal": "2026-10-15",
                 "shared": true
+            }
+        ],
+        "subscriptions": [
+            {
+                "name": "Example Scheduler",
+                "businessId": 0,
+                "category": "social",
+                "categoryLabel": "Social media",
+                "cycle": "monthly",
+                "amount": 29,
+                "currency": "USD",
+                "monthly": 29,
+                "nextRenewal": "2026-10-15",
+                "loginUrl": "https://scheduler.example/login",
+                "account": "owner@business.example",
+                "shared": true,
+                "notes": "Shared by all businesses."
+            },
+            {
+                "name": "Example Host",
+                "businessId": 4,
+                "category": "hosting",
+                "categoryLabel": "Hosting / Domain",
+                "cycle": "yearly",
+                "amount": 120,
+                "currency": "USD",
+                "monthly": 10,
+                "nextRenewal": null,
+                "loginUrl": null,
+                "account": null,
+                "shared": false,
+                "notes": null
+            },
+            {
+                "name": "Example Writer",
+                "businessId": 4,
+                "category": "weird",
+                "categoryLabel": "Weird",
+                "cycle": "one_time",
+                "amount": 50,
+                "currency": "USD",
+                "monthly": 0,
+                "nextRenewal": null,
+                "loginUrl": null,
+                "account": null,
+                "shared": false,
+                "notes": null
             }
         ]
     }

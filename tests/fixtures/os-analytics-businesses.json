@@ -92,6 +92,18 @@
         "monthlyTotal": 312.5,
         "yearlyTotal": 3750,
         "activeSubscriptions": 6,
+        "byCategory": [
+            {
+                "category": "social",
+                "label": "Social media",
+                "monthly": 29
+            },
+            {
+                "category": "hosting",
+                "label": "Hosting / Domain",
+                "monthly": 10
+            }
+        ],
         "upcomingRenewals": [
             {
                 "name": "Example Scheduler",
@@ -101,6 +113,53 @@
                 "cycle": "monthly",
                 "nextRenewal": "2026-10-15",
                 "shared": true
+            }
+        ],
+        "subscriptions": [
+            {
+                "name": "Example Scheduler",
+                "businessId": 0,
+                "category": "social",
+                "categoryLabel": "Social media",
+                "cycle": "monthly",
+                "amount": 29,
+                "currency": "USD",
+                "monthly": 29,
+                "nextRenewal": "2026-10-15",
+                "loginUrl": "https://scheduler.example/login",
+                "account": "owner@business.example",
+                "shared": true,
+                "notes": "Shared by all businesses."
+            },
+            {
+                "name": "Example Host",
+                "businessId": 4,
+                "category": "hosting",
+                "categoryLabel": "Hosting / Domain",
+                "cycle": "yearly",
+                "amount": 120,
+                "currency": "USD",
+                "monthly": 10,
+                "nextRenewal": null,
+                "loginUrl": null,
+                "account": null,
+                "shared": false,
+                "notes": null
+            },
+            {
+                "name": "Example Writer",
+                "businessId": 4,
+                "category": "weird",
+                "categoryLabel": "Weird",
+                "cycle": "one_time",
+                "amount": 50,
+                "currency": "USD",
+                "monthly": 0,
+                "nextRenewal": null,
+                "loginUrl": null,
+                "account": null,
+                "shared": false,
+                "notes": null
             }
         ]
     }
