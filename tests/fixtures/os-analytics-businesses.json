@@ -1,0 +1,107 @@
+{
+    "generatedAt": "2026-10-10T12:00:00-07:00",
+    "timezone": "America/Los_Angeles",
+    "businesses": [
+        {
+            "id": 4,
+            "slug": "example-leads",
+            "name": "Example Leads Co",
+            "tagline": "Lead generation services",
+            "siteUrl": "https://leads.example.com",
+            "currency": "$",
+            "active": true,
+            "window": {
+                "from": "2026-09-11",
+                "to": "2026-10-10"
+            },
+            "last30": {
+                "leads": 42,
+                "won": 4,
+                "appointments": 6,
+                "spend": 525,
+                "costPerLead": 12.5,
+                "conversionRate": 9.5,
+                "loanVolume": 0
+            },
+            "previous30": {
+                "leads": 30,
+                "won": 4,
+                "appointments": 6,
+                "spend": 525,
+                "costPerLead": 12.5,
+                "conversionRate": 9.5,
+                "loanVolume": 0
+            },
+            "clientsAllTime": 19,
+            "renewals": [
+                {
+                    "item": "domain",
+                    "date": "2026-10-20",
+                    "status": "soon",
+                    "daysLeft": 10
+                },
+                {
+                    "item": "hosting",
+                    "date": "2027-03-01",
+                    "status": "ok",
+                    "daysLeft": 142
+                },
+                {
+                    "item": "ssl",
+                    "date": "2026-10-01",
+                    "status": "expired",
+                    "daysLeft": -9
+                }
+            ]
+        },
+        {
+            "id": 7,
+            "slug": "paused-brand",
+            "name": "Paused Brand",
+            "tagline": null,
+            "siteUrl": null,
+            "currency": "$",
+            "active": false,
+            "window": {
+                "from": "2026-09-11",
+                "to": "2026-10-10"
+            },
+            "last30": {
+                "leads": 0,
+                "won": 0,
+                "appointments": 0,
+                "spend": 0,
+                "costPerLead": 0,
+                "conversionRate": 0,
+                "loanVolume": 0
+            },
+            "previous30": {
+                "leads": 0,
+                "won": 0,
+                "appointments": 0,
+                "spend": 0,
+                "costPerLead": 0,
+                "conversionRate": 0,
+                "loanVolume": 0
+            },
+            "clientsAllTime": 0,
+            "renewals": []
+        }
+    ],
+    "spending": {
+        "monthlyTotal": 312.5,
+        "yearlyTotal": 3750,
+        "activeSubscriptions": 6,
+        "upcomingRenewals": [
+            {
+                "name": "Example Scheduler",
+                "category": "social",
+                "amount": 29,
+                "currency": "USD",
+                "cycle": "monthly",
+                "nextRenewal": "2026-10-15",
+                "shared": true
+            }
+        ]
+    }
+}

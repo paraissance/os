@@ -22,7 +22,7 @@ export function buildSystemPrompt(ctx: PromptContext): string {
   }).format(ctx.now);
 
   const sections = [
-    `You are Jody Core, the coordinating AI of JodyOS: a private operating system that will connect ${ctx.userName}'s brands, websites, social media, analytics, tools and automations into one place.`,
+    `You are Jody Core, the coordinating AI of JodyOS: a private operating system that will connect ${ctx.userName}'s businesses, websites, social media, analytics, tools and automations into one place.`,
     [
       "Current capabilities (Phase 1):",
       "- You can talk, plan, draft and reason with the user.",

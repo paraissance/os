@@ -48,17 +48,13 @@ export const MODULES: ModuleDef[] = [
     ],
   },
   {
-    id: "brands",
-    label: "Brands",
-    href: "/brands",
+    id: "businesses",
+    label: "Businesses",
+    href: "/businesses",
     group: "Business",
-    phase: 2,
-    summary: "Every brand you run, with its voice, audience, SEO and channels in one profile.",
-    planned: [
-      "Unlimited brands, none hard-coded",
-      "Name, description, website, socials, instructions, content style, SEO, audience, integrations, notes, status",
-      "Brand context fed to Jody Core and every agent",
-    ],
+    phase: 1,
+    summary: "Every business, live from OS Analytics: leads, spend, pipeline, sites and renewals.",
+    planned: [],
   },
   {
     id: "websites",
@@ -68,7 +64,7 @@ export const MODULES: ModuleDef[] = [
     phase: 3,
     summary: "All sites across WordPress, Vercel and GitHub, with deploy and health status.",
     planned: [
-      "Domain, brand, platform, hosting, repo, deploy provider",
+      "Domain, business, platform, hosting, repo, deploy provider",
       "Status and last deploy pulled live from GitHub and Vercel",
       "Analytics and SEO per site",
     ],
@@ -79,11 +75,11 @@ export const MODULES: ModuleDef[] = [
     href: "/social",
     group: "Business",
     phase: 3,
-    summary: "Plan, create and schedule posts across every brand's channels.",
+    summary: "Plan, create and schedule posts across every business's channels.",
     planned: [
       "Facebook, Instagram, YouTube, Pinterest, X and more",
       "Blotato as a pluggable publishing provider",
-      "Post status, errors, media and a brand filter",
+      "Post status, errors, media and a business filter",
     ],
   },
   {
@@ -92,7 +88,7 @@ export const MODULES: ModuleDef[] = [
     href: "/analytics",
     group: "Business",
     phase: 3,
-    summary: "Traffic and conversions per brand, starting with Google Analytics 4.",
+    summary: "Traffic and conversions per business, starting with Google Analytics 4.",
     planned: [
       "Users, sessions, sources, top pages, conversions",
       "Trends and period comparisons",
@@ -107,7 +103,7 @@ export const MODULES: ModuleDef[] = [
     phase: 2,
     summary: "Work items Jody Core creates, runs and reports on.",
     planned: [
-      "Title, description, brand, project, priority, dates, tools, history",
+      "Title, description, business, project, priority, dates, tools, history",
       "Pending, Running, Waiting, Completed, Failed, Cancelled",
     ],
   },
@@ -135,8 +131,8 @@ export const MODULES: ModuleDef[] = [
     href: "/memory",
     group: "Operations",
     phase: 2,
-    summary: "What Jody Core remembers about you, each brand, project and task.",
-    planned: ["User, brand, project and task memory", "Review and edit what is remembered", "No complex RAG in v1"],
+    summary: "What Jody Core remembers about you, each business, project and task.",
+    planned: ["User, business, project and task memory", "Review and edit what is remembered", "No complex RAG in v1"],
   },
   {
     id: "activity",

@@ -48,6 +48,12 @@ async function SettingsView() {
       note: env.anthropic ? undefined : "AI Command stays offline until this is set.",
     },
     {
+      label: "OS_ANALYTICS_URL / KEY",
+      value: env.osAnalytics ? "Set" : "Not set",
+      ok: env.osAnalytics,
+      note: env.osAnalytics ? undefined : "Businesses stay empty until both are set.",
+    },
+    {
       label: "SETUP_TOKEN",
       value: env.setupToken ? "Set" : "Not set",
       ok: !env.setupToken,
@@ -56,7 +62,7 @@ async function SettingsView() {
   ];
 
   return (
-    <div className="grid gap-10 lg:grid-cols-[1.4fr_1fr]">
+    <div className="grid grid-cols-[minmax(0,1fr)] gap-10 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
       <Panel>
         <PanelHeader title="Profile and AI" description="How Jody Core addresses you and how it thinks." />
         <SettingsForm

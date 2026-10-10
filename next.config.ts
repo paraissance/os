@@ -29,6 +29,13 @@ const nextConfig: NextConfig = {
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },
+  async redirects() {
+    // "Brands" was renamed "Businesses".
+    return [
+      { source: "/brands", destination: "/businesses", permanent: true },
+      { source: "/brands/:slug", destination: "/businesses/:slug", permanent: true },
+    ];
+  },
 };
 
 export default nextConfig;

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { Suspense, useEffect, useRef, useState, type ReactNode } from "react";
 import { MODULE_GROUPS, MODULES } from "@/lib/modules";
 import { Wordmark } from "@/components/ui/logo";
 import { cx } from "@/components/ui/primitives";
@@ -14,52 +14,71 @@ function isActive(pathname: string, href: string) {
 /** Index numbers follow the module order, so the nav reads like a contents page. */
 const INDEX = new Map(MODULES.map((m, i) => [m.id, String(i + 1).padStart(2, "0")]));
 
-function SidebarContent({ userSlot }: { userSlot: ReactNode }) {
-  const pathname = usePathname();
+function NavGroups({ activePath, onNavigate }: { activePath: string | null; onNavigate?: () => void }) {
+  return (
+    <>
+      {MODULE_GROUPS.map((group) => (
+        <div key={group} className="mb-5">
+          <p className="label mb-1.5 px-5 text-subtle">{group}</p>
+          <ul>
+            {MODULES.filter((m) => m.group === group).map((m) => {
+              const active = activePath !== null && isActive(activePath, m.href);
+              return (
+                <li key={m.id}>
+                  <Link
+                    href={m.href}
+                    onClick={onNavigate}
+                    aria-current={active ? "page" : undefined}
+                    className={cx(
+                      "flex min-h-10 items-center gap-3 px-5 text-[15px] transition-colors",
+                      active ? "bg-ink font-semibold text-paper" : "hover:bg-wash",
+                    )}
+                  >
+                    <span className={cx("w-5 font-mono text-[11px] tabular-nums", active ? "text-paper" : "text-subtle")}>
+                      {INDEX.get(m.id)}
+                    </span>
+                    <span className="flex-1 truncate">{m.label}</span>
+                    {m.phase > 1 ? (
+                      <span
+                        className={cx("font-mono text-[11px]", active ? "text-paper" : "text-subtle")}
+                        title={`Arrives in Phase ${m.phase}`}
+                      >
+                        P{m.phase}
+                      </span>
+                    ) : null}
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      ))}
+    </>
+  );
+}
+
+/**
+ * Reads the current path. On pages with a dynamic segment (/businesses/[slug])
+ * the path is request-time data, so it sits behind its own Suspense boundary:
+ * the plain nav is part of the instant static shell and the highlight streams in.
+ */
+function ActiveNav({ onNavigate }: { onNavigate?: () => void }) {
+  return <NavGroups activePath={usePathname()} onNavigate={onNavigate} />;
+}
+
+function SidebarContent({ userSlot, onNavigate }: { userSlot: ReactNode; onNavigate?: () => void }) {
   return (
     <div className="flex h-full flex-col">
       <div className="flex h-16 shrink-0 items-center border-b border-ink px-5">
-        <Link href="/" aria-label="JodyOS dashboard">
+        <Link href="/" onClick={onNavigate} aria-label="JodyOS dashboard">
           <Wordmark />
         </Link>
       </div>
 
       <nav className="flex-1 overflow-y-auto py-5" aria-label="Main">
-        {MODULE_GROUPS.map((group) => (
-          <div key={group} className="mb-5">
-            <p className="label mb-1.5 px-5 text-subtle">{group}</p>
-            <ul>
-              {MODULES.filter((m) => m.group === group).map((m) => {
-                const active = isActive(pathname, m.href);
-                return (
-                  <li key={m.id}>
-                    <Link
-                      href={m.href}
-                      aria-current={active ? "page" : undefined}
-                      className={cx(
-                        "flex min-h-10 items-center gap-3 px-5 text-[15px] transition-colors",
-                        active ? "bg-ink font-semibold text-paper" : "hover:bg-wash",
-                      )}
-                    >
-                      <span className={cx("w-5 font-mono text-[11px] tabular-nums", active ? "text-paper" : "text-subtle")}>
-                        {INDEX.get(m.id)}
-                      </span>
-                      <span className="flex-1 truncate">{m.label}</span>
-                      {m.phase > 1 ? (
-                        <span
-                          className={cx("font-mono text-[11px]", active ? "text-paper" : "text-subtle")}
-                          title={`Arrives in Phase ${m.phase}`}
-                        >
-                          P{m.phase}
-                        </span>
-                      ) : null}
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        ))}
+        <Suspense fallback={<NavGroups activePath={null} onNavigate={onNavigate} />}>
+          <ActiveNav onNavigate={onNavigate} />
+        </Suspense>
       </nav>
 
       <div className="shrink-0 border-t border-ink">{userSlot}</div>
@@ -69,17 +88,10 @@ function SidebarContent({ userSlot }: { userSlot: ReactNode }) {
 
 export function AppShell({ children, userSlot }: { children: ReactNode; userSlot: ReactNode }) {
   const [open, setOpen] = useState(false);
-  const pathname = usePathname();
   const router = useRouter();
   const drawerRef = useRef<HTMLDivElement>(null);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
-
-  // Close the drawer whenever the route changes.
-  const [lastPath, setLastPath] = useState(pathname);
-  if (pathname !== lastPath) {
-    setLastPath(pathname);
-    setOpen(false);
-  }
+  const close = () => setOpen(false);
 
   // Ctrl/Cmd+K jumps to AI Command from anywhere.
   useEffect(() => {
@@ -132,7 +144,7 @@ export function AppShell({ children, userSlot }: { children: ReactNode; userSlot
 
       {open ? (
         <div className="fixed inset-0 z-40 lg:hidden">
-          <div className="absolute inset-0 bg-ink/40" onClick={() => setOpen(false)} aria-hidden="true" />
+          <div className="absolute inset-0 bg-ink/40" onClick={close} aria-hidden="true" />
           <div
             ref={drawerRef}
             role="dialog"
@@ -142,12 +154,13 @@ export function AppShell({ children, userSlot }: { children: ReactNode; userSlot
           >
             <button
               type="button"
-              onClick={() => setOpen(false)}
+              onClick={close}
               className="absolute right-4 top-2.5 z-10 min-h-11 px-1 text-sm font-semibold underline decoration-1 underline-offset-4"
             >
               Close
             </button>
-            <SidebarContent userSlot={userSlot} />
+            {/* Following a link closes the drawer. */}
+            <SidebarContent userSlot={userSlot} onNavigate={close} />
           </div>
         </div>
       ) : null}

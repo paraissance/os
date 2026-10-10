@@ -23,7 +23,7 @@ type Conv = { id: string; title: string; updatedAt: string };
 
 const SUGGESTIONS = [
   "What can you do for me right now?",
-  "Plan my week across all my brands",
+  "Plan my week across all my businesses",
   "Draft three social post ideas for Done For You Leads",
   "Outline what the GitHub and Vercel integrations should check",
 ];

@@ -33,6 +33,21 @@ const schema = z.object({
     .trim()
     .optional()
     .transform((v) => (v ? v : undefined)),
+  // OS Analytics (WordPress plugin) connector: the endpoint shown on the
+  // plugin's Settings → JodyOS connection card, and the key generated there.
+  OS_ANALYTICS_URL: z
+    .string()
+    .trim()
+    .optional()
+    .transform((v) => (v ? v.replace(/\/+$/, "") : undefined))
+    .refine((v) => v === undefined || /^https?:\/\/[^\s]+$/i.test(v), {
+      message: "OS_ANALYTICS_URL must be an http(s) URL",
+    }),
+  OS_ANALYTICS_KEY: z
+    .string()
+    .trim()
+    .optional()
+    .transform((v) => (v ? v : undefined)),
 });
 
 export type ServerEnv = z.infer<typeof schema>;
@@ -62,6 +77,9 @@ export function parseEnv(source: Record<string, string | undefined>): ServerEnv 
   if (env.SETUP_TOKEN && env.SETUP_TOKEN.length < 24) {
     throw new EnvError("SETUP_TOKEN must be at least 24 characters long.");
   }
+  if (env.NODE_ENV === "production" && env.OS_ANALYTICS_URL?.startsWith("http://")) {
+    throw new EnvError("OS_ANALYTICS_URL must use https:// in production (the key travels with every request).");
+  }
   return env;
 }
 
@@ -81,5 +99,6 @@ export function envStatus() {
     database: e.DATABASE_URL ? ("postgres" as const) : ("pglite" as const),
     setupToken: Boolean(e.SETUP_TOKEN),
     anthropic: Boolean(e.ANTHROPIC_API_KEY),
+    osAnalytics: Boolean(e.OS_ANALYTICS_URL && e.OS_ANALYTICS_KEY),
   };
 }

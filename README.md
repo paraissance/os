@@ -2,7 +2,7 @@
 
 A private, modular AI operating system: one dashboard and one AI coordinator (Jody Core) for every brand, website, social channel, analytics account, tool and automation.
 
-**Status: Phase 1 (Foundation).** The app shell, sign-in, database, settings, activity log and a basic AI chat work today. Brands, websites, social, analytics, tasks, automations, agents and memory show their plan and the phase that delivers them; none of them shows sample data.
+**Status: Phase 1 (Foundation) plus Businesses.** The app shell, sign-in, database, settings, activity log and a basic AI chat work today. **Businesses** shows every business live from the OS Analytics WordPress plugin (leads, spend, pipeline, site renewals, social, campaigns, tasks, subscriptions) and feeds the dashboard. Websites, social, analytics, tasks, automations, agents and memory show their plan and the phase that delivers them; none of them shows sample data.
 
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the stack, data model, deployment plan and phase plan.
 
@@ -39,6 +39,8 @@ Open http://localhost:3000. You'll be sent to sign in; go to **/setup**, enter t
 | `SETUP_TOKEN` | Once | Proves you own the deployment when creating the owner account. 24+ characters. Remove after setup. |
 | `ANTHROPIC_API_KEY` | For AI | Enables Jody Core. Without it the AI shows as offline. |
 | `AI_MODEL` | Optional | Default model until one is picked in Settings (`claude-opus-5-5` by default). |
+| `OS_ANALYTICS_URL` | For Businesses | The JodyOS connector endpoint from the OS Analytics plugin (Settings → JodyOS connection), e.g. `https://YOUR-SITE/wp-json/jdy/v1/os`. |
+| `OS_ANALYTICS_KEY` | For Businesses | The connection key generated on that same card. Read-only; revoke it there at any time. |
 | `PGLITE_DATA_DIR` | Optional | Local database folder (default `.data/pglite`). |
 
 Secrets live only in environment variables. They are never sent to the browser, written to the activity log, or returned by an API.

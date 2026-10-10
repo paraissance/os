@@ -16,7 +16,7 @@ export function ModulePlaceholder({ id }: { id: string }) {
         description={mod.summary}
         action={<Badge tone="neutral">Not built yet</Badge>}
       />
-      <div className="grid gap-10 md:grid-cols-[1fr_1.4fr]">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-10 md:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
         <div>
           <p className="text-2xl font-bold leading-tight tracking-[-0.02em]">
             Arrives in Phase {mod.phase}.

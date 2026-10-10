@@ -1,0 +1,251 @@
+{
+    "id": 4,
+    "slug": "example-leads",
+    "name": "Example Leads Co",
+    "tagline": "Lead generation services",
+    "siteUrl": "https://leads.example.com",
+    "currency": "$",
+    "active": true,
+    "window": {
+        "from": "2026-09-11",
+        "to": "2026-10-10"
+    },
+    "last30": {
+        "leads": 42,
+        "won": 4,
+        "appointments": 6,
+        "spend": 525,
+        "costPerLead": 12.5,
+        "conversionRate": 9.5,
+        "loanVolume": 0
+    },
+    "previous30": {
+        "leads": 30,
+        "won": 4,
+        "appointments": 6,
+        "spend": 525,
+        "costPerLead": 12.5,
+        "conversionRate": 9.5,
+        "loanVolume": 0
+    },
+    "clientsAllTime": 19,
+    "renewals": [
+        {
+            "item": "domain",
+            "date": "2026-10-20",
+            "status": "soon",
+            "daysLeft": 10
+        },
+        {
+            "item": "hosting",
+            "date": "2027-03-01",
+            "status": "ok",
+            "daysLeft": 142
+        },
+        {
+            "item": "ssl",
+            "date": "2026-10-01",
+            "status": "expired",
+            "daysLeft": -9
+        }
+    ],
+    "pipeline": {
+        "new": 20,
+        "contacted": 0,
+        "qualified": 0,
+        "appointment": 0,
+        "approved": 0,
+        "closed": 7,
+        "lost": 0
+    },
+    "trend": [
+        {
+            "date": "2026-09-11",
+            "leads": 1
+        },
+        {
+            "date": "2026-09-12",
+            "leads": 1
+        },
+        {
+            "date": "2026-09-13",
+            "leads": 1
+        },
+        {
+            "date": "2026-09-14",
+            "leads": 1
+        },
+        {
+            "date": "2026-09-15",
+            "leads": 1
+        },
+        {
+            "date": "2026-09-16",
+            "leads": 1
+        },
+        {
+            "date": "2026-09-17",
+            "leads": 1
+        },
+        {
+            "date": "2026-09-18",
+            "leads": 1
+        },
+        {
+            "date": "2026-09-19",
+            "leads": 1
+        },
+        {
+            "date": "2026-09-20",
+            "leads": 1
+        },
+        {
+            "date": "2026-09-21",
+            "leads": 1
+        },
+        {
+            "date": "2026-09-22",
+            "leads": 1
+        },
+        {
+            "date": "2026-09-23",
+            "leads": 1
+        },
+        {
+            "date": "2026-09-24",
+            "leads": 1
+        },
+        {
+            "date": "2026-09-25",
+            "leads": 1
+        },
+        {
+            "date": "2026-09-26",
+            "leads": 1
+        },
+        {
+            "date": "2026-09-27",
+            "leads": 1
+        },
+        {
+            "date": "2026-09-28",
+            "leads": 1
+        },
+        {
+            "date": "2026-09-29",
+            "leads": 1
+        },
+        {
+            "date": "2026-09-30",
+            "leads": 1
+        },
+        {
+            "date": "2026-10-01",
+            "leads": 1
+        },
+        {
+            "date": "2026-10-02",
+            "leads": 1
+        },
+        {
+            "date": "2026-10-03",
+            "leads": 1
+        },
+        {
+            "date": "2026-10-04",
+            "leads": 1
+        },
+        {
+            "date": "2026-10-05",
+            "leads": 1
+        },
+        {
+            "date": "2026-10-06",
+            "leads": 1
+        },
+        {
+            "date": "2026-10-07",
+            "leads": 1
+        },
+        {
+            "date": "2026-10-08",
+            "leads": 1
+        },
+        {
+            "date": "2026-10-09",
+            "leads": 1
+        },
+        {
+            "date": "2026-10-10",
+            "leads": 1
+        }
+    ],
+    "site": {
+        "domain": "leads.example.com",
+        "registrar": "Example Registrar",
+        "registrarAccount": "Owner registrar account",
+        "domainAutoRenew": false,
+        "hostingProvider": "Example Host",
+        "hostingPlan": "Business",
+        "sslProvider": "Let's Encrypt",
+        "domainExpiry": "2026-10-20",
+        "hostingExpiry": "2027-03-01",
+        "sslExpiry": "2026-10-01",
+        "wpVersion": "6.6.2",
+        "phpVersion": "8.2",
+        "activeTheme": "Astra Child",
+        "lastBackupAt": "2026-10-09",
+        "warnDays": 30
+    },
+    "social": [
+        {
+            "platform": "facebook",
+            "label": "Facebook",
+            "impressions": 1200,
+            "reach": 900,
+            "clicks": 45,
+            "engagements": 80,
+            "leads": 5,
+            "posts": 12,
+            "followers": 3400
+        }
+    ],
+    "campaigns": [
+        {
+            "name": "Autumn campaign",
+            "channel": "facebook",
+            "status": "active",
+            "startDate": "2026-09-01",
+            "endDate": null,
+            "budget": 1000,
+            "spend": 420.5,
+            "leads": 33,
+            "conversions": 4,
+            "revenue": 0
+        }
+    ],
+    "tasks": {
+        "pending": 3,
+        "inProgress": 1,
+        "completed": 0,
+        "failed": 0,
+        "skipped": 0,
+        "overdue": 2
+    },
+    "spending": {
+        "monthlyTotal": 312.5,
+        "yearlyTotal": 3750,
+        "activeSubscriptions": 6,
+        "upcomingRenewals": [
+            {
+                "name": "Example Scheduler",
+                "category": "social",
+                "amount": 29,
+                "currency": "USD",
+                "cycle": "monthly",
+                "nextRenewal": "2026-10-15",
+                "shared": true
+            }
+        ]
+    }
+}
