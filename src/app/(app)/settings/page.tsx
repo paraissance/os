@@ -36,8 +36,8 @@ async function SettingsView() {
 
   const envRows: { label: string; value: string; ok: boolean; note?: string }[] = [
     {
-      label: "Database",
-      value: env.database === "postgres" ? "PostgreSQL (DATABASE_URL)" : "Local PGlite",
+      label: "DATABASE_URL",
+      value: env.database === "postgres" ? "PostgreSQL" : "Local PGlite",
       ok: true,
       note: env.database === "pglite" ? "Development only. Production uses DATABASE_URL." : undefined,
     },
@@ -56,8 +56,8 @@ async function SettingsView() {
   ];
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
-      <Panel className="animate-fade-up">
+    <div className="grid gap-10 lg:grid-cols-[1.4fr_1fr]">
+      <Panel>
         <PanelHeader title="Profile and AI" description="How Jody Core addresses you and how it thinks." />
         <SettingsForm
           initial={{ name: user.name, ...settings }}
@@ -68,48 +68,48 @@ async function SettingsView() {
         />
       </Panel>
 
-      <div className="space-y-6">
-        <Panel className="animate-fade-up">
+      <div className="space-y-10">
+        <Panel>
           <PanelHeader title="Password" description="Changing it signs out every other device." />
           <PasswordForm />
         </Panel>
 
-        <Panel className="animate-fade-up">
+        <Panel>
           <PanelHeader title="Active sessions" description={`${sessions.length} signed-in device${sessions.length === 1 ? "" : "s"}`} />
-          <ul className="divide-y divide-line">
+          <ul>
             {sessions.map((s) => (
-              <li key={s.id} className="flex items-start justify-between gap-3 px-5 py-3">
+              <li key={s.id} className="flex items-start justify-between gap-3 border-b border-hair px-5 py-3">
                 <div className="min-w-0">
-                  <p className="flex items-center gap-2 text-sm text-fg">
+                  <p className="flex flex-wrap items-center gap-2 text-sm font-semibold">
                     {describeUserAgent(s.userAgent)}
                     {s.id === sessionId ? <Badge tone="accent">This device</Badge> : null}
                   </p>
-                  <p className="text-xs text-subtle">
+                  <p className="text-xs text-muted">
                     {s.ip ?? "unknown IP"} · signed in {formatDateTime(s.createdAt, settings.timezone)}
                   </p>
                 </div>
-                <span className="shrink-0 text-xs text-subtle">{formatRelative(s.lastSeenAt, now)}</span>
+                <span className="shrink-0 font-mono text-xs text-subtle">{formatRelative(s.lastSeenAt, now)}</span>
               </li>
             ))}
           </ul>
-          <div className="border-t border-line px-5 py-3">
+          <div className="px-5 py-3">
             <RevokeSessionsForm disabled={sessions.length <= 1} />
           </div>
         </Panel>
 
-        <Panel className="animate-fade-up">
+        <Panel>
           <PanelHeader title="Environment" description="Configuration checks. Values are never shown." />
-          <ul className="divide-y divide-line">
+          <ul>
             {envRows.map((r) => (
-              <li key={r.label} className="px-5 py-3">
+              <li key={r.label} className="border-b border-hair px-5 py-3 last:border-b-0">
                 <div className="flex items-center justify-between gap-3">
-                  <code className="font-mono text-[13px] text-fg">{r.label}</code>
-                  <span className="flex items-center gap-2 text-sm text-muted">
+                  <code className="font-mono text-[13px] font-semibold">{r.label}</code>
+                  <span className="flex items-center gap-2 text-sm">
                     <StatusDot tone={r.ok ? "ok" : "warn"} />
                     {r.value}
                   </span>
                 </div>
-                {r.note ? <p className="mt-1 text-xs text-subtle">{r.note}</p> : null}
+                {r.note ? <p className="mt-1 text-xs text-muted">{r.note}</p> : null}
               </li>
             ))}
           </ul>

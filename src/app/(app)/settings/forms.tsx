@@ -1,7 +1,6 @@
 "use client";
 
 import { startTransition, useActionState, useState, type FormEvent } from "react";
-import { LoaderCircle } from "lucide-react";
 import { changePasswordAction, revokeOtherSessionsAction, saveSettingsAction } from "@/app/actions/settings";
 import { Alert, Button, Field, Input, Select, Textarea } from "@/components/ui/primitives";
 
@@ -12,10 +11,6 @@ type Initial = {
   aiEffort: string;
   aiInstructions: string;
 };
-
-function Spinner() {
-  return <LoaderCircle className="size-4 animate-spin" aria-hidden="true" />;
-}
 
 export function SettingsForm({
   initial,
@@ -93,7 +88,6 @@ export function SettingsForm({
       </Field>
       <div className="flex justify-end">
         <Button type="submit" disabled={pending}>
-          {pending ? <Spinner /> : null}
           {pending ? "Saving…" : "Save settings"}
         </Button>
       </div>
@@ -118,8 +112,7 @@ export function PasswordForm() {
         <Input id="confirm" name="confirm" type="password" autoComplete="new-password" required />
       </Field>
       <Button type="submit" variant="secondary" disabled={pending}>
-        {pending ? <Spinner /> : null}
-        Change password
+        {pending ? "Changing…" : "Change password"}
       </Button>
     </form>
   );
@@ -129,12 +122,11 @@ export function RevokeSessionsForm({ disabled }: { disabled: boolean }) {
   const [state, action, pending] = useActionState(revokeOtherSessionsAction, undefined);
   return (
     <form action={action} className="flex flex-wrap items-center justify-between gap-3">
-      <span className="text-sm text-muted" role="status">
+      <span className="text-sm font-semibold" role="status">
         {state?.message ?? ""}
       </span>
-      <Button type="submit" variant="ghost" disabled={disabled || pending} className="min-h-9 px-3">
-        {pending ? <Spinner /> : null}
-        Sign out other sessions
+      <Button type="submit" variant="ghost" disabled={disabled || pending}>
+        {pending ? "Signing out…" : "Sign out other sessions"}
       </Button>
     </form>
   );

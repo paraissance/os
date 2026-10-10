@@ -3,33 +3,33 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { Menu, X } from "lucide-react";
 import { MODULE_GROUPS, MODULES } from "@/lib/modules";
 import { Wordmark } from "@/components/ui/logo";
 import { cx } from "@/components/ui/primitives";
-import { NAV_ICONS } from "./nav-icons";
 
 function isActive(pathname: string, href: string) {
   return href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`);
 }
 
-function SidebarContent({ userSlot, gradientId }: { userSlot: ReactNode; gradientId: string }) {
+/** Index numbers follow the module order, so the nav reads like a contents page. */
+const INDEX = new Map(MODULES.map((m, i) => [m.id, String(i + 1).padStart(2, "0")]));
+
+function SidebarContent({ userSlot }: { userSlot: ReactNode }) {
   const pathname = usePathname();
   return (
     <div className="flex h-full flex-col">
-      <div className="flex h-16 items-center px-5">
-        <Link href="/" className="rounded-lg" aria-label="JodyOS dashboard">
-          <Wordmark gradientId={gradientId} />
+      <div className="flex h-16 shrink-0 items-center border-b border-ink px-5">
+        <Link href="/" aria-label="JodyOS dashboard">
+          <Wordmark />
         </Link>
       </div>
 
-      <nav className="flex-1 space-y-6 overflow-y-auto px-3 py-4" aria-label="Main">
+      <nav className="flex-1 overflow-y-auto py-5" aria-label="Main">
         {MODULE_GROUPS.map((group) => (
-          <div key={group}>
-            <p className="mb-1.5 px-3 font-mono text-[11px] uppercase tracking-[0.16em] text-subtle">{group}</p>
-            <ul className="space-y-0.5">
+          <div key={group} className="mb-5">
+            <p className="label mb-1.5 px-5 text-subtle">{group}</p>
+            <ul>
               {MODULES.filter((m) => m.group === group).map((m) => {
-                const Icon = NAV_ICONS[m.id];
                 const active = isActive(pathname, m.href);
                 return (
                   <li key={m.id}>
@@ -37,18 +37,17 @@ function SidebarContent({ userSlot, gradientId }: { userSlot: ReactNode; gradien
                       href={m.href}
                       aria-current={active ? "page" : undefined}
                       className={cx(
-                        "group relative flex min-h-10 items-center gap-3 rounded-xl px-3 text-sm transition-colors",
-                        active ? "bg-white/[0.07] text-fg" : "text-muted hover:bg-white/[0.04] hover:text-fg",
+                        "flex min-h-10 items-center gap-3 px-5 text-[15px] transition-colors",
+                        active ? "bg-ink font-semibold text-paper" : "hover:bg-wash",
                       )}
                     >
-                      {active ? (
-                        <span className="absolute inset-y-2 left-0 w-0.5 rounded-full bg-gradient-to-b from-accent to-violet" />
-                      ) : null}
-                      <Icon className={cx("size-4 shrink-0", active ? "text-accent" : "text-subtle group-hover:text-muted")} />
+                      <span className={cx("w-5 font-mono text-[11px] tabular-nums", active ? "text-paper" : "text-subtle")}>
+                        {INDEX.get(m.id)}
+                      </span>
                       <span className="flex-1 truncate">{m.label}</span>
                       {m.phase > 1 ? (
                         <span
-                          className="rounded-md border border-line px-1.5 py-px font-mono text-[10px] text-subtle"
+                          className={cx("font-mono text-[11px]", active ? "text-paper" : "text-subtle")}
                           title={`Arrives in Phase ${m.phase}`}
                         >
                           P{m.phase}
@@ -63,7 +62,7 @@ function SidebarContent({ userSlot, gradientId }: { userSlot: ReactNode; gradien
         ))}
       </nav>
 
-      <div className="border-t border-line p-3">{userSlot}</div>
+      <div className="shrink-0 border-t border-ink">{userSlot}</div>
     </div>
   );
 }
@@ -112,51 +111,49 @@ export function AppShell({ children, userSlot }: { children: ReactNode; userSlot
 
   return (
     <div className="min-h-dvh">
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 border-r border-line bg-ink-900/70 backdrop-blur-xl lg:block">
-        <SidebarContent userSlot={userSlot} gradientId="sidebar" />
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 border-r border-ink bg-paper lg:block">
+        <SidebarContent userSlot={userSlot} />
       </aside>
 
-      <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-line bg-ink-950/80 px-4 backdrop-blur-xl lg:hidden">
+      <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-ink bg-paper px-4 lg:hidden">
+        <Link href="/" aria-label="JodyOS dashboard">
+          <Wordmark />
+        </Link>
         <button
           ref={menuButtonRef}
           type="button"
           onClick={() => setOpen(true)}
-          className="-ml-1 inline-flex size-11 items-center justify-center rounded-xl text-muted hover:bg-white/[0.06] hover:text-fg"
-          aria-label="Open navigation"
+          className="min-h-11 px-1 text-sm font-semibold underline decoration-1 underline-offset-4"
           aria-expanded={open}
         >
-          <Menu className="size-5" />
+          Menu
         </button>
-        <Link href="/" aria-label="JodyOS dashboard">
-          <Wordmark gradientId="topbar" />
-        </Link>
       </header>
 
       {open ? (
         <div className="fixed inset-0 z-40 lg:hidden">
-          <div className="absolute inset-0 bg-ink-950/70 backdrop-blur-sm" onClick={() => setOpen(false)} aria-hidden="true" />
+          <div className="absolute inset-0 bg-ink/40" onClick={() => setOpen(false)} aria-hidden="true" />
           <div
             ref={drawerRef}
             role="dialog"
             aria-modal="true"
             aria-label="Navigation"
-            className="absolute inset-y-0 left-0 w-[min(18rem,85vw)] border-r border-line bg-ink-900 shadow-2xl animate-fade-up"
+            className="absolute inset-y-0 left-0 w-[min(18rem,85vw)] border-r border-ink bg-paper"
           >
             <button
               type="button"
               onClick={() => setOpen(false)}
-              className="absolute right-2 top-2.5 z-10 inline-flex size-11 items-center justify-center rounded-xl text-muted hover:bg-white/[0.06] hover:text-fg"
-              aria-label="Close navigation"
+              className="absolute right-4 top-2.5 z-10 min-h-11 px-1 text-sm font-semibold underline decoration-1 underline-offset-4"
             >
-              <X className="size-5" />
+              Close
             </button>
-            <SidebarContent userSlot={userSlot} gradientId="drawer" />
+            <SidebarContent userSlot={userSlot} />
           </div>
         </div>
       ) : null}
 
-      <div className="lg:pl-64">
-        <main className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 sm:py-8 lg:px-10 lg:py-10">{children}</main>
+      <div className="lg:pl-60">
+        <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-8 lg:px-12 lg:py-12">{children}</main>
       </div>
     </div>
   );

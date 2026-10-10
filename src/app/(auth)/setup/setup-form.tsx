@@ -1,7 +1,6 @@
 "use client";
 
 import { useActionState } from "react";
-import { LoaderCircle } from "lucide-react";
 import { setupAction } from "@/app/actions/auth";
 import { Alert, Button, Field, Input } from "@/components/ui/primitives";
 
@@ -10,7 +9,7 @@ export function SetupForm() {
   const err = state?.fieldErrors ?? {};
 
   return (
-    <form action={action} className="space-y-4" noValidate>
+    <form action={action} className="space-y-5" noValidate>
       {state?.error ? <Alert tone="bad">{state.error}</Alert> : null}
       <Field label="Setup token" htmlFor="setupToken" error={err.setupToken} hint="The SETUP_TOKEN value from your environment.">
         <Input id="setupToken" name="setupToken" type="password" autoComplete="off" required />
@@ -28,8 +27,7 @@ export function SetupForm() {
         <Input id="confirm" name="confirm" type="password" autoComplete="new-password" required />
       </Field>
       <Button type="submit" className="w-full" disabled={pending}>
-        {pending ? <LoaderCircle className="size-4 animate-spin" aria-hidden="true" /> : null}
-        {pending ? "Creating account…" : "Create owner account"}
+        {pending ? "Creating account…" : "Create owner account →"}
       </Button>
     </form>
   );

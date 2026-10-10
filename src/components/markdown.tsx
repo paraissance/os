@@ -10,13 +10,13 @@ function InlineNodes({ nodes }: { nodes: Inline[] }) {
             return <Fragment key={i}>{n.text}</Fragment>;
           case "code":
             return (
-              <code key={i} className="rounded-md border border-line bg-white/[0.05] px-1.5 py-0.5 font-mono text-[0.85em] text-fg">
+              <code key={i} className="bg-wash px-1 py-0.5 font-mono text-[0.86em]">
                 {n.text}
               </code>
             );
           case "strong":
             return (
-              <strong key={i} className="font-semibold text-fg">
+              <strong key={i} className="font-bold">
                 <InlineNodes nodes={n.children} />
               </strong>
             );
@@ -28,7 +28,7 @@ function InlineNodes({ nodes }: { nodes: Inline[] }) {
             );
           case "link":
             return (
-              <a key={i} href={n.href} target="_blank" rel="noopener noreferrer nofollow" className="text-accent underline underline-offset-4">
+              <a key={i} href={n.href} target="_blank" rel="noopener noreferrer nofollow" className="underline decoration-1 underline-offset-4 hover:decoration-2">
                 <InlineNodes nodes={n.children} />
               </a>
             );
@@ -41,10 +41,10 @@ function InlineNodes({ nodes }: { nodes: Inline[] }) {
 function BlockNode({ block }: { block: Block }) {
   switch (block.type) {
     case "heading": {
-      const cls = "font-semibold text-fg mt-5 first:mt-0";
-      if (block.level === 1) return <h3 className={`${cls} text-lg`}><InlineNodes nodes={block.children} /></h3>;
-      if (block.level === 2) return <h4 className={`${cls} text-base`}><InlineNodes nodes={block.children} /></h4>;
-      return <h5 className={`${cls} text-[15px]`}><InlineNodes nodes={block.children} /></h5>;
+      const cls = "mt-6 font-bold tracking-[-0.02em] first:mt-0";
+      if (block.level === 1) return <h3 className={`${cls} text-xl`}><InlineNodes nodes={block.children} /></h3>;
+      if (block.level === 2) return <h4 className={`${cls} text-lg`}><InlineNodes nodes={block.children} /></h4>;
+      return <h5 className={`${cls} text-base`}><InlineNodes nodes={block.children} /></h5>;
     }
     case "paragraph":
       return (
@@ -54,7 +54,7 @@ function BlockNode({ block }: { block: Block }) {
       );
     case "code":
       return (
-        <pre className="overflow-x-auto rounded-xl border border-line bg-ink-950/80 p-4 font-mono text-[13px] leading-relaxed text-fg">
+        <pre className="overflow-x-auto border border-ink bg-wash p-4 font-mono text-[13px] leading-relaxed">
           <code>{block.text}</code>
         </pre>
       );
@@ -65,28 +65,28 @@ function BlockNode({ block }: { block: Block }) {
         </li>
       ));
       return block.ordered ? (
-        <ol start={block.start} className="list-decimal space-y-1 pl-5 marker:text-subtle">
+        <ol start={block.start} className="list-decimal space-y-1 pl-6">
           {items}
         </ol>
       ) : (
-        <ul className="list-disc space-y-1 pl-5 marker:text-subtle">{items}</ul>
+        <ul className="list-[square] space-y-1 pl-6">{items}</ul>
       );
     }
     case "quote":
       return (
-        <blockquote className="whitespace-pre-wrap border-l-2 border-accent/50 pl-4 text-muted">
+        <blockquote className="whitespace-pre-wrap border-l-4 border-ink pl-4 text-muted">
           <InlineNodes nodes={block.children} />
         </blockquote>
       );
     case "rule":
-      return <hr className="border-line" />;
+      return <hr className="border-ink" />;
   }
 }
 
 export function Markdown({ text }: { text: string }) {
   const blocks = parseMarkdown(text);
   return (
-    <div className="space-y-3 text-[15px] leading-relaxed text-fg/90">
+    <div className="space-y-3 text-[15px] leading-relaxed">
       {blocks.map((b, i) => (
         <BlockNode key={i} block={b} />
       ))}

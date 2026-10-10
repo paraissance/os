@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import Form from "next/form";
 import Link from "next/link";
-import { Suspense, type ReactNode } from "react";
-import { Activity as ActivityIcon, ArrowRight, ArrowUpRight, Database, Plug, Sparkles, TriangleAlert } from "lucide-react";
+import { Suspense } from "react";
 import { requireUser } from "@/lib/auth/current-user";
 import { activitySummary, listActivity } from "@/lib/activity";
 import { envStatus } from "@/lib/env";
@@ -29,27 +28,19 @@ export const metadata: Metadata = { title: "Dashboard" };
 export default function DashboardPage() {
   return (
     <>
-      <Suspense fallback={<Skeleton className="mb-8 h-20 w-full max-w-lg" />}>
+      <Suspense fallback={<Skeleton className="mb-10 h-36 w-full" />}>
         <Greeting />
       </Suspense>
 
-      <Suspense
-        fallback={
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            {[0, 1, 2, 3].map((i) => (
-              <Skeleton key={i} className="h-32" />
-            ))}
-          </div>
-        }
-      >
-        <StatusCards />
+      <Suspense fallback={<Skeleton className="h-36 w-full" />}>
+        <StatusStrip />
       </Suspense>
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-[1.6fr_1fr]">
-        <div className="space-y-6">
-          <Panel className="animate-fade-up">
-            <PanelHeader title="Ask Jody Core" description="Plan, draft or think something through." />
-            <Form action="/command" className="flex flex-col gap-3 p-5 sm:flex-row">
+      <div className="mt-10 grid gap-10 lg:grid-cols-[1.6fr_1fr]">
+        <div className="space-y-10">
+          <section>
+            <h2 className="label mb-3">Ask Jody Core</h2>
+            <Form action="/command" className="flex flex-col sm:flex-row">
               <label htmlFor="quick-command" className="sr-only">
                 Command
               </label>
@@ -58,22 +49,21 @@ export default function DashboardPage() {
                 name="q"
                 required
                 maxLength={2000}
-                placeholder="e.g. Draft a launch checklist for Done For You Leads"
-                className="min-h-11 flex-1 rounded-xl border border-line-strong bg-ink-900/80 px-3.5 text-sm text-fg placeholder:text-subtle focus:border-accent/60 focus:outline-none"
+                placeholder="Draft a launch checklist for Done For You Leads"
+                className="min-h-12 flex-1 border border-ink px-4 text-[15px] placeholder:text-subtle focus:outline-2 focus:-outline-offset-2 focus:outline-ink sm:border-r-0"
               />
-              <button type="submit" className={buttonClass("primary")}>
-                <Sparkles className="size-4" aria-hidden="true" /> Ask
+              <button type="submit" className={buttonClass("primary", "min-h-12 px-7")}>
+                Ask →
               </button>
             </Form>
-          </Panel>
+          </section>
 
-          <Panel className="animate-fade-up">
+          <Panel>
             <PanelHeader
               title="Recent activity"
-              description="The latest entries in the audit log."
               action={
-                <Link href="/activity" className={buttonClass("ghost", "min-h-9 px-3")}>
-                  View all <ArrowRight className="size-4" aria-hidden="true" />
+                <Link href="/activity" className="text-sm font-semibold underline decoration-1 underline-offset-4">
+                  View all
                 </Link>
               }
             />
@@ -83,8 +73,8 @@ export default function DashboardPage() {
           </Panel>
         </div>
 
-        <div className="space-y-6">
-          <Suspense fallback={<Skeleton className="h-48" />}>
+        <div className="space-y-10">
+          <Suspense fallback={<Skeleton className="h-40" />}>
             <Attention />
           </Suspense>
           <Roadmap />
@@ -100,50 +90,34 @@ async function Greeting() {
   const now = requestNow();
   const date = new Intl.DateTimeFormat("en-GB", { timeZone: timezone, weekday: "long", day: "numeric", month: "long" }).format(now);
   return (
-    <header className="mb-8 animate-fade-up">
-      <p className="mb-2 font-mono text-xs uppercase tracking-[0.18em] text-accent">{date}</p>
-      <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
-        {greeting(now, timezone)}, <span className="text-gradient">{user.name.split(" ")[0]}</span>
+    <header className="mb-10 border-b-2 border-ink pb-6">
+      <p className="label mb-3 text-muted">{date}</p>
+      <h1 className="text-5xl font-extrabold leading-[0.95] tracking-[-0.045em] sm:text-7xl">
+        {greeting(now, timezone)}, {user.name.split(" ")[0]}.
       </h1>
-      <p className="mt-2 text-[15px] text-muted">Here&apos;s the state of your system.</p>
     </header>
   );
 }
 
-function StatCard({
-  icon,
-  label,
-  value,
-  detail,
-  tone,
-  href,
-}: {
-  icon: ReactNode;
-  label: string;
-  value: string;
-  detail: string;
-  tone: Tone;
-  href: string;
-}) {
+function Stat({ label, value, detail, tone, href }: { label: string; value: string; detail: string; tone: Tone; href: string }) {
   return (
-    <Link href={href} className="panel group block p-5 transition-colors hover:border-line-strong animate-fade-up">
-      <div className="flex items-center justify-between">
-        <span className="flex size-9 items-center justify-center rounded-xl border border-line bg-white/[0.04] text-accent">
-          {icon}
+    <Link href={href} className="group block min-w-0 border-b border-r border-ink p-4 transition-colors hover:bg-ink hover:text-paper sm:p-5">
+      <p className="label flex items-center justify-between">
+        {label}
+        <span aria-hidden="true">→</span>
+      </p>
+      <p className="mt-4 flex items-center gap-2 text-2xl font-extrabold tracking-[-0.03em] sm:mt-6 sm:gap-2.5 sm:text-3xl">
+        <span className="group-hover:invert">
+          <StatusDot tone={tone} />
         </span>
-        <ArrowUpRight className="size-4 text-subtle transition-colors group-hover:text-fg" aria-hidden="true" />
-      </div>
-      <p className="mt-4 text-sm text-muted">{label}</p>
-      <p className="mt-1 flex items-center gap-2 text-lg font-semibold text-fg">
-        <StatusDot tone={tone} pulse={tone === "ok"} />
         {value}
       </p>
-      <p className="mt-1 truncate text-xs text-subtle">{detail}</p>
+      <p className="mt-1 truncate text-sm text-muted group-hover:text-paper">{detail}</p>
     </Link>
   );
 }
 
-async function StatusCards() {
+async function StatusStrip() {
   await requireUser();
   const env = envStatus();
   const now = requestNow();
@@ -153,36 +127,32 @@ async function StatusCards() {
   const events = last24h.success + last24h.failure + last24h.pending + last24h.info;
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-      <StatCard
+    <div className="grid grid-cols-2 border-l border-t border-ink xl:grid-cols-4">
+      <Stat
         href="/command"
-        icon={<Sparkles className="size-4" />}
         label="Jody Core"
         value={env.anthropic ? "Online" : "Offline"}
         detail={env.anthropic ? (modelInfo(settings.aiModel)?.label ?? settings.aiModel) : "ANTHROPIC_API_KEY not set"}
         tone={env.anthropic ? "ok" : "warn"}
       />
-      <StatCard
+      <Stat
         href="/settings"
-        icon={<Database className="size-4" />}
         label="Database"
         value="Connected"
         detail={env.database === "postgres" ? "PostgreSQL" : "Local PGlite (development)"}
         tone="ok"
       />
-      <StatCard
+      <Stat
         href="/activity"
-        icon={<ActivityIcon className="size-4" />}
-        label="Activity, last 24 h"
+        label="Last 24 hours"
         value={`${events} event${events === 1 ? "" : "s"}`}
         detail={last24h.failure ? `${last24h.failure} failed` : "No failures"}
         tone={last24h.failure ? "bad" : "ok"}
       />
-      <StatCard
+      <Stat
         href="/integrations"
-        icon={<Plug className="size-4" />}
         label="Integrations"
-        value={`${connected} of ${integrations.length}`}
+        value={`${connected} / ${integrations.length}`}
         detail={`${integrations.filter((i) => i.status === "planned").length} planned for later phases`}
         tone={connected ? "ok" : "warn"}
       />
@@ -193,9 +163,7 @@ async function StatusCards() {
 async function RecentActivity() {
   await requireUser();
   const [rows, settings] = await Promise.all([listActivity({ limit: 6 }), getSettings()]);
-  if (!rows.length) {
-    return <EmptyState icon={<ActivityIcon className="size-6" />} title="No activity yet" />;
-  }
+  if (!rows.length) return <EmptyState title="No activity yet." />;
   return <ActivityList rows={rows} now={requestNow()} timeZone={settings.timezone} />;
 }
 
@@ -207,18 +175,12 @@ async function Attention() {
   const failures = await listActivity({ status: "failure", limit: 3 });
   const recentFailures = failures.filter((f) => now.getTime() - f.createdAt.getTime() < DAY_MS);
 
-  const items: { tone: Tone; title: string; body: string; href: string }[] = [];
+  const items: { title: string; body: string; href: string }[] = [];
   if (!env.anthropic) {
-    items.push({
-      tone: "warn",
-      title: "Jody Core is offline",
-      body: "Add ANTHROPIC_API_KEY to enable AI Command.",
-      href: "/integrations",
-    });
+    items.push({ title: "Jody Core is offline", body: "Add ANTHROPIC_API_KEY to enable AI Command.", href: "/integrations" });
   }
   if (env.setupToken) {
     items.push({
-      tone: "info",
       title: "Remove SETUP_TOKEN",
       body: "Setup is finished. Delete the variable so the setup page stays locked.",
       href: "/settings",
@@ -226,63 +188,53 @@ async function Attention() {
   }
   if (recentFailures.length) {
     items.push({
-      tone: "bad",
-      title: `${recentFailures.length} failure${recentFailures.length === 1 ? "" : "s"} in the last 24 h`,
+      title: `${recentFailures.length} failure${recentFailures.length === 1 ? "" : "s"} in the last 24 hours`,
       body: `Latest: ${recentFailures[0].action}`,
       href: "/activity?status=failure",
     });
   }
 
   return (
-    <Panel className="animate-fade-up">
-      <PanelHeader title="Needs attention" />
+    <section>
+      <h2 className="label mb-3 flex items-center justify-between border-b border-ink pb-2">
+        Needs attention
+        <span className="font-mono tabular-nums">{String(items.length).padStart(2, "0")}</span>
+      </h2>
       {items.length ? (
-        <ul className="divide-y divide-line">
+        <ul>
           {items.map((item) => (
-            <li key={item.title}>
-              <Link href={item.href} className="flex gap-3 px-5 py-3.5 hover:bg-white/[0.02]">
-                <TriangleAlert
-                  className={`mt-0.5 size-4 shrink-0 ${item.tone === "bad" ? "text-bad" : item.tone === "warn" ? "text-warn" : "text-info"}`}
-                  aria-hidden="true"
-                />
-                <span>
-                  <span className="block text-sm font-medium text-fg">{item.title}</span>
-                  <span className="block text-sm text-muted">{item.body}</span>
-                </span>
+            <li key={item.title} className="border-b border-hair">
+              <Link href={item.href} className="group block py-3">
+                <span className="block font-semibold group-hover:underline group-hover:underline-offset-4">{item.title}</span>
+                <span className="block text-sm text-muted">{item.body}</span>
               </Link>
             </li>
           ))}
         </ul>
       ) : (
-        <EmptyState title="All clear">Nothing needs you right now.</EmptyState>
+        <p className="py-3 text-sm text-muted">Nothing needs you right now.</p>
       )}
-    </Panel>
+    </section>
   );
 }
 
 function Roadmap() {
   const phases = [1, 2, 3, 4, 5, 6] as const;
   return (
-    <Panel className="animate-fade-up">
-      <PanelHeader title="Roadmap" description="What each phase switches on." />
-      <ol className="space-y-3 p-5">
+    <section>
+      <h2 className="label mb-3 border-b border-ink pb-2">Roadmap</h2>
+      <ol>
         {phases.map((p) => {
           const mods = MODULES.filter((m) => m.phase === p);
           return (
-            <li key={p} className="flex gap-3">
-              <span
-                className={`flex size-7 shrink-0 items-center justify-center rounded-lg border font-mono text-xs ${
-                  p === 1 ? "border-accent/40 bg-accent/10 text-accent" : "border-line text-subtle"
-                }`}
-              >
-                {p}
-              </span>
+            <li key={p} className="flex gap-4 border-b border-hair py-3">
+              <span className="w-6 shrink-0 font-mono text-xs leading-6 text-subtle">{String(p).padStart(2, "0")}</span>
               <div className="min-w-0">
-                <p className="flex items-center gap-2 text-sm font-medium text-fg">
+                <p className="flex items-center gap-2 font-semibold">
                   {PHASES[p]}
                   {p === 1 ? <Badge tone="accent">Live</Badge> : null}
                 </p>
-                <p className="truncate text-xs text-subtle">
+                <p className="truncate text-sm text-muted">
                   {mods.length ? mods.map((m) => m.label).join(", ") : p === 6 ? "MCP, RAG, voice, mobile" : "Engine work"}
                 </p>
               </div>
@@ -290,6 +242,6 @@ function Roadmap() {
           );
         })}
       </ol>
-    </Panel>
+    </section>
   );
 }

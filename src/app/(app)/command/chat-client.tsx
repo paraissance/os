@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
-import { ArrowUpRight, History, MessageSquare, Plus, Send, Sparkles, Square, Trash } from "lucide-react";
 import { deleteConversationAction } from "@/app/actions/chat";
 import { modelInfo } from "@/lib/ai/models";
 import { parseChatEvents } from "@/lib/chat-events";
@@ -31,6 +30,10 @@ const SUGGESTIONS = [
 
 let tempId = 0;
 const nextTempId = () => `tmp-${++tempId}`;
+
+function Cursor() {
+  return <span className="ml-0.5 inline-block h-[1.05em] w-2 translate-y-[0.15em] bg-ink animate-blink" aria-hidden="true" />;
+}
 
 export function ChatClient({
   initialConversationId,
@@ -77,6 +80,8 @@ export function ChatClient({
     if (!el) return;
     el.style.height = "auto";
     el.style.height = `${Math.min(el.scrollHeight, 240)}px`;
+    // Only show a scrollbar once the text is taller than the cap.
+    el.style.overflowY = el.scrollHeight > 240 ? "auto" : "hidden";
   }, [input]);
 
   useEffect(() => () => abortRef.current?.abort(), []);
@@ -197,80 +202,68 @@ export function ChatClient({
 
   const modelLabel = (id?: string | null) => (id ? (modelInfo(id)?.label ?? id) : null);
 
+  const textButton = "min-h-10 px-1 text-sm font-semibold underline decoration-1 underline-offset-4 hover:decoration-2";
+
   return (
-    <div className="grid gap-4 lg:h-[calc(100dvh-5rem)] lg:grid-cols-[16rem_1fr]">
+    <div className="grid border border-ink lg:h-[calc(100dvh-6rem)] lg:grid-cols-[17rem_1fr]">
       {/* Conversation history */}
-      <aside className={cx("panel flex min-h-0 flex-col", showHistory ? "flex" : "hidden lg:flex")} aria-label="Conversations">
-        <div className="flex items-center justify-between gap-2 border-b border-line p-3">
-          <span className="px-1 font-mono text-[11px] uppercase tracking-[0.16em] text-subtle">History</span>
-          <button
-            type="button"
-            onClick={newChat}
-            className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-line-strong px-2.5 text-sm text-fg hover:bg-white/[0.06]"
-          >
-            <Plus className="size-4" aria-hidden="true" /> New
+      <aside
+        className={cx("min-h-0 flex-col border-b border-ink lg:border-b-0 lg:border-r", showHistory ? "flex" : "hidden lg:flex")}
+        aria-label="Conversations"
+      >
+        <div className="flex h-14 shrink-0 items-center justify-between border-b border-ink px-4">
+          <span className="label">History</span>
+          <button type="button" onClick={newChat} className={textButton}>
+            New chat
           </button>
         </div>
-        <ul className="min-h-0 flex-1 space-y-0.5 overflow-y-auto p-2 max-lg:max-h-72">
-          {conversations.length === 0 ? <li className="px-2 py-3 text-sm text-subtle">No conversations yet.</li> : null}
-          {conversations.map((c) => (
-            <li key={c.id} className="group relative">
-              <Link
-                href={`/command?c=${c.id}`}
-                onClick={() => setShowHistory(false)}
-                aria-current={c.id === conversationId ? "page" : undefined}
-                className={cx(
-                  "flex min-h-10 items-center gap-2 rounded-lg py-2 pl-2.5 pr-10 text-sm",
-                  c.id === conversationId ? "bg-white/[0.07] text-fg" : "text-muted hover:bg-white/[0.04] hover:text-fg",
-                )}
-              >
-                <MessageSquare className="size-3.5 shrink-0 text-subtle" aria-hidden="true" />
-                <span className="truncate">{c.title}</span>
-              </Link>
-              <button
-                type="button"
-                onClick={() => void remove(c.id)}
-                className="absolute right-1 top-1/2 inline-flex size-8 -translate-y-1/2 items-center justify-center rounded-md text-subtle opacity-100 hover:bg-white/[0.08] hover:text-bad focus-visible:opacity-100 lg:opacity-0 lg:group-hover:opacity-100"
-                aria-label={`Delete conversation: ${c.title}`}
-              >
-                <Trash className="size-3.5" aria-hidden="true" />
-              </button>
-            </li>
-          ))}
+        <ul className="min-h-0 flex-1 overflow-y-auto max-lg:max-h-72">
+          {conversations.length === 0 ? <li className="px-4 py-4 text-sm text-muted">No conversations yet.</li> : null}
+          {conversations.map((c) => {
+            const active = c.id === conversationId;
+            return (
+              <li key={c.id} className={cx("group flex items-stretch border-b border-hair", active && "bg-ink text-paper")}>
+                <Link
+                  href={`/command?c=${c.id}`}
+                  onClick={() => setShowHistory(false)}
+                  aria-current={active ? "page" : undefined}
+                  className={cx("min-w-0 flex-1 truncate px-4 py-2.5 text-sm", active ? "font-semibold" : "hover:bg-wash")}
+                >
+                  {c.title}
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => void remove(c.id)}
+                  className={cx(
+                    "w-10 shrink-0 text-base lg:opacity-0 lg:group-hover:opacity-100 focus-visible:opacity-100",
+                    active ? "lg:opacity-100 hover:bg-paper hover:text-ink" : "hover:bg-ink hover:text-paper",
+                  )}
+                  aria-label={`Delete conversation: ${c.title}`}
+                  title="Delete"
+                >
+                  ×
+                </button>
+              </li>
+            );
+          })}
         </ul>
       </aside>
 
       {/* Chat */}
-      <section className="panel flex min-h-[70dvh] min-w-0 flex-col lg:min-h-0" aria-label="Chat with Jody Core">
-        <header className="flex items-center justify-between gap-3 border-b border-line px-4 py-3 sm:px-5">
-          <div className="flex min-w-0 items-center gap-3">
-            <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-accent/25 to-violet/25 ring-1 ring-line-strong">
-              <Sparkles className="size-4 text-accent" aria-hidden="true" />
-            </span>
-            <div className="min-w-0">
-              <h1 className="text-[15px] font-semibold text-fg">Jody Core</h1>
-              <p className="truncate text-xs text-subtle">
-                {aiOnline ? `${modelLabel(model)} · chat only in Phase 1, no tools yet` : "Offline"}
-              </p>
-            </div>
+      <section className="flex min-h-[75dvh] min-w-0 flex-col lg:min-h-0" aria-label="Chat with Jody Core">
+        <header className="flex h-14 shrink-0 items-center justify-between gap-3 border-b border-ink px-4 sm:px-6">
+          <div className="min-w-0">
+            <h1 className="font-extrabold tracking-[-0.02em]">Jody Core</h1>
           </div>
-          <div className="flex items-center gap-1">
-            <button
-              type="button"
-              onClick={() => setShowHistory((v) => !v)}
-              className="inline-flex size-10 items-center justify-center rounded-xl text-muted hover:bg-white/[0.06] hover:text-fg lg:hidden"
-              aria-label="Show conversation history"
-              aria-expanded={showHistory}
-            >
-              <History className="size-4" />
+          <p className="hidden truncate font-mono text-xs text-muted sm:block">
+            {aiOnline ? `${modelLabel(model)} · chat only, no tools yet` : "offline"}
+          </p>
+          <div className="flex items-center gap-4 lg:hidden">
+            <button type="button" onClick={() => setShowHistory((v) => !v)} className={textButton} aria-expanded={showHistory}>
+              History
             </button>
-            <button
-              type="button"
-              onClick={newChat}
-              className="inline-flex size-10 items-center justify-center rounded-xl text-muted hover:bg-white/[0.06] hover:text-fg lg:hidden"
-              aria-label="New conversation"
-            >
-              <Plus className="size-4" />
+            <button type="button" onClick={newChat} className={textButton}>
+              New
             </button>
           </div>
         </header>
@@ -281,65 +274,63 @@ export function ChatClient({
             const el = e.currentTarget;
             stickToBottom.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
           }}
-          className="min-h-0 flex-1 overflow-y-auto px-4 py-6 sm:px-6"
+          className="min-h-0 flex-1 overflow-y-auto px-4 py-8 sm:px-8"
           aria-live="polite"
         >
           {messages.length === 0 ? (
-            <div className="mx-auto flex max-w-xl flex-col items-center py-10 text-center animate-fade-up">
-              <span className="mb-4 flex size-14 items-center justify-center rounded-2xl bg-gradient-to-br from-accent/20 to-violet/20 ring-1 ring-line-strong">
-                <Sparkles className="size-6 text-accent" aria-hidden="true" />
-              </span>
-              <h2 className="text-xl font-semibold tracking-tight">What are we working on, {userName}?</h2>
-              <p className="mt-2 text-sm text-muted">
+            <div className="mx-auto max-w-2xl">
+              <h2 className="text-4xl font-extrabold leading-[1] tracking-[-0.04em] sm:text-5xl">
+                What are we working on, {userName}?
+              </h2>
+              <p className="mt-4 max-w-lg text-[15px] leading-relaxed text-muted">
                 Jody Core can plan, draft and think things through. It can&apos;t reach your sites or accounts until those
                 integrations are connected.
               </p>
               {aiOnline ? (
-                <div className="mt-6 grid w-full gap-2 sm:grid-cols-2">
+                <ul className="mt-8 border-t border-ink">
                   {SUGGESTIONS.map((s) => (
-                    <button
-                      key={s}
-                      type="button"
-                      onClick={() => void send(s)}
-                      className="rounded-xl border border-line bg-white/[0.02] px-4 py-3 text-left text-sm text-muted transition-colors hover:border-line-strong hover:text-fg"
-                    >
-                      {s}
-                    </button>
+                    <li key={s} className="border-b border-hair">
+                      <button
+                        type="button"
+                        onClick={() => void send(s)}
+                        className="flex w-full items-center justify-between gap-4 py-3 text-left text-[15px] hover:underline hover:underline-offset-4"
+                      >
+                        {s}
+                        <span aria-hidden="true">→</span>
+                      </button>
+                    </li>
                   ))}
-                </div>
+                </ul>
               ) : null}
             </div>
           ) : (
-            <ol className="mx-auto max-w-3xl space-y-6">
+            <ol className="mx-auto max-w-3xl space-y-8">
               {messages.map((m) =>
                 m.role === "user" ? (
                   <li key={m.id} className="flex justify-end">
-                    <div className="max-w-[85%] whitespace-pre-wrap break-words rounded-2xl rounded-br-md border border-accent/20 bg-accent/10 px-4 py-2.5 text-[15px] text-fg">
+                    <div className="max-w-[85%] whitespace-pre-wrap break-words bg-ink px-4 py-3 text-[15px] leading-relaxed text-paper">
                       {m.content}
                     </div>
                   </li>
                 ) : (
-                  <li key={m.id} className="flex gap-3">
-                    <span className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-accent/25 to-violet/25 ring-1 ring-line-strong">
-                      <Sparkles className="size-3.5 text-accent" aria-hidden="true" />
-                    </span>
-                    <div className="min-w-0 flex-1 break-words">
+                  <li key={m.id} className="border-l-2 border-ink pl-5">
+                    <p className="label mb-2 text-subtle">Jody Core</p>
+                    <div className="min-w-0 break-words">
                       {m.content ? <Markdown text={m.content} /> : null}
                       {m.streaming && !m.content ? (
-                        <p className="flex items-center gap-2 text-sm text-subtle" role="status">
-                          <span className="size-2 rounded-full bg-accent animate-pulse-soft" aria-hidden="true" /> Thinking…
+                        <p className="text-[15px] text-muted" role="status">
+                          Thinking
+                          <Cursor />
                         </p>
                       ) : null}
-                      {m.streaming && m.content ? (
-                        <span className="ml-0.5 inline-block h-4 w-1.5 translate-y-0.5 bg-accent/70 animate-pulse-soft" aria-hidden="true" />
-                      ) : null}
+                      {m.streaming && m.content ? <Cursor /> : null}
                       {m.error ? (
                         <div className="mt-2">
                           <Alert tone="bad">{m.error}</Alert>
                         </div>
                       ) : null}
                       {!m.streaming && !m.error && (m.model || m.stopReason) ? (
-                        <p className="mt-2 font-mono text-[11px] text-subtle">
+                        <p className="mt-3 font-mono text-[11px] text-subtle">
                           {[
                             modelLabel(m.model),
                             m.stopReason === "stopped" ? "stopped" : null,
@@ -358,14 +349,14 @@ export function ChatClient({
           )}
         </div>
 
-        <div className="border-t border-line p-3 sm:p-4">
+        <div className="shrink-0 border-t border-ink p-3 sm:p-4">
           {notice ? (
             <div className="mb-3">
               <Alert tone="bad">{notice}</Alert>
             </div>
           ) : null}
           {aiOnline ? (
-            <form onSubmit={onSubmit} className="mx-auto flex max-w-3xl items-end gap-2">
+            <form onSubmit={onSubmit} className="mx-auto flex max-w-3xl items-stretch">
               <label htmlFor="composer" className="sr-only">
                 Message Jody Core
               </label>
@@ -377,34 +368,32 @@ export function ChatClient({
                 onKeyDown={onKeyDown}
                 rows={1}
                 maxLength={20000}
-                placeholder="Ask Jody Core…  (Enter to send, Shift+Enter for a new line)"
-                className="min-h-11 flex-1 resize-none rounded-xl border border-line-strong bg-ink-900/80 px-3.5 py-2.5 text-[15px] leading-relaxed text-fg placeholder:text-subtle focus:border-accent/60 focus:outline-none"
+                placeholder="Ask Jody Core. Enter to send, Shift+Enter for a new line."
+                className="min-h-12 flex-1 resize-none border border-r-0 border-ink px-4 py-3 text-[15px] leading-relaxed placeholder:text-subtle focus:outline-2 focus:-outline-offset-2 focus:outline-ink"
               />
               {busy ? (
                 <button
                   type="button"
                   onClick={() => abortRef.current?.abort()}
-                  className="inline-flex size-11 shrink-0 items-center justify-center rounded-xl border border-line-strong bg-white/[0.05] text-fg hover:bg-white/[0.1]"
-                  aria-label="Stop generating"
+                  className="min-h-12 shrink-0 border border-ink px-5 text-sm font-semibold hover:bg-ink hover:text-paper"
                 >
-                  <Square className="size-4" />
+                  Stop
                 </button>
               ) : (
                 <button
                   type="submit"
                   disabled={!input.trim()}
-                  className="inline-flex size-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-r from-accent-strong to-violet text-ink-950 disabled:opacity-40"
-                  aria-label="Send"
+                  className="min-h-12 shrink-0 border border-ink bg-ink px-6 text-sm font-semibold text-paper hover:bg-paper hover:text-ink disabled:cursor-not-allowed disabled:opacity-40"
                 >
-                  <Send className="size-4" />
+                  Send
                 </button>
               )}
             </form>
           ) : (
             <Alert tone="warn">
-              Jody Core is offline. Add <code className="font-mono">ANTHROPIC_API_KEY</code> to the environment and restart.{" "}
-              <Link href="/integrations" className="inline-flex items-center gap-1 underline underline-offset-4">
-                Integrations <ArrowUpRight className="size-3.5" aria-hidden="true" />
+              Jody Core is offline. Add <code className="font-mono">ANTHROPIC_API_KEY</code> to the environment and redeploy.{" "}
+              <Link href="/integrations" className="font-semibold underline underline-offset-4">
+                Integrations →
               </Link>
             </Alert>
           )}

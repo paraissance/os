@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
-import { Activity as ActivityIcon } from "lucide-react";
 import { requireUser } from "@/lib/auth/current-user";
 import { requestNow } from "@/lib/clock";
 import { listActivity } from "@/lib/activity";
@@ -68,29 +67,31 @@ async function ActivityView({ searchParams }: { searchParams: PageProps<"/activi
     return qs ? `/activity?${qs}` : "/activity";
   };
 
-  const chip = (active: boolean) =>
+  const tab = (active: boolean) =>
     cx(
-      "inline-flex min-h-9 items-center rounded-full border px-3.5 text-sm transition-colors",
-      active ? "border-accent/40 bg-accent/10 text-accent" : "border-line text-muted hover:text-fg",
+      "inline-flex min-h-9 items-center border px-3 text-sm transition-colors",
+      active ? "border-ink bg-ink font-semibold text-paper" : "border-transparent hover:border-ink",
     );
 
   return (
     <Panel>
-      <div className="flex flex-wrap items-center gap-x-6 gap-y-3 border-b border-line px-5 py-4">
-        <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Filter by type">
+      <div className="flex flex-wrap items-center gap-x-8 gap-y-3 border-b border-ink px-5 py-3">
+        <div className="flex flex-wrap items-center gap-1" role="group" aria-label="Filter by type">
+          <span className="label mr-2 text-subtle">Type</span>
           {ACTION_FILTERS.map((f) => (
-            <Link key={f.label} href={href({ action: f.value, before: undefined })} className={chip(action === f.value)}>
+            <Link key={f.label} href={href({ action: f.value, before: undefined })} className={tab(action === f.value)}>
               {f.label}
             </Link>
           ))}
         </div>
-        <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Filter by status">
-          <Link href={href({ status: undefined, before: undefined })} className={chip(!status)}>
-            Any status
+        <div className="flex flex-wrap items-center gap-1" role="group" aria-label="Filter by status">
+          <span className="label mr-2 text-subtle">Status</span>
+          <Link href={href({ status: undefined, before: undefined })} className={tab(!status)}>
+            Any
           </Link>
           {ACTIVITY_STATUSES.map((s) => (
-            <Link key={s} href={href({ status: s, before: undefined })} className={chip(status === s)}>
-              {s}
+            <Link key={s} href={href({ status: s, before: undefined })} className={tab(status === s)}>
+              {s[0].toUpperCase() + s.slice(1)}
             </Link>
           ))}
         </div>
@@ -99,26 +100,21 @@ async function ActivityView({ searchParams }: { searchParams: PageProps<"/activi
       {page.length ? (
         <ActivityList rows={page} now={requestNow()} timeZone={settings.timezone} detailed />
       ) : (
-        <EmptyState icon={<ActivityIcon className="size-6" />} title="Nothing matches">
-          No activity for this filter yet.
-        </EmptyState>
+        <EmptyState title="Nothing matches.">No activity for this filter yet.</EmptyState>
       )}
 
       {hasMore || before ? (
-        <div className="flex justify-between gap-3 border-t border-line px-5 py-3">
+        <div className="flex justify-between gap-3 border-t border-ink px-5 py-3">
           {before ? (
-            <Link href={href({})} className={buttonClass("ghost", "min-h-9 px-3")}>
-              Newest
+            <Link href={href({})} className={buttonClass("ghost")}>
+              ← Newest
             </Link>
           ) : (
             <span />
           )}
           {hasMore ? (
-            <Link
-              href={href({ before: page[page.length - 1].createdAt.toISOString() })}
-              className={buttonClass("secondary", "min-h-9 px-3")}
-            >
-              Older
+            <Link href={href({ before: page[page.length - 1].createdAt.toISOString() })} className={buttonClass("secondary")}>
+              Older →
             </Link>
           ) : null}
         </div>

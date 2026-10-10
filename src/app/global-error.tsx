@@ -5,11 +5,11 @@
 export default function GlobalError({ reset }: { error: Error & { digest?: string }; reset: () => void }) {
   return (
     <html lang="en">
-      <body style={{ background: "#05070d", color: "#e9edf5", fontFamily: "system-ui, sans-serif", display: "grid", placeItems: "center", minHeight: "100dvh", margin: 0 }}>
-        <div style={{ textAlign: "center", padding: 24 }}>
-          <h1 style={{ fontSize: 20, margin: 0 }}>JodyOS hit an error</h1>
-          <p style={{ color: "#a6b0c4" }}>Reload to try again.</p>
-          <button type="button" onClick={reset} style={{ marginTop: 12, padding: "10px 18px", borderRadius: 12, border: "1px solid #263049", background: "#121929", color: "#e9edf5", cursor: "pointer" }}>
+      <body style={{ background: "#fff", color: "#000", fontFamily: "Helvetica Neue, Arial, sans-serif", margin: 0, minHeight: "100dvh", display: "grid", placeItems: "center" }}>
+        <div style={{ padding: 24, maxWidth: 480 }}>
+          <h1 style={{ fontSize: 40, lineHeight: 1, letterSpacing: "-0.04em", fontWeight: 800, margin: 0 }}>JodyOS hit an error.</h1>
+          <p style={{ color: "#545454" }}>Reload the page to try again.</p>
+          <button type="button" onClick={reset} style={{ marginTop: 12, padding: "12px 20px", border: "1px solid #000", background: "#000", color: "#fff", fontWeight: 600, cursor: "pointer" }}>
             Try again
           </button>
         </div>
