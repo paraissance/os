@@ -18,18 +18,18 @@ export function ActivityList({
   detailed?: boolean;
 }) {
   return (
-    <ul>
+    <ul className="stagger">
       {rows.map((row) => {
         const summary = row.result ?? row.request ?? row.error ?? row.action;
         return (
           <li
             key={row.id}
-            className="grid gap-x-4 gap-y-1 border-b border-hair px-5 py-3.5 last:border-b-0 sm:grid-cols-[6.5rem_1fr]"
+            className="grid gap-x-4 gap-y-1 border-b border-paper px-5 py-3.5 last:border-b-0 sm:grid-cols-[6.5rem_1fr]"
           >
             <time
               dateTime={row.createdAt.toISOString()}
               title={formatDateTime(row.createdAt, timeZone)}
-              className="font-mono text-xs leading-6 text-subtle"
+              className="text-xs leading-6 text-muted"
             >
               {formatRelative(row.createdAt, now)}
             </time>
@@ -37,7 +37,7 @@ export function ActivityList({
               <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                 <code className="font-mono text-[13px] font-semibold">{row.action}</code>
                 <Badge tone={STATUS_TONE[row.status]}>{row.status}</Badge>
-                <span className="label text-subtle">{ACTOR[row.actor]}</span>
+                <span className="label text-muted">{ACTOR[row.actor]}</span>
                 {row.tool ? <Badge>{row.tool}</Badge> : null}
               </div>
               <p className="mt-1 break-words text-sm text-muted">{summary}</p>

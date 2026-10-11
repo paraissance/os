@@ -3,6 +3,7 @@ import { cache } from "react";
 import { z } from "zod";
 import { env } from "@/lib/env";
 import { businessHref } from "@/lib/business-sections";
+import { formatMoney } from "@/lib/money";
 
 /**
  * Client for the OS Analytics WordPress plugin's JodyOS connector
@@ -524,21 +525,4 @@ export function detailAttention(b: BusinessDetail, today: Date): AttentionItem[]
   return sortAttention(items);
 }
 
-/** Money with either a symbol ("$") or an ISO code ("USD"). */
-export function formatMoney(value: number, currency: string, fractionDigits?: number): string {
-  const digits = fractionDigits ?? (Number.isInteger(value) ? 0 : 2);
-  if (/^[A-Z]{3}$/.test(currency)) {
-    try {
-      return new Intl.NumberFormat("en-US", {
-        style: "currency",
-        currency,
-        minimumFractionDigits: digits,
-        maximumFractionDigits: digits,
-      }).format(value);
-    } catch {
-      // Unknown code: fall through to the plain format.
-    }
-  }
-  const n = new Intl.NumberFormat("en-US", { minimumFractionDigits: digits, maximumFractionDigits: digits }).format(Math.abs(value));
-  return `${value < 0 ? "-" : ""}${currency || "$"}${n}`;
-}
+export { formatMoney };

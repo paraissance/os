@@ -69,13 +69,13 @@ async function ActivityView({ searchParams }: { searchParams: PageProps<"/activi
 
   const tab = (active: boolean) =>
     cx(
-      "inline-flex min-h-9 items-center border px-3 text-sm transition-colors",
-      active ? "border-ink bg-ink font-semibold text-paper" : "border-transparent hover:border-ink",
+      "inline-flex min-h-9 items-center rounded-full px-3.5 text-sm transition-colors duration-200",
+      active ? "bg-ink font-semibold text-paper" : "bg-paper hover:bg-mist",
     );
 
   return (
     <Panel>
-      <div className="flex flex-wrap items-center gap-x-8 gap-y-3 border-b border-ink px-5 py-3">
+      <div className="flex flex-wrap items-center gap-x-8 gap-y-3 border-b border-paper px-5 py-4">
         <div className="flex flex-wrap items-center gap-1" role="group" aria-label="Filter by type">
           <span className="label mr-2 text-subtle">Type</span>
           {ACTION_FILTERS.map((f) => (
@@ -104,7 +104,7 @@ async function ActivityView({ searchParams }: { searchParams: PageProps<"/activi
       )}
 
       {hasMore || before ? (
-        <div className="flex justify-between gap-3 border-t border-ink px-5 py-3">
+        <div className="flex justify-between gap-3 border-t border-paper px-5 py-3">
           {before ? (
             <Link href={href({})} className={buttonClass("ghost")}>
               ← Newest

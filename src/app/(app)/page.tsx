@@ -43,7 +43,13 @@ export default function DashboardPage(props: PageProps<"/">) {
 }
 
 function TabBarSkeleton() {
-  return <Skeleton className="mb-10 h-12 w-full" />;
+  return (
+    <div className="mb-10 flex gap-2" aria-hidden="true">
+      {[8, 10, 9, 11].map((w, i) => (
+        <Skeleton key={i} className="h-11 rounded-full" style={{ width: `${w}rem` }} />
+      ))}
+    </div>
+  );
 }
 
 async function Greeting() {
@@ -52,11 +58,12 @@ async function Greeting() {
   const now = requestNow();
   const date = new Intl.DateTimeFormat("en-GB", { timeZone: timezone, weekday: "long", day: "numeric", month: "long" }).format(now);
   return (
-    <header className="mb-8">
+    <header className="mb-8 animate-rise">
       <p className="label mb-3 text-muted">{date}</p>
       <h1 className="text-5xl font-extrabold leading-[0.95] tracking-[-0.045em] sm:text-7xl">
         {greeting(now, timezone)}, {user.name.split(" ")[0]}.
       </h1>
+      <p className="mt-3 text-lg text-muted">Here&apos;s how your businesses are doing.</p>
     </header>
   );
 }
@@ -105,7 +112,7 @@ async function BusinessTab({ slug }: { slug: string }) {
   const b = result.data;
   if (!b) {
     return (
-      <div className="border-t-2 border-ink pt-6">
+      <div className="animate-rise rounded-2xl bg-wash p-6">
         <p className="text-2xl font-extrabold">There is no business called “{slug}”.</p>
         <Link href="/" className="mt-3 inline-block font-semibold underline decoration-1 underline-offset-4">
           Back to all businesses
@@ -127,7 +134,7 @@ async function BusinessTab({ slug }: { slug: string }) {
 
   return (
     <article aria-label={b.name}>
-      <header className="mb-8 flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
+      <header className="mb-8 flex animate-rise flex-wrap items-end justify-between gap-x-6 gap-y-4">
         <div className="min-w-0">
           <h2 className="flex flex-wrap items-center gap-3 text-4xl font-extrabold leading-[0.95] tracking-[-0.04em] sm:text-6xl">
             {b.name}

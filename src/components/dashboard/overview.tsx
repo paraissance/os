@@ -20,6 +20,7 @@ import {
 import { getSettings } from "@/lib/settings";
 import { ActivityList } from "@/components/activity-list";
 import { Delta, OsAnalyticsSetup } from "@/components/business-bits";
+import { CountUp } from "@/components/motion/count-up";
 import { Alert, EmptyState, Skeleton, StatusDot, buttonClass } from "@/components/ui/primitives";
 import { AttentionList, Bars, Facts, Sentence, Title } from "./ui";
 
@@ -48,10 +49,10 @@ export function Overview() {
           <Suspense fallback={<Skeleton className="h-48" />}>
             <SystemStatus />
           </Suspense>
-          <section>
+          <section className="reveal">
             <Title
               note={
-                <Link href="/activity" className="font-sans text-sm font-semibold text-ink underline decoration-1 underline-offset-4">
+                <Link href="/activity" className="text-sm font-semibold text-ink underline decoration-1 underline-offset-4">
                   View all
                 </Link>
               }
@@ -59,7 +60,9 @@ export function Overview() {
               Recent activity
             </Title>
             <Suspense fallback={<Skeleton className="h-48" />}>
-              <RecentActivity />
+              <div className="overflow-hidden rounded-2xl bg-wash">
+                <RecentActivity />
+              </div>
             </Suspense>
           </section>
         </div>
@@ -141,7 +144,7 @@ async function Attention() {
 
   return (
     <section>
-      <Title note={items.length ? String(items.length) : undefined}>Needs attention</Title>
+      <Title count={items.length}>Needs attention</Title>
       <AttentionList items={items} empty="Nothing needs you right now." />
     </section>
   );
@@ -155,22 +158,32 @@ async function BusinessCards() {
   const paused = result.data.businesses.filter((b) => !b.active);
 
   return (
-    <section>
-      <Title note="last 30 days">Your businesses</Title>
+    <section className="reveal">
+      <Title note="last 30 days · tap one to open it">Your businesses</Title>
       {active.length ? (
-        <ul className="grid grid-cols-[minmax(0,1fr)] gap-3 sm:grid-cols-2">
+        <ul className="stagger grid grid-cols-[minmax(0,1fr)] gap-3 sm:grid-cols-2">
           {active.map((b) => {
             const worst = worstRenewal(b.renewals);
             return (
               <li key={b.slug}>
-                <Link href={businessHref(b.slug)} className="group flex h-full flex-col border border-ink p-5 hover:bg-wash">
+                <Link
+                  href={businessHref(b.slug)}
+                  className="group flex h-full flex-col rounded-2xl bg-wash p-5 transition-[background-color,transform] duration-200 hover:-translate-y-1 hover:bg-mist"
+                >
                   <span className="flex items-start justify-between gap-3 text-xl font-extrabold leading-tight tracking-[-0.02em]">
-                    <span className="min-w-0 group-hover:underline group-hover:underline-offset-4">{b.name}</span>
-                    <span aria-hidden="true">→</span>
+                    <span className="min-w-0">{b.name}</span>
+                    <span
+                      aria-hidden="true"
+                      className="flex size-8 shrink-0 items-center justify-center rounded-full bg-paper text-base transition-[background-color,color,transform] duration-200 group-hover:translate-x-0.5 group-hover:bg-ink group-hover:text-paper"
+                    >
+                      →
+                    </span>
                   </span>
                   <span className="mt-1 truncate text-sm text-muted">{b.tagline ?? (b.siteUrl ? shortUrl(b.siteUrl) : " ")}</span>
-                  <span className="mt-5 flex items-baseline gap-2">
-                    <span className="text-4xl font-extrabold tabular-nums tracking-[-0.03em]">{b.last30.leads}</span>
+                  <span className="mt-5 flex items-center gap-2">
+                    <span className="text-4xl font-extrabold tabular-nums tracking-[-0.03em]">
+                      <CountUp value={b.last30.leads} />
+                    </span>
                     <span className="font-semibold">leads</span>
                     <Delta current={b.last30.leads} previous={b.previous30.leads} />
                   </span>
@@ -195,7 +208,7 @@ async function BusinessCards() {
       )}
       {paused.length ? (
         <p className="mt-4 text-sm text-muted">
-          Paused:{" "}
+          Paused for now:{" "}
           {paused.map((b, i) => (
             <span key={b.slug}>
               {i ? ", " : ""}
@@ -214,9 +227,12 @@ function AskJodyCore() {
   return (
     <section>
       <Title>Ask Jody Core</Title>
-      <Form action="/command" className="flex flex-col sm:flex-row">
+      <Form
+        action="/command"
+        className="flex items-center gap-2 rounded-full border border-line bg-paper p-1.5 pl-5 transition-colors focus-within:border-ink hover:border-ink"
+      >
         <label htmlFor="quick-command" className="sr-only">
-          Command
+          Ask Jody Core
         </label>
         <input
           id="quick-command"
@@ -224,10 +240,10 @@ function AskJodyCore() {
           required
           maxLength={2000}
           placeholder="Which business needs me most this week?"
-          className="min-h-12 min-w-0 flex-1 border border-ink px-4 text-[15px] placeholder:text-subtle focus:outline-2 focus:-outline-offset-2 focus:outline-ink sm:border-r-0"
+          className="min-h-10 min-w-0 flex-1 bg-transparent text-[15px] placeholder:text-subtle focus:outline-none"
         />
-        <button type="submit" className={buttonClass("primary", "min-h-12 px-7")}>
-          Ask →
+        <button type="submit" className={buttonClass("primary", "min-h-10 shrink-0 px-5")}>
+          Ask <span aria-hidden="true">→</span>
         </button>
       </Form>
     </section>
@@ -240,11 +256,13 @@ async function Spending() {
   if (!result?.ok || !result.data.spending) return null;
   const rows = spendByBusiness(result.data);
   return (
-    <section>
+    <section className="reveal">
       <Title id="spending" note="per month">
         Software and tools
       </Title>
-      <Bars rows={rows.map((r) => ({ label: r.name, value: r.monthly, display: formatMoney(r.monthly, "USD") }))} empty="No subscriptions recorded." />
+      <div className="rounded-2xl bg-wash p-5">
+        <Bars rows={rows.map((r) => ({ label: r.name, value: r.monthly, display: formatMoney(r.monthly, "USD") }))} empty="No subscriptions recorded." />
+      </div>
       <p className="mt-4 text-sm text-muted">
         {formatMoney(result.data.spending.monthlyTotal, "USD")} a month in total, {formatMoney(result.data.spending.yearlyTotal, "USD", 0)} a year. Open a
         business&apos;s Money tab for every subscription.
@@ -267,7 +285,7 @@ async function SystemStatus() {
   );
 
   return (
-    <section>
+    <section className="reveal">
       <Title>JodyOS</Title>
       <Facts
         rows={[

@@ -31,18 +31,18 @@ async function IntegrationTable() {
   await requireUser();
   const integrations = listIntegrations();
   return (
-    <div className="border-t-2 border-ink">
-      <div className="label hidden grid-cols-[12rem_9rem_1fr_5rem] gap-6 border-b border-ink py-2.5 md:grid">
+    <div>
+      <div className="label hidden grid-cols-[12rem_9rem_1fr_5rem] gap-6 px-5 pb-2 text-muted md:grid">
         <span>Service</span>
         <span>Status</span>
         <span>Setup</span>
         <span className="text-right">Phase</span>
       </div>
-      <ul>
+      <ul className="stagger space-y-2">
         {integrations.map((i) => {
           const s = STATUS[i.status];
           return (
-            <li key={i.id} className="grid gap-x-6 gap-y-2 border-b border-hair py-5 md:grid-cols-[12rem_9rem_1fr_5rem]">
+            <li key={i.id} className="grid gap-x-6 gap-y-2 rounded-2xl bg-wash p-5 md:grid-cols-[12rem_9rem_1fr_5rem]">
               <div>
                 <p className="text-lg font-bold leading-tight tracking-[-0.02em]">{i.name}</p>
                 <p className="mt-0.5 text-sm text-muted">{i.category}</p>
@@ -59,14 +59,14 @@ async function IntegrationTable() {
                 {i.envVars.length ? (
                   <p className="mt-2 flex flex-wrap gap-1.5">
                     {i.envVars.map((v) => (
-                      <code key={v} className="bg-wash px-1.5 py-0.5 font-mono text-xs">
+                      <code key={v} className="rounded-md bg-paper px-1.5 py-0.5 font-mono text-xs">
                         {v}
                       </code>
                     ))}
                   </p>
                 ) : null}
               </div>
-              <p className="font-mono text-sm md:pt-1 md:text-right">{i.phase === 1 ? "Now" : `P${i.phase}`}</p>
+              <p className="text-sm font-semibold md:pt-1 md:text-right">{i.phase === 1 ? "Now" : `Phase ${i.phase}`}</p>
             </li>
           );
         })}

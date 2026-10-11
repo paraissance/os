@@ -10,7 +10,7 @@ export default function LoginPage() {
     <>
       <h1 className="text-5xl font-extrabold leading-[0.95] tracking-[-0.045em]">Sign in.</h1>
       <p className="mt-3 text-muted">Your operating system is waiting.</p>
-      <div className="mt-8 border-t-2 border-ink pt-8">
+      <div className="mt-8 rounded-3xl bg-wash p-6 sm:p-8">
         <Suspense fallback={<Skeleton className="h-56" />}>
           <LoginForm />
         </Suspense>

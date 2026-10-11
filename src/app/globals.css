@@ -1,23 +1,70 @@
 @import "tailwindcss";
 
 /*
- * JodyOS: black on white. Type, rules and space do the work; no gradients,
- * glows, shadows or rounded cards. Greys are for secondary text only and stay
- * at or above 4.5:1 on white. Status is carried by words and shape, not colour.
+ * JodyOS: black on white, soft and calm. Space and type do the work: soft
+ * grey surfaces and rounded corners instead of boxes, hairlines only where
+ * rows need separating. Greys used for text stay at or above 4.5:1 on white.
+ * Status is carried by words and shape, not colour. Motion is short and
+ * quiet, and switches off for anyone who asks for reduced motion.
  */
 @theme {
   --color-ink: #000000;
   --color-paper: #ffffff;
   --color-muted: #545454; /* 7.6:1 on white */
   --color-subtle: #6b6b6b; /* 5.3:1 on white */
-  --color-hair: #dedede; /* row dividers (decorative) */
-  --color-wash: #f3f3f3; /* hover, code, skeletons */
+  --color-line: #8c8c8c; /* 3.3:1: input and control outlines */
+  --color-hair: #e6e6e6; /* row dividers (decorative) */
+  --color-wash: #f4f4f4; /* cards and surfaces */
+  --color-mist: #eaeaea; /* hover on a surface, skeletons */
+
+  --ease-out-soft: cubic-bezier(0.2, 0.7, 0.2, 1);
 
   --animate-blink: blink 1s steps(1) infinite;
+  --animate-rise: rise 0.5s var(--ease-out-soft) both;
+  --animate-fade: fade 0.4s ease-out both;
+  --animate-grow-x: grow-x 0.9s var(--ease-out-soft) both;
+  --animate-grow-y: grow-y 0.8s var(--ease-out-soft) both;
+  --animate-shimmer: shimmer 1.4s ease-in-out infinite;
+  --animate-slide-in: slide-in 0.3s var(--ease-out-soft) both;
 
   @keyframes blink {
     50% {
       opacity: 0;
+    }
+  }
+  @keyframes rise {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  @keyframes fade {
+    from {
+      opacity: 0;
+    }
+  }
+  @keyframes grow-x {
+    from {
+      transform: scaleX(0);
+    }
+  }
+  @keyframes grow-y {
+    from {
+      transform: scaleY(0);
+    }
+  }
+  @keyframes shimmer {
+    50% {
+      opacity: 0.45;
+    }
+  }
+  @keyframes slide-in {
+    from {
+      transform: translateX(-100%);
     }
   }
 }
@@ -34,6 +81,40 @@
   font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
+}
+
+/* Children rise in one after another. */
+@utility stagger {
+  & > * {
+    animation: rise 0.5s var(--ease-out-soft) both;
+  }
+  & > :nth-child(2) { animation-delay: 50ms; }
+  & > :nth-child(3) { animation-delay: 100ms; }
+  & > :nth-child(4) { animation-delay: 150ms; }
+  & > :nth-child(5) { animation-delay: 200ms; }
+  & > :nth-child(6) { animation-delay: 250ms; }
+  & > :nth-child(7) { animation-delay: 300ms; }
+  & > :nth-child(8) { animation-delay: 350ms; }
+  & > :nth-child(n + 9) { animation-delay: 400ms; }
+}
+
+/* Rises into place as it scrolls into view, where the browser supports scroll-driven animation. */
+@utility reveal {
+  @media (prefers-reduced-motion: no-preference) {
+    @supports (animation-timeline: view()) {
+      animation: rise linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 40%;
+    }
+  }
+}
+
+/* Hide a scrollbar on a row that scrolls sideways (the content still scrolls). */
+@utility no-scrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 @layer base {
@@ -69,6 +150,7 @@
     *::before,
     *::after {
       animation-duration: 0.01ms !important;
+      animation-delay: 0ms !important;
       animation-iteration-count: 1 !important;
       transition-duration: 0.01ms !important;
     }

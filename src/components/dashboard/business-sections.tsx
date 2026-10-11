@@ -20,12 +20,14 @@ import {
   renewalPhrase,
 } from "@/lib/business-view";
 import { BarChart, Delta } from "@/components/business-bits";
+import { CountUp } from "@/components/motion/count-up";
 import { Badge, cx, type Tone } from "@/components/ui/primitives";
-import { AttentionList, Bars, Facts, LinkRow, Linked, Muted, Out, Sentence, Tile, Tiles, Title as BaseTitle } from "./ui";
+import { AttentionList, Bars, Facts, LinkRow, Linked, Muted, Out, Rows, Sentence, Tile, Tiles, Title as BaseTitle } from "./ui";
 
 /*
  * The seven sections of a business tab. Each one leads with a plain
- * sentence, then the detail. Everything comes from one OS Analytics call.
+ * sentence, then the detail on soft cards. Everything comes from one
+ * OS Analytics call.
  */
 
 type Props = { b: BusinessDetail; timeZone: string; today: Date };
@@ -33,6 +35,11 @@ type Props = { b: BusinessDetail; timeZone: string; today: Date };
 /** Section titles sit under the business name (h2). */
 function Title(props: Omit<Parameters<typeof BaseTitle>[0], "level">) {
   return <BaseTitle {...props} level={3} />;
+}
+
+/** A block of a section that rises in as it scrolls into view. */
+function Block({ children, className }: { children: ReactNode; className?: string }) {
+  return <section className={cx("reveal", className)}>{children}</section>;
 }
 
 function plural(n: number, word: string, many = `${word}s`) {
@@ -94,19 +101,19 @@ export function SummarySection({ b, timeZone, today }: Props) {
       </Sentence>
 
       <Tiles className="sm:grid-cols-3">
-        <Tile label="Leads" value={k.leads}>
+        <Tile label="Leads" value={<CountUp value={k.leads} />}>
           <Delta current={k.leads} previous={p.leads} />
         </Tile>
-        <Tile label="Won" value={k.won}>
+        <Tile label="Won" value={<CountUp value={k.won} />}>
           {k.conversionRate}% of leads
         </Tile>
-        <Tile label="Appointments" value={k.appointments}>
+        <Tile label="Appointments" value={<CountUp value={k.appointments} />}>
           <Delta current={k.appointments} previous={p.appointments} />
         </Tile>
-        <Tile label="Marketing" value={money(k.spend, 0)}>
+        <Tile label="Spent on marketing" value={<CountUp value={k.spend} currency={b.currency} digits={0} />}>
           <Delta current={k.spend} previous={p.spend} />
         </Tile>
-        <Tile label="Per lead" value={k.leads ? money(k.costPerLead) : "—"}>
+        <Tile label="Cost per lead" value={k.leads ? <CountUp value={k.costPerLead} currency={b.currency} /> : "—"}>
           {p.leads ? `was ${money(p.costPerLead)}` : null}
         </Tile>
         {showLoans ? (
@@ -114,7 +121,7 @@ export function SummarySection({ b, timeZone, today }: Props) {
             <Delta current={k.loanVolume} previous={p.loanVolume} />
           </Tile>
         ) : (
-          <Tile label="Clients" value={b.clientsAllTime}>
+          <Tile label="Clients" value={<CountUp value={b.clientsAllTime} />}>
             all time
           </Tile>
         )}
@@ -122,22 +129,22 @@ export function SummarySection({ b, timeZone, today }: Props) {
 
       <Grid wide>
         <div className="space-y-12">
-          <section>
-            <Title note={attention.length ? String(attention.length) : undefined}>Needs attention</Title>
+          <Block>
+            <Title count={attention.length}>Needs attention</Title>
             <AttentionList items={attention} empty="Nothing needs you here." />
-          </section>
-          <section>
-            <Title note={`${formatDay(b.window.from)} to ${formatDay(b.window.to)}`}>Leads per day</Title>
+          </Block>
+          <Block>
+            <Title note="last 30 days">Leads per day</Title>
             <BarChart points={b.trend} />
-          </section>
+          </Block>
         </div>
         <div className="space-y-12">
-          <section>
-            <Title note={b.tasks.open.length ? `${b.tasks.pending + b.tasks.inProgress} open` : undefined}>To do</Title>
+          <Block>
+            <Title count={b.tasks.pending + b.tasks.inProgress}>To do</Title>
             {b.tasks.open.length ? (
-              <ul>
+              <Rows>
                 {b.tasks.open.map((t, i) => (
-                  <li key={`${t.title}-${i}`} className="border-b border-hair py-3">
+                  <li key={`${t.title}-${i}`}>
                     <p className="flex flex-wrap items-center gap-2 font-bold">
                       {t.title}
                       {t.overdue ? <Badge tone="bad">Overdue</Badge> : null}
@@ -149,26 +156,26 @@ export function SummarySection({ b, timeZone, today }: Props) {
                     </p>
                   </li>
                 ))}
-              </ul>
+              </Rows>
             ) : (
               <Muted>No open tasks.</Muted>
             )}
-          </section>
-          <section>
+          </Block>
+          <Block>
             <Title>Coming up</Title>
             {comingUp.length ? (
-              <ul>
+              <Rows>
                 {comingUp.map((c, i) => (
-                  <li key={i} className="border-b border-hair py-3">
+                  <li key={i}>
                     <p className="font-bold">{c.what}</p>
                     <p className="text-sm text-muted">{formatWhen(c.when, timeZone) ?? "No time set"}</p>
                   </li>
                 ))}
-              </ul>
+              </Rows>
             ) : (
               <Muted>No appointments or posts scheduled.</Muted>
             )}
-          </section>
+          </Block>
         </div>
       </Grid>
     </div>
@@ -192,13 +199,13 @@ export function AboutSection({ b }: Props) {
       {!a ? <Muted>OS Analytics has no business profile for {b.name} yet.</Muted> : null}
 
       <Grid wide>
-        <section>
+        <Block>
           <Title>What it is</Title>
           {sections.length ? (
-            <div className="space-y-8">
+            <div className="stagger space-y-3">
               {sections.map((s, i) => (
-                <div key={i}>
-                  {s.heading ? <h4 className="label mb-2">{s.heading}</h4> : null}
+                <div key={i} className="rounded-2xl bg-wash p-5">
+                  {s.heading ? <h4 className="label mb-2 text-muted">{s.heading}</h4> : null}
                   <ul className="space-y-2 text-[17px] leading-relaxed">
                     {s.lines.map((line, j) => (
                       <li key={j}>
@@ -212,38 +219,47 @@ export function AboutSection({ b }: Props) {
           ) : (
             <Muted>No description saved.</Muted>
           )}
-        </section>
+        </Block>
 
         <div className="space-y-12">
-          <section>
-            <Title note={a?.questions.length ? String(a.questions.length) : undefined}>Common questions</Title>
+          <Block>
+            <Title count={a?.questions.length}>Common questions</Title>
             {a?.questions.length ? (
-              <ul>
+              <div className="stagger space-y-2">
                 {a.questions.map((q) => (
-                  <li key={q.question} className="border-b border-hair py-4">
-                    <p className="text-lg font-bold leading-snug">{q.question}</p>
-                    {q.answer ? <p className="mt-1.5 whitespace-pre-line text-[15px] leading-relaxed text-muted">{q.answer}</p> : null}
+                  <details key={q.question} className="group/q rounded-2xl bg-wash px-5 py-4 open:bg-mist">
+                    <summary className="flex cursor-pointer list-none items-start justify-between gap-4 text-lg font-bold leading-snug [&::-webkit-details-marker]:hidden">
+                      {q.question}
+                      <span aria-hidden="true" className="mt-0.5 shrink-0 text-xl transition-transform duration-300 group-open/q:rotate-45">
+                        +
+                      </span>
+                    </summary>
+                    {q.answer ? <p className="mt-2 animate-fade whitespace-pre-line text-[15px] leading-relaxed">{q.answer}</p> : null}
                     {q.link ? (
                       <p className="mt-2 text-sm font-semibold">
                         <Out href={q.link.url}>{q.link.label}</Out>
                       </p>
                     ) : null}
-                  </li>
+                  </details>
                 ))}
-              </ul>
+              </div>
             ) : (
               <Muted>None saved.</Muted>
             )}
-          </section>
+          </Block>
 
           {a?.greeting || a?.note ? (
-            <section>
+            <Block>
               <Title>Website chat assistant</Title>
-              {a.greeting ? (
-                <blockquote className="whitespace-pre-line border-l-4 border-ink pl-4 text-[15px] leading-relaxed">{a.greeting}</blockquote>
-              ) : null}
-              {a.note ? <p className="mt-3 text-sm text-muted">Small print: {a.note}</p> : null}
-            </section>
+              <div className="rounded-2xl bg-wash p-5">
+                {a.greeting ? (
+                  <p className="w-fit max-w-full whitespace-pre-line rounded-2xl rounded-tl-sm bg-ink px-4 py-3 text-[15px] leading-relaxed text-paper">
+                    {a.greeting}
+                  </p>
+                ) : null}
+                {a.note ? <p className="mt-3 text-sm text-muted">Small print: {a.note}</p> : null}
+              </div>
+            </Block>
           ) : null}
         </div>
       </Grid>
@@ -265,9 +281,9 @@ export function LinksSection({ b }: Props) {
       </Sentence>
       <Grid>
         {groups.map((g) => (
-          <section key={g.id}>
-            <Title note={String(g.links.length)}>{g.title}</Title>
-            <ul>
+          <Block key={g.id}>
+            <Title count={g.links.length}>{g.title}</Title>
+            <ul className="stagger">
               {g.links.map((l) => (
                 <LinkRow key={l.url} label={l.label} url={l.url} note={l.note} />
               ))}
@@ -275,7 +291,7 @@ export function LinksSection({ b }: Props) {
             {g.id === "logins" ? (
               <p className="mt-3 text-sm text-muted">Only the login pages are saved. Passwords stay in your password manager.</p>
             ) : null}
-          </section>
+          </Block>
         ))}
       </Grid>
     </div>
@@ -304,23 +320,31 @@ export function MoneySection({ b, today }: Props) {
         Marketing in the last 30 days: <b>{money(b.last30.spend, 0)}</b>.
       </Sentence>
 
+      {sp ? (
+        <Tiles className="sm:grid-cols-3">
+          <Tile label="Each month" value={<CountUp value={sp.monthlyTotal} currency="USD" />} />
+          <Tile label="Each year" value={<CountUp value={sp.yearlyTotal} currency="USD" digits={0} />} />
+          <Tile label="Subscriptions" value={<CountUp value={sp.activeSubscriptions} />} />
+        </Tiles>
+      ) : null}
+
       <Grid>
-        <section>
+        <Block>
           <Title note="per month">By category</Title>
           <Bars
             rows={(sp?.byCategory ?? []).map((c) => ({ label: c.label, value: c.monthly, display: formatMoney(c.monthly, "USD") }))}
             empty="No subscriptions."
           />
-        </section>
-        <section>
+        </Block>
+        <Block>
           <Title note="next 30 days">Renewing soon</Title>
           {sp?.upcomingRenewals.length ? (
-            <ul>
+            <Rows>
               {sp.upcomingRenewals.map((r) => {
                 const d = daysUntil(r.nextRenewal, today);
                 const when = d === null ? "" : d < 0 ? " · overdue" : d === 0 ? " · today" : ` · in ${dayCount(d)}`;
                 return (
-                  <li key={`${r.name}-${r.nextRenewal}`} className="flex items-baseline justify-between gap-4 border-b border-hair py-3">
+                  <li key={`${r.name}-${r.nextRenewal}`} className="flex items-baseline justify-between gap-4">
                     <span className="min-w-0">
                       <span className="block font-bold">{r.name}</span>
                       <span className="block text-sm text-muted">
@@ -328,25 +352,25 @@ export function MoneySection({ b, today }: Props) {
                         {when}
                       </span>
                     </span>
-                    <span className="shrink-0 font-mono text-sm tabular-nums">
+                    <span className="shrink-0 text-sm font-semibold tabular-nums">
                       {formatMoney(r.amount, r.currency)} {cycleLabel(r.cycle)}
                     </span>
                   </li>
                 );
               })}
-            </ul>
+            </Rows>
           ) : (
             <Muted>Nothing renews in the next 30 days.</Muted>
           )}
-        </section>
+        </Block>
       </Grid>
 
-      <section>
-        <Title note={String(subs.length)}>Every subscription</Title>
+      <Block>
+        <Title count={subs.length}>Every subscription</Title>
         {subs.length ? (
-          <ul>
+          <Rows>
             {subs.map((s, i) => (
-              <li key={`${s.name}-${s.businessId}-${i}`} className="grid gap-x-6 gap-y-2 border-b border-hair py-4 sm:grid-cols-[minmax(0,1fr)_auto]">
+              <li key={`${s.name}-${s.businessId}-${i}`} className="grid gap-x-6 gap-y-2 sm:grid-cols-[minmax(0,1fr)_auto]">
                 <div className="min-w-0">
                   <p className="flex flex-wrap items-center gap-2 text-lg font-bold leading-snug">
                     {s.name}
@@ -357,13 +381,11 @@ export function MoneySection({ b, today }: Props) {
                   </p>
                   {s.notes ? <p className="mt-1 whitespace-pre-line text-sm">{s.notes}</p> : null}
                 </div>
-                <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1 sm:flex-col sm:items-end">
-                  <p className="font-mono text-base font-semibold tabular-nums">
-                    {formatMoney(s.amount, s.currency)} <span className="font-sans text-sm font-normal text-muted">{cycleLabel(s.cycle)}</span>
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 sm:flex-col sm:items-end">
+                  <p className="text-base font-bold tabular-nums">
+                    {formatMoney(s.amount, s.currency)} <span className="text-sm font-normal text-muted">{cycleLabel(s.cycle)}</span>
                   </p>
-                  {s.cycle !== "monthly" && s.monthly > 0 ? (
-                    <p className="font-mono text-xs text-muted">{formatMoney(s.monthly, s.currency)} a month</p>
-                  ) : null}
+                  {s.cycle !== "monthly" && s.monthly > 0 ? <p className="text-xs text-muted">{formatMoney(s.monthly, s.currency)} a month</p> : null}
                   {s.loginUrl ? (
                     <Out href={s.loginUrl} className="text-sm font-semibold">
                       Log in
@@ -372,37 +394,37 @@ export function MoneySection({ b, today }: Props) {
                 </div>
               </li>
             ))}
-          </ul>
+          </Rows>
         ) : (
           <Muted>No subscriptions recorded for {b.name}.</Muted>
         )}
-      </section>
+      </Block>
 
-      <section>
+      <Block>
         <Title note="spent of budget">Campaigns</Title>
         {campaigns.length ? (
-          <ul>
+          <Rows>
             {campaigns.map((c, i) => (
-              <li key={`${c.name}-${i}`} className="border-b border-hair py-3">
+              <li key={`${c.name}-${i}`}>
                 <div className="flex items-baseline justify-between gap-4">
                   <span className="min-w-0 font-bold">{c.name}</span>
-                  <span className="shrink-0 font-mono text-sm tabular-nums">
+                  <span className="shrink-0 text-sm font-semibold tabular-nums">
                     {money(c.spend, 0)}
                     {c.budget > 0 ? ` of ${money(c.budget, 0)}` : ""}
                   </span>
                 </div>
                 {c.budget > 0 ? (
-                  <div className="mt-1.5 h-2 bg-wash" aria-hidden="true">
-                    <div className="h-full bg-ink" style={{ width: `${Math.min(100, (c.spend / c.budget) * 100)}%` }} />
+                  <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-paper" aria-hidden="true">
+                    <div className="h-full origin-left animate-grow-x rounded-full bg-ink" style={{ width: `${Math.min(100, (c.spend / c.budget) * 100)}%` }} />
                   </div>
                 ) : null}
               </li>
             ))}
-          </ul>
+          </Rows>
         ) : (
           <Muted>No campaign spending recorded.</Muted>
         )}
-      </section>
+      </Block>
     </div>
   );
 }
@@ -427,10 +449,10 @@ export function WebsiteSection({ b }: Props) {
           const r = byItem.get(key);
           const expired = r?.status === "expired";
           return (
-            <div key={key} className={cx("min-w-0 border-b border-r border-ink p-4 sm:p-5", expired && "bg-ink text-paper")}>
-              <p className="label">{label}</p>
-              <p className="mt-3 text-2xl font-extrabold leading-tight tracking-[-0.02em] sm:text-3xl">{r ? renewalPhrase(r) : "No date saved"}</p>
-              <p className={cx("mt-1 text-sm", expired ? "text-paper" : "text-muted")}>
+            <div key={key} className={cx("min-w-0 rounded-2xl p-5", expired ? "bg-ink text-paper" : "bg-wash")}>
+              <p className={cx("text-sm font-semibold", expired ? "text-paper/80" : "text-muted")}>{label}</p>
+              <p className="mt-2 text-2xl font-extrabold leading-tight tracking-[-0.02em] sm:text-3xl">{r ? renewalPhrase(r) : "No date saved"}</p>
+              <p className={cx("mt-1 text-sm", expired ? "text-paper/80" : "text-muted")}>
                 {[r ? formatDay(r.date) : null, provider].filter(Boolean).join(" · ") || "—"}
               </p>
             </div>
@@ -440,7 +462,7 @@ export function WebsiteSection({ b }: Props) {
 
       {site ? (
         <Grid>
-          <section>
+          <Block>
             <Title>Domain</Title>
             <Facts
               rows={[
@@ -453,8 +475,8 @@ export function WebsiteSection({ b }: Props) {
                 ["Nameservers", site.nameservers.length ? <span className="font-mono text-sm">{site.nameservers.join(", ")}</span> : null],
               ]}
             />
-          </section>
-          <section>
+          </Block>
+          <Block>
             <Title>Hosting</Title>
             <Facts
               rows={[
@@ -466,8 +488,8 @@ export function WebsiteSection({ b }: Props) {
                 ["Server IP", site.serverIp ? <span className="font-mono text-sm">{site.serverIp}</span> : null],
               ]}
             />
-          </section>
-          <section>
+          </Block>
+          <Block>
             <Title>Security and software</Title>
             <Facts
               rows={[
@@ -480,11 +502,11 @@ export function WebsiteSection({ b }: Props) {
                 ["Reminders", `${site.warnDays} days before anything expires`],
               ]}
             />
-          </section>
-          <section>
+          </Block>
+          <Block>
             <Title>Notes</Title>
             {site.notes ? (
-              <p className="whitespace-pre-line text-[17px] leading-relaxed">
+              <p className="whitespace-pre-line rounded-2xl bg-wash p-5 text-[17px] leading-relaxed">
                 <Linked text={site.notes} />
               </p>
             ) : (
@@ -492,15 +514,15 @@ export function WebsiteSection({ b }: Props) {
             )}
             {site.importantLinks.length ? (
               <>
-                <h4 className="label mb-1 mt-8">Saved links</h4>
-                <ul>
+                <h4 className="mb-1 mt-8 text-lg font-bold">Saved links</h4>
+                <ul className="stagger">
                   {site.importantLinks.map((l) => (
                     <LinkRow key={l.url} label={l.label} url={l.url} />
                   ))}
                 </ul>
               </>
             ) : null}
-          </section>
+          </Block>
         </Grid>
       ) : (
         <Muted>No website details saved for {b.name}. Add them on the Sites page in OS Analytics.</Muted>
@@ -519,71 +541,71 @@ export function MarketingSection({ b, timeZone }: Props) {
 
   return (
     <div className="space-y-12">
-      <section>
+      <Block>
         <Title note="last 30 days">From first look to lead</Title>
-        <ol className={cx("grid grid-cols-2 border-l border-t border-ink", steps.length === 5 ? "sm:grid-cols-5" : "sm:grid-cols-4")}>
+        <ol className={cx("stagger grid grid-cols-2 gap-3", steps.length === 5 ? "sm:grid-cols-5" : "sm:grid-cols-4")}>
           {steps.map((s, i) => (
-            <li key={s.key} className="min-w-0 border-b border-r border-ink p-4 sm:p-5">
-              <p className="label">
+            <li key={s.key} className="relative min-w-0 rounded-2xl bg-wash p-5">
+              <p className="text-sm font-semibold text-muted">
                 {i + 1}. {s.label}
               </p>
-              <p className="mt-3 text-3xl font-extrabold tracking-[-0.03em] sm:text-4xl">{n(s.value)}</p>
+              <p className="mt-2 text-3xl font-extrabold tabular-nums tracking-[-0.03em] sm:text-4xl">
+                <CountUp value={s.value} />
+              </p>
               <p className="mt-1 text-sm text-muted">{i === 0 ? "views" : s.rate === null ? "—" : `${s.rate}% of ${s.of}`}</p>
             </li>
           ))}
         </ol>
-      </section>
+      </Block>
 
       <Grid>
-        <section>
+        <Block>
           <Title note="last 4 weeks">Social media</Title>
           {b.social.length ? (
-            <ul>
+            <Rows>
               {b.social.map((s) => (
-                <li key={s.platform} className="border-b border-hair py-3">
+                <li key={s.platform}>
                   <div className="flex items-baseline justify-between gap-4">
                     <span className="text-lg font-bold">{s.label}</span>
-                    <span className="font-mono text-sm tabular-nums">{n(s.followers)} followers</span>
+                    <span className="text-sm font-semibold tabular-nums">{n(s.followers)} followers</span>
                   </div>
                   <p className="text-sm text-muted">
                     {n(s.posts)} posts · {n(s.impressions)} seen · {n(s.clicks)} clicks · {n(s.engagements)} engagements · {n(s.leads)} leads
                   </p>
                 </li>
               ))}
-            </ul>
+            </Rows>
           ) : (
             <Muted>No social stats entered for the last 4 weeks.</Muted>
           )}
-        </section>
+        </Block>
 
-        <section>
+        <Block>
           <Title note="most leads">Best posts</Title>
           {b.topPosts.length ? (
-            <ul>
+            <Rows>
               {b.topPosts.map((post, i) => (
-                <li key={`${post.url ?? post.title}-${i}`} className="border-b border-hair py-3">
+                <li key={`${post.url ?? post.title}-${i}`}>
                   <p className="font-bold leading-snug">
                     {post.url ? <Out href={post.url}>{post.title ?? "Untitled post"}</Out> : (post.title ?? "Untitled post")}
                   </p>
-                  <p className="text-sm text-muted">
-                    {[humanize(post.platform), formatWhen(post.publishedAt, timeZone)].filter(Boolean).join(" · ")}
-                  </p>
-                  <p className="font-mono text-xs tabular-nums">
-                    {n(post.leads)} leads · {n(post.clicks)} clicks · {n(post.reach)} reach · {n(post.engagements)} engagements
+                  <p className="text-sm text-muted">{[humanize(post.platform), formatWhen(post.publishedAt, timeZone)].filter(Boolean).join(" · ")}</p>
+                  <p className="mt-1 text-sm font-semibold tabular-nums">
+                    {n(post.leads)} leads · {n(post.clicks)} clicks · {n(post.reach)} reach
                   </p>
                 </li>
               ))}
-            </ul>
+            </Rows>
           ) : (
             <Muted>No posts recorded yet.</Muted>
           )}
-        </section>
+        </Block>
 
-        <section>
+        <Block>
           <Title>Social Publisher</Title>
           {pub ? (
-            <div className="space-y-6">
-              <p className="text-lg leading-snug [&_b]:font-extrabold">
+            <div className="space-y-4">
+              <p className="rounded-2xl bg-wash p-5 text-lg leading-snug [&_b]:font-extrabold">
                 <b>{plural(pub.queued, "post")}</b> waiting
                 {pub.next ? (
                   <>
@@ -599,9 +621,9 @@ export function MarketingSection({ b, timeZone }: Props) {
                 .
               </p>
               {pub.upcoming.length ? (
-                <ul>
+                <Rows>
                   {pub.upcoming.map((u, i) => (
-                    <li key={i} className="flex items-baseline justify-between gap-4 border-b border-hair py-2.5">
+                    <li key={i} className="flex items-baseline justify-between gap-4">
                       <span className="min-w-0">
                         <span className="block font-semibold">{u.title ?? "Untitled post"}</span>
                         <span className="block text-sm text-muted">{u.label}</span>
@@ -609,12 +631,12 @@ export function MarketingSection({ b, timeZone }: Props) {
                       <span className="shrink-0 text-sm tabular-nums">{formatWhen(u.scheduledAt, timeZone)}</span>
                     </li>
                   ))}
-                </ul>
+                </Rows>
               ) : null}
-              <p className="text-[15px]">
-                <span className="text-muted">Posts to: </span>
-                {pub.accounts.length ? pub.accounts.map((a) => a.label).join(", ") : "no accounts connected"}
-              </p>
+              <div className="flex flex-wrap items-center gap-2 text-[15px]">
+                <span className="text-muted">Posts to:</span>
+                {pub.accounts.length ? pub.accounts.map((a) => <Badge key={`${a.platform}-${a.label}`}>{a.label}</Badge>) : "no accounts connected"}
+              </div>
               <p className="text-[15px]">
                 <span className="text-muted">Library: </span>
                 {plural(pub.library.total, "post")} ready ({n(pub.library.images)} with images, {n(pub.library.videos)} videos),{" "}
@@ -624,14 +646,14 @@ export function MarketingSection({ b, timeZone }: Props) {
           ) : (
             <Muted>Social Publisher isn&apos;t set up for this business.</Muted>
           )}
-        </section>
+        </Block>
 
-        <section>
+        <Block>
           <Title note="active first">Campaigns</Title>
           {b.campaigns.length ? (
-            <ul>
+            <Rows>
               {b.campaigns.map((c, i) => (
-                <li key={`${c.name}-${i}`} className="border-b border-hair py-3">
+                <li key={`${c.name}-${i}`}>
                   <p className="flex flex-wrap items-center gap-2 font-bold">
                     {c.name}
                     <Badge tone={c.status === "active" ? "accent" : "neutral"}>{c.status}</Badge>
@@ -641,16 +663,16 @@ export function MarketingSection({ b, timeZone }: Props) {
                       .filter(Boolean)
                       .join(" · ")}
                   </p>
-                  <p className="font-mono text-xs tabular-nums">
+                  <p className="mt-1 text-sm font-semibold tabular-nums">
                     {money(c.spend, 0)} spent · {n(c.clicks)} clicks · {n(c.leads)} leads · {n(c.conversions)} won
                   </p>
                 </li>
               ))}
-            </ul>
+            </Rows>
           ) : (
             <Muted>No campaigns.</Muted>
           )}
-        </section>
+        </Block>
       </Grid>
     </div>
   );
@@ -701,26 +723,28 @@ export function LeadsSection({ b, timeZone }: Props) {
         .
       </Sentence>
 
-      <section>
+      <Block>
         <Title note="all time">Pipeline</Title>
         {total ? (
           <>
-            <div className="flex h-4 w-full border border-ink" aria-hidden="true">
+            <div className="flex h-4 w-full gap-1" aria-hidden="true">
               {STAGES.map(([k], i) =>
                 pl[k] ? (
                   <span
                     key={k}
-                    style={{ width: `${(pl[k] / total) * 100}%` }}
-                    className={cx("border-r border-ink last:border-r-0", i % 2 === 0 ? "bg-ink" : "bg-paper")}
+                    style={{ width: `${(pl[k] / total) * 100}%`, animationDelay: `${i * 70}ms` }}
+                    className={cx("origin-left animate-grow-x rounded-full", i % 2 === 0 ? "bg-ink" : "bg-line")}
                   />
                 ) : null,
               )}
             </div>
-            <dl className="mt-4 grid grid-cols-2 gap-x-8 sm:grid-cols-4 lg:grid-cols-7">
+            <dl className="stagger mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
               {STAGES.map(([k, label]) => (
-                <div key={k} className="border-b border-hair py-2">
-                  <dt className="label text-muted">{label}</dt>
-                  <dd className="text-2xl font-extrabold tabular-nums">{pl[k]}</dd>
+                <div key={k} className="rounded-2xl bg-wash px-4 py-3">
+                  <dt className="text-sm font-semibold text-muted">{label}</dt>
+                  <dd className="text-2xl font-extrabold tabular-nums">
+                    <CountUp value={pl[k]} />
+                  </dd>
                 </div>
               ))}
             </dl>
@@ -728,52 +752,60 @@ export function LeadsSection({ b, timeZone }: Props) {
         ) : (
           <Muted>No leads recorded yet.</Muted>
         )}
-      </section>
+      </Block>
 
       <Grid wide>
-        <section>
+        <Block>
           <Title note="newest first">Newest leads</Title>
           {b.recentLeads.length ? (
-            <ul>
+            <Rows>
               {b.recentLeads.map((l, i) => (
-                <li key={i} className="flex items-start justify-between gap-4 border-b border-hair py-3">
-                  <div className="min-w-0">
-                    <p className="flex flex-wrap items-center gap-2 font-bold">
-                      {l.name ?? <span className="font-normal text-muted">No name</span>}
-                      <Badge tone={statusTone(l.status)}>{leadStatusLabel(l.status)}</Badge>
-                    </p>
-                    <p className="text-sm text-muted">
-                      {[l.source && humanize(l.source), l.platform && humanize(l.platform), l.place].filter(Boolean).join(" · ") || "Source unknown"}
-                    </p>
+                <li key={i} className="flex items-start justify-between gap-4">
+                  <div className="flex min-w-0 items-start gap-3">
+                    <span
+                      aria-hidden="true"
+                      className="flex size-9 shrink-0 items-center justify-center rounded-full bg-paper text-sm font-bold"
+                    >
+                      {(l.name ?? "?").trim().charAt(0).toUpperCase() || "?"}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="flex flex-wrap items-center gap-2 font-bold">
+                        {l.name ?? <span className="font-normal text-muted">No name</span>}
+                        <Badge tone={statusTone(l.status)}>{leadStatusLabel(l.status)}</Badge>
+                      </p>
+                      <p className="text-sm text-muted">
+                        {[l.source && humanize(l.source), l.platform && humanize(l.platform), l.place].filter(Boolean).join(" · ") || "Source unknown"}
+                      </p>
+                    </div>
                   </div>
                   <p className="shrink-0 text-right text-sm tabular-nums text-muted">{formatWhen(l.createdAt, timeZone) ?? "—"}</p>
                 </li>
               ))}
-            </ul>
+            </Rows>
           ) : (
             <Muted>No leads yet.</Muted>
           )}
-        </section>
+        </Block>
 
         <div className="space-y-12">
-          <section>
-            <Title note="booked">Appointments</Title>
+          <Block>
+            <Title count={b.appointments.length}>Appointments</Title>
             {b.appointments.length ? (
-              <ul>
+              <Rows>
                 {b.appointments.map((a, i) => (
-                  <li key={i} className="border-b border-hair py-3">
+                  <li key={i}>
                     <p className="font-bold">{formatWhen(a.at, timeZone) ?? "No time set"}</p>
                     <p className="text-sm text-muted">{a.name ?? "Lead name not saved"}</p>
                   </li>
                 ))}
-              </ul>
+              </Rows>
             ) : (
               <Muted>No appointments booked.</Muted>
             )}
-          </section>
-          <section>
+          </Block>
+          <Block>
             <Title>Tasks</Title>
-            <dl className="grid grid-cols-3 gap-x-6">
+            <dl className="stagger grid grid-cols-3 gap-3">
               {(
                 [
                   ["Open", b.tasks.pending + b.tasks.inProgress],
@@ -781,28 +813,28 @@ export function LeadsSection({ b, timeZone }: Props) {
                   ["Done", b.tasks.completed],
                 ] as const
               ).map(([label, value]) => (
-                <div key={label} className="border-b border-hair py-2">
-                  <dt className="label text-muted">{label}</dt>
+                <div key={label} className={cx("rounded-2xl px-4 py-3", label === "Overdue" && value > 0 ? "bg-ink text-paper" : "bg-wash")}>
+                  <dt className={cx("text-sm font-semibold", label === "Overdue" && value > 0 ? "text-paper/80" : "text-muted")}>{label}</dt>
                   <dd className="text-2xl font-extrabold tabular-nums">{value}</dd>
                 </div>
               ))}
             </dl>
             {b.tasks.failed ? <p className="mt-3 text-sm font-semibold">{plural(b.tasks.failed, "automation")} failed.</p> : null}
-          </section>
+          </Block>
         </div>
       </Grid>
 
-      <section>
+      <Block>
         <Title note="last 30 days">Where leads come from</Title>
-        <div className="grid grid-cols-[minmax(0,1fr)] gap-10 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-[minmax(0,1fr)] gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {where.map(([title, rows, tidy]) => (
-            <div key={title}>
-              <h4 className="label mb-3">{title}</h4>
+            <div key={title} className="rounded-2xl bg-wash p-5">
+              <h4 className="mb-3 font-bold">{title}</h4>
               <Bars rows={rows.map((r) => ({ label: tidy ? humanize(r.label) : r.label, value: r.value }))} empty="No data yet." />
             </div>
           ))}
         </div>
-      </section>
+      </Block>
     </div>
   );
 }

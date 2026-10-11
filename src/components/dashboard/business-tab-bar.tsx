@@ -19,7 +19,8 @@ function Pending() {
   );
 }
 
-const tab = "relative inline-flex min-h-12 shrink-0 items-center gap-2.5 whitespace-nowrap border border-ink px-4 text-[15px] font-bold leading-tight";
+const tab =
+  "relative inline-flex min-h-11 shrink-0 items-center gap-2 overflow-hidden whitespace-nowrap rounded-full px-4 text-[15px] font-bold leading-tight transition-[background-color,color,transform] duration-200 active:scale-[0.96]";
 
 /**
  * One tab per business plus "All businesses". Switching business keeps the
@@ -37,22 +38,19 @@ export function BusinessTabBar({ items, current }: { items: TabItem[]; current: 
     const box = list.current;
     const el = activeTab.current;
     if (!box || !el || box.scrollWidth <= box.clientWidth) return;
-    box.scrollLeft = el.offsetLeft - (box.clientWidth - el.offsetWidth) / 2;
+    box.scrollTo({ left: el.offsetLeft - (box.clientWidth - el.offsetWidth) / 2, behavior: "smooth" });
   }, [current]);
 
   return (
     <nav aria-label="Businesses" className="mb-10">
-      <ul
-        ref={list}
-        className="relative flex gap-2 overflow-x-auto [scrollbar-width:none] sm:flex-wrap sm:overflow-visible [&::-webkit-scrollbar]:hidden"
-      >
+      <ul ref={list} className="no-scrollbar stagger relative flex gap-2 overflow-x-auto sm:flex-wrap sm:overflow-visible">
         <li className="shrink-0">
           <Link
             href="/"
             scroll={false}
             ref={current === null ? activeTab : undefined}
             aria-current={current === null ? "page" : undefined}
-            className={cx(tab, current === null ? "bg-ink text-paper" : "bg-paper hover:bg-wash")}
+            className={cx(tab, current === null ? "bg-ink text-paper" : "bg-wash hover:bg-mist")}
           >
             All businesses
             <Pending />
@@ -67,10 +65,18 @@ export function BusinessTabBar({ items, current }: { items: TabItem[]; current: 
                 scroll={false}
                 ref={on ? activeTab : undefined}
                 aria-current={on ? "page" : undefined}
-                className={cx(tab, on ? "bg-ink text-paper" : "bg-paper hover:bg-wash", !b.active && !on && "border-dashed text-muted")}
+                className={cx(
+                  tab,
+                  on ? "bg-ink text-paper" : b.active ? "bg-wash hover:bg-mist" : "border border-dashed border-line text-muted hover:bg-wash",
+                )}
               >
                 {b.name}
-                <span className={cx("font-mono text-xs font-medium tabular-nums", on ? "text-paper" : "text-muted")}>
+                <span
+                  className={cx(
+                    "rounded-full px-1.5 text-xs font-semibold tabular-nums",
+                    on ? "bg-paper/20 text-paper" : b.active ? "bg-paper text-muted" : "text-muted",
+                  )}
+                >
                   {b.active ? b.leads : "paused"}
                   {b.active ? <span className="sr-only"> leads in the last 30 days</span> : null}
                 </span>

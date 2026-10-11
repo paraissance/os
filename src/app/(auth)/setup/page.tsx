@@ -16,7 +16,7 @@ export default function SetupPage() {
     <>
       <h1 className="text-5xl font-extrabold leading-[0.95] tracking-[-0.045em]">Set up.</h1>
       <p className="mt-3 text-muted">Create the owner account. This only works once.</p>
-      <div className="mt-8 border-t-2 border-ink pt-8">
+      <div className="mt-8 rounded-3xl bg-wash p-6 sm:p-8">
         <Suspense fallback={<Skeleton className="h-80" />}>
           <SetupGate />
         </Suspense>

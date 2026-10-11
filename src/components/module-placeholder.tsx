@@ -29,11 +29,11 @@ export function ModulePlaceholder({ id }: { id: string }) {
           </Link>
         </div>
         <div>
-          <h2 className="label border-b border-ink pb-2">Planned</h2>
-          <ol>
+          <h2 className="mb-3 text-xl font-extrabold tracking-[-0.02em]">Planned</h2>
+          <ol className="stagger space-y-2">
             {mod.planned.map((item, i) => (
-              <li key={item} className="flex gap-4 border-b border-hair py-3 text-[15px] leading-relaxed">
-                <span className="w-6 shrink-0 font-mono text-xs leading-6 text-subtle">{String(i + 1).padStart(2, "0")}</span>
+              <li key={item} className="flex gap-4 rounded-2xl bg-wash px-5 py-4 text-[15px] leading-relaxed">
+                <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-ink text-xs font-bold text-paper">{i + 1}</span>
                 {item}
               </li>
             ))}
