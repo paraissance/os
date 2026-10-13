@@ -2,23 +2,20 @@ import Form from "next/form";
 import Link from "next/link";
 import { Suspense } from "react";
 import { requireUser } from "@/lib/auth/current-user";
-import { activitySummary, listActivity } from "@/lib/activity";
-import { modelInfo } from "@/lib/ai/models";
 import { businessHref } from "@/lib/business-sections";
 import { bookAttention, costByBusiness, monthlyTotal, mostUrgent, renewalWords, siteRenewals, sortAttention, type Attention } from "@/lib/business-model";
 import { shortUrl } from "@/lib/business-view";
 import { loadBook } from "@/lib/businesses";
-import { DAY_MS, requestNow } from "@/lib/clock";
+import { requestNow } from "@/lib/clock";
 import { envStatus } from "@/lib/env";
 import { formatMoney, listBusinesses, liveListAttention, percentChange, settle } from "@/lib/os-analytics";
-import { getSettings } from "@/lib/settings";
-import { ActivityList } from "@/components/activity-list";
+import { ImportForm } from "@/components/businesses/editors";
 import { Delta } from "@/components/business-bits";
 import { CountUp } from "@/components/motion/count-up";
 import { EmptyState, Skeleton, StatusDot, buttonClass } from "@/components/ui/primitives";
-import { AttentionList, Bars, Facts, Sentence, Title } from "./ui";
+import { AttentionList, Bars, Sentence, Title } from "./ui";
 
-/** The "All businesses" tab: the whole picture in one screen. */
+/** The "All businesses" tab: the businesses, what needs doing, and nothing else. */
 export function Overview() {
   return (
     <div className="space-y-12">
@@ -40,31 +37,11 @@ export function Overview() {
           <Suspense fallback={<Skeleton className="h-60" />}>
             <Spending />
           </Suspense>
-          <Suspense fallback={<Skeleton className="h-48" />}>
-            <SystemStatus />
-          </Suspense>
-          <section className="reveal">
-            <Title
-              note={
-                <Link href="/activity" className="text-sm font-semibold text-ink underline decoration-1 underline-offset-4">
-                  View all
-                </Link>
-              }
-            >
-              Recent activity
-            </Title>
-            <Suspense fallback={<Skeleton className="h-48" />}>
-              <div className="overflow-hidden rounded-2xl bg-wash">
-                <RecentActivity />
-              </div>
-            </Suspense>
-          </section>
         </div>
       </div>
     </div>
   );
 }
-
 /** Live numbers from OS Analytics, when it is connected; null otherwise. */
 async function liveList() {
   return envStatus().osAnalytics ? settle(listBusinesses) : null;
@@ -76,20 +53,20 @@ async function Headline() {
 
   if (!book.businesses.length) {
     return (
-      <div className="animate-rise rounded-3xl bg-wash p-8 sm:p-10">
-        <p className="text-3xl font-extrabold tracking-[-0.02em]">Let&apos;s add your businesses.</p>
-        <p className="mt-2 max-w-xl text-lg text-muted">
-          Each one gets its own tab here, with its websites, links, what it&apos;s about and what you pay for. Add them one by one, or import a file with all of
-          them.
-        </p>
-        <div className="mt-6 flex flex-wrap gap-2">
-          <Link href="/businesses/new" className={buttonClass("primary")}>
-            + Add a business
-          </Link>
-          <Link href="/businesses/import" className={buttonClass("light")}>
-            Import a file
+      <div className="grid animate-rise gap-8 rounded-3xl bg-wash p-8 sm:p-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-center">
+        <div>
+          <p className="text-3xl font-extrabold tracking-[-0.02em]">Let&apos;s add your businesses.</p>
+          <p className="mt-2 max-w-xl text-lg text-muted">
+            Each one gets its own tab here, with its websites, links, what it&apos;s about and what you pay for.
+          </p>
+          <p className="mt-4 max-w-xl text-[15px] text-muted">
+            Have a businesses file? Drop it in the box to add them all at once. Or add them one by one.
+          </p>
+          <Link href="/businesses/new" className={buttonClass("light", "mt-6")}>
+            + Add one business
           </Link>
         </div>
+        <ImportForm submitOnPick />
       </div>
     );
   }
@@ -122,37 +99,19 @@ async function Headline() {
   );
 }
 
-/** Real conditions only: each item comes from the owner's records, configuration, OS Analytics or the activity log. */
+/** Business things only: renewals and payments coming due, and (when connected) big lead drops. Hidden when there's nothing. */
 async function Attention() {
   await requireUser();
-  const env = envStatus();
   const now = requestNow();
-  const [book, failures, live] = await Promise.all([loadBook(), listActivity({ status: "failure", limit: 3 }), liveList()]);
-  const recentFailures = failures.filter((f) => now.getTime() - f.createdAt.getTime() < DAY_MS);
+  const [book, live] = await Promise.all([loadBook(), liveList()]);
 
   const items: Attention[] = [...bookAttention(book, now)];
   if (live?.ok) {
     // Only businesses that also exist in JodyOS: their tab is where the link goes.
     const names = new Map(book.businesses.map((b) => [b.slug, b.name]));
     items.push(...liveListAttention({ ...live.data, businesses: live.data.businesses.filter((b) => names.has(b.slug)) }, names));
-  } else if (live) {
-    items.push({ level: "warning", title: "Live numbers unavailable", detail: live.error.message, href: "/integrations", sort: 800 });
   }
-  if (!env.anthropic) {
-    items.push({ level: "warning", title: "Jody Core is offline", detail: "Add ANTHROPIC_API_KEY to switch on AI Command.", href: "/integrations", sort: 900 });
-  }
-  if (env.setupToken) {
-    items.push({ level: "warning", title: "Remove SETUP_TOKEN", detail: "Setup is finished. Delete the variable so the setup page stays locked.", href: "/settings", sort: 901 });
-  }
-  if (recentFailures.length) {
-    items.push({
-      level: "warning",
-      title: `${recentFailures.length} failure${recentFailures.length === 1 ? "" : "s"} in the last 24 hours`,
-      detail: `Latest: ${recentFailures[0].action}`,
-      href: "/activity?status=failure",
-      sort: 902,
-    });
-  }
+  if (!items.length) return null;
 
   const sorted = sortAttention(items);
   return (
@@ -162,7 +121,6 @@ async function Attention() {
     </section>
   );
 }
-
 async function BusinessCards() {
   await requireUser();
   const [book, live, today] = await Promise.all([loadBook(), liveList(), Promise.resolve(requestNow())]);
@@ -298,39 +256,4 @@ async function Spending() {
       </p>
     </section>
   );
-}
-
-async function SystemStatus() {
-  await requireUser();
-  const env = envStatus();
-  const now = requestNow();
-  const [settings, last24h, live] = await Promise.all([getSettings(), activitySummary(new Date(now.getTime() - DAY_MS)), liveList()]);
-  const events = last24h.success + last24h.failure + last24h.pending + last24h.info;
-  const state = (ok: boolean, text: string) => (
-    <span className="flex items-center gap-2">
-      <StatusDot tone={ok ? "ok" : "neutral"} />
-      {text}
-    </span>
-  );
-
-  return (
-    <section className="reveal">
-      <Title>JodyOS</Title>
-      <Facts
-        rows={[
-          ["Jody Core", state(env.anthropic, env.anthropic ? `Online · ${modelInfo(settings.aiModel)?.label ?? settings.aiModel}` : "Offline")],
-          ["Live numbers", state(!!live?.ok, !live ? "Optional, not connected" : live.ok ? "OS Analytics connected" : "OS Analytics error")],
-          ["Database", state(true, env.database === "postgres" ? "PostgreSQL" : "Local PGlite")],
-          ["Last 24 hours", `${events} event${events === 1 ? "" : "s"}${last24h.failure ? `, ${last24h.failure} failed` : ""}`],
-        ]}
-      />
-    </section>
-  );
-}
-
-async function RecentActivity() {
-  await requireUser();
-  const [rows, settings] = await Promise.all([listActivity({ limit: 6 }), getSettings()]);
-  if (!rows.length) return <EmptyState title="No activity yet." />;
-  return <ActivityList rows={rows} now={requestNow()} timeZone={settings.timezone} />;
 }

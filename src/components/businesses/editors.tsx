@@ -1,6 +1,6 @@
 "use client";
 
-import { startTransition, useActionState, useState, type FormEvent, type ReactNode } from "react";
+import { startTransition, useActionState, useRef, useState, type FormEvent, type ReactNode } from "react";
 import {
   deleteBusinessAction,
   deletePartAction,
@@ -593,32 +593,63 @@ export function SubscriptionsEditor({ businessId, subscriptions }: { businessId:
 
 /* ─── Import ──────────────────────────────────────────────────────── */
 
-export function ImportForm() {
+/**
+ * Pick or drop a JodyOS businesses file. With `submitOnPick` the import
+ * starts as soon as a file is chosen (used on the empty dashboard).
+ */
+export function ImportForm({ submitOnPick = false }: { submitOnPick?: boolean }) {
   const { state, pending, onSubmit } = useForm(importBusinessesAction);
   const [fileName, setFileName] = useState<string | null>(null);
+  const [dragging, setDragging] = useState(false);
+  const form = useRef<HTMLFormElement>(null);
+  const input = useRef<HTMLInputElement>(null);
+
+  function picked(files: FileList | null) {
+    const file = files?.[0];
+    setFileName(file?.name ?? null);
+    if (file && submitOnPick) form.current?.requestSubmit();
+  }
+
   return (
-    <form onSubmit={onSubmit} className="space-y-4">
+    <form ref={form} onSubmit={onSubmit} className="space-y-4">
       <Status state={state} />
       <label
+        onDragOver={(e) => {
+          e.preventDefault();
+          setDragging(true);
+        }}
+        onDragLeave={() => setDragging(false)}
+        onDrop={(e) => {
+          e.preventDefault();
+          setDragging(false);
+          if (!input.current || !e.dataTransfer.files.length) return;
+          input.current.files = e.dataTransfer.files;
+          picked(e.dataTransfer.files);
+        }}
         className={cx(
-          "flex min-h-32 cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-line bg-paper px-5 py-8 text-center transition-colors hover:border-ink",
-          fileName && "border-ink",
+          "flex min-h-32 cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed bg-paper px-5 py-8 text-center transition-[border-color,background-color,transform] duration-200 hover:border-ink",
+          dragging ? "scale-[1.01] border-ink bg-wash" : fileName ? "border-ink" : "border-line",
         )}
       >
-        <span className="text-lg font-bold">{fileName ?? "Choose a .json file"}</span>
-        <span className="text-sm text-muted">{fileName ? "Ready to import." : "A JodyOS businesses file, up to 900 KB."}</span>
+        <span className="text-lg font-bold">{pending ? "Importing…" : (fileName ?? (dragging ? "Drop it here" : "Choose or drop a .json file"))}</span>
+        <span className="text-sm text-muted">
+          {pending ? "Adding your businesses." : fileName ? (submitOnPick ? "One moment." : "Ready to import.") : "A JodyOS businesses file, up to 900 KB."}
+        </span>
         <input
+          ref={input}
           type="file"
           name="file"
           accept="application/json,.json"
           required
           className="sr-only"
-          onChange={(e) => setFileName(e.target.files?.[0]?.name ?? null)}
+          onChange={(e) => picked(e.target.files)}
         />
       </label>
-      <Button type="submit" disabled={pending || !fileName}>
-        {pending ? "Importing…" : "Import"}
-      </Button>
+      {submitOnPick ? null : (
+        <Button type="submit" disabled={pending || !fileName}>
+          {pending ? "Importing…" : "Import"}
+        </Button>
+      )}
     </form>
   );
 }

@@ -3,74 +3,51 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Suspense, useEffect, useRef, useState, type ReactNode } from "react";
-import { MODULE_GROUPS, MODULES, PHASES, type ModuleDef } from "@/lib/modules";
 import { Wordmark } from "@/components/ui/logo";
 import { cx } from "@/components/ui/primitives";
 
-function isActive(pathname: string, href: string) {
-  return href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`);
-}
-
-const READY = MODULES.filter((m) => m.phase === 1);
-const LATER = MODULES.filter((m) => m.phase > 1);
-
-function NavLink({ m, activePath, onNavigate }: { m: ModuleDef; activePath: string | null; onNavigate?: () => void }) {
-  const active = activePath !== null && isActive(activePath, m.href);
-  return (
-    <li>
-      <Link
-        href={m.href}
-        onClick={onNavigate}
-        aria-current={active ? "page" : undefined}
-        className={cx(
-          "flex min-h-10 items-center justify-between gap-3 rounded-xl px-3 text-[15px] transition-colors duration-200",
-          active ? "bg-ink font-semibold text-paper" : "hover:bg-wash",
-        )}
-      >
-        <span className="truncate">{m.label}</span>
-        {m.phase > 1 ? <span className={cx("text-xs", active ? "text-paper" : "text-subtle")}>{PHASES[m.phase]}</span> : null}
-      </Link>
-    </li>
-  );
-}
-
 /**
- * What works today comes first, by group. Pages still to be built sit under
- * "Coming later" so they don't get in the way; it opens by itself when one
- * of them is the current page.
+ * Four places, nothing more. Everything else (AI Command, Activity,
+ * Integrations and the pages still to come) lives under Others.
  */
+const NAV = [
+  { href: "/", label: "Dashboard" },
+  { href: "/businesses", label: "Businesses" },
+  { href: "/others", label: "Others" },
+  { href: "/settings", label: "Settings" },
+] as const;
+
+function isActive(pathname: string, href: string) {
+  if (href === "/") return pathname === "/";
+  if (href === "/others") {
+    // Any page that isn't one of the other three belongs to Others.
+    return !NAV.some((n) => n.href !== "/others" && (n.href === "/" ? pathname === "/" : pathname === n.href || pathname.startsWith(`${n.href}/`)));
+  }
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
 function NavGroups({ activePath, onNavigate }: { activePath: string | null; onNavigate?: () => void }) {
-  const onLaterPage = activePath !== null && LATER.some((m) => isActive(activePath, m.href));
   return (
-    <>
-      {MODULE_GROUPS.map((group) => {
-        const mods = READY.filter((m) => m.group === group);
-        if (!mods.length) return null;
+    <ul className="space-y-1 px-3">
+      {NAV.map((item) => {
+        const active = activePath !== null && isActive(activePath, item.href);
         return (
-          <div key={group} className="mb-5 px-3">
-            <p className="label mb-1.5 px-3 text-subtle">{group}</p>
-            <ul className="space-y-0.5">
-              {mods.map((m) => (
-                <NavLink key={m.id} m={m} activePath={activePath} onNavigate={onNavigate} />
-              ))}
-            </ul>
-          </div>
+          <li key={item.href}>
+            <Link
+              href={item.href}
+              onClick={onNavigate}
+              aria-current={active ? "page" : undefined}
+              className={cx(
+                "flex min-h-11 items-center rounded-xl px-4 text-base transition-colors duration-200",
+                active ? "bg-ink font-semibold text-paper" : "hover:bg-wash",
+              )}
+            >
+              {item.label}
+            </Link>
+          </li>
         );
       })}
-      <details className="group/later mb-5 px-3" open={onLaterPage || undefined}>
-        <summary className="label flex min-h-9 cursor-pointer list-none items-center justify-between rounded-xl px-3 text-subtle hover:bg-wash [&::-webkit-details-marker]:hidden">
-          Coming later
-          <span aria-hidden="true" className="text-sm transition-transform duration-200 group-open/later:rotate-90">
-            ›
-          </span>
-        </summary>
-        <ul className="mt-1 space-y-0.5">
-          {LATER.map((m) => (
-            <NavLink key={m.id} m={m} activePath={activePath} onNavigate={onNavigate} />
-          ))}
-        </ul>
-      </details>
-    </>
+    </ul>
   );
 }
 

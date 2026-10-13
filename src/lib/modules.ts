@@ -1,7 +1,8 @@
 /**
- * The JodyOS module map: one list drives the sidebar, the dashboard roadmap
- * and the "coming in Phase N" pages, so a module goes live by flipping its
- * `phase` once its real page replaces the placeholder.
+ * The JodyOS module map: one list drives the Others page and the "coming in
+ * Phase N" pages, so a module goes live by flipping its `phase` once its
+ * real page replaces the placeholder. The sidebar itself has four fixed
+ * places (see src/components/shell/app-shell.tsx).
  */
 export type ModuleGroup = "Core" | "Business" | "Operations" | "System";
 
@@ -163,7 +164,6 @@ export const MODULES: ModuleDef[] = [
   },
 ];
 
-export const MODULE_GROUPS: ModuleGroup[] = ["Core", "Business", "Operations", "System"];
 
 export function getModule(id: string): ModuleDef {
   const m = MODULES.find((x) => x.id === id);
