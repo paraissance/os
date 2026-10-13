@@ -3,6 +3,7 @@ import { cache } from "react";
 import { z } from "zod";
 import { env } from "@/lib/env";
 import { businessHref } from "@/lib/business-sections";
+import type { Attention } from "@/lib/business-model";
 import { formatMoney } from "@/lib/money";
 
 /**
@@ -391,19 +392,8 @@ export function percentChange(current: number, previous: number): number | null 
   return Math.round(((current - previous) / previous) * 100);
 }
 
-export type AttentionItem = {
-  level: "critical" | "warning";
-  title: string;
-  detail: string;
-  href: string;
-  sort: number;
-};
-
-export const RENEWAL_LABEL = { domain: "Domain", hosting: "Hosting", ssl: "SSL certificate" } as const;
-
-export function dayCount(n: number) {
-  return `${n} day${n === 1 ? "" : "s"}`;
-}
+/** A needs-attention item; the same shape as the ones JodyOS derives from its own records. */
+export type AttentionItem = Attention;
 
 const DAY = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
 
@@ -414,31 +404,13 @@ export function formatDay(date: string | null): string | null {
   return Number.isNaN(ms) ? date : DAY.format(ms);
 }
 
-/** Whole days from today (UTC) to a YYYY-MM-DD date; null when it isn't a date. */
-export function daysUntil(date: string, today: Date): number | null {
-  const due = Date.parse(`${date}T00:00:00Z`);
-  if (Number.isNaN(due)) return null;
-  const todayMs = Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate());
-  return Math.round((due - todayMs) / 86_400_000);
-}
+/*
+ * Live numbers only add what JodyOS can't know by itself: leads falling,
+ * overdue tasks and posts that failed to publish. Renewals and subscriptions
+ * come from the owner's own records (src/lib/business-model.ts).
+ */
 
-/** `prefix` is "Business name: " on the all-businesses view and "" inside a business. */
-function renewalAttention(b: BusinessSummary, prefix: string): AttentionItem[] {
-  const href = businessHref(b.slug, "website");
-  return b.renewals.flatMap((r): AttentionItem[] => {
-    if (r.status === "expired") {
-      const ago = r.daysLeft === null ? "" : ` ${dayCount(Math.abs(r.daysLeft))} ago`;
-      return [{ level: "critical", title: `${prefix}${RENEWAL_LABEL[r.item]} expired`, detail: `Expired${ago} (${formatDay(r.date)}).`, href, sort: r.daysLeft ?? -999 }];
-    }
-    if (r.status === "soon") {
-      const left = r.daysLeft === null ? "soon" : `in ${dayCount(r.daysLeft)}`;
-      return [{ level: "warning", title: `${prefix}${RENEWAL_LABEL[r.item]} expires ${left}`, detail: `Renew before ${formatDay(r.date)}.`, href, sort: r.daysLeft ?? 0 }];
-    }
-    return [];
-  });
-}
-
-function leadDropAttention(b: BusinessSummary, prefix: string): AttentionItem[] {
+function leadDrop(b: BusinessSummary, prefix: string): AttentionItem[] {
   const change = percentChange(b.last30.leads, b.previous30.leads);
   if (b.previous30.leads < 10 || change === null || change > -50) return [];
   return [
@@ -452,63 +424,20 @@ function leadDropAttention(b: BusinessSummary, prefix: string): AttentionItem[] 
   ];
 }
 
-type UpcomingRenewal = NonNullable<BusinessList["spending"]>["upcomingRenewals"][number];
-
-function subscriptionAttention(rows: UpcomingRenewal[], today: Date, hrefFor: (name: string) => string): AttentionItem[] {
-  return rows.flatMap((r): AttentionItem[] => {
-    const days = daysUntil(r.nextRenewal, today);
-    if (days === null || days > 7) return [];
-    return [
-      {
-        level: days < 0 ? "critical" : "warning",
-        title: days < 0 ? `${r.name} renewal is overdue` : `${r.name} renews ${days === 0 ? "today" : `in ${dayCount(days)}`}`,
-        detail: `${formatMoney(r.amount, r.currency)} ${r.cycle}${r.shared ? ", shared by all businesses" : ""}.`,
-        href: hrefFor(r.name),
-        sort: days,
-      },
-    ];
-  });
+/** Across every active business in OS Analytics: big lead drops. */
+export function liveListAttention(list: BusinessList, names: Map<string, string> = new Map()): AttentionItem[] {
+  return list.businesses.filter((b) => b.active).flatMap((b) => leadDrop(b, `${names.get(b.slug) ?? b.name}: `));
 }
 
-function sortAttention(items: AttentionItem[]) {
-  return items.sort((a, b) => (a.level === b.level ? a.sort - b.sort : a.level === "critical" ? -1 : 1));
-}
-
-/**
- * What needs the owner across all businesses: expired or expiring domains,
- * hosting and SSL; subscription renewals in the next 7 days; and a lead drop
- * of more than half against the previous 30 days.
- */
-export function businessAttention(list: BusinessList, today: Date): AttentionItem[] {
-  const items: AttentionItem[] = [];
-  for (const b of list.businesses) {
-    if (!b.active) continue;
-    items.push(...renewalAttention(b, `${b.name}: `), ...leadDropAttention(b, `${b.name}: `));
-  }
-  // A subscription that belongs to one business links to that business's Money tab.
-  const slugById = new Map(list.businesses.map((b) => [b.id, b.slug]));
-  const owner = new Map((list.spending?.subscriptions ?? []).map((s) => [s.name, slugById.get(s.businessId)]));
-  items.push(
-    ...subscriptionAttention(list.spending?.upcomingRenewals ?? [], today, (name) => {
-      const slug = owner.get(name);
-      return slug ? businessHref(slug, "money") : "/#spending";
-    }),
-  );
-  return sortAttention(items);
-}
-
-/**
- * The same checks for one business, plus overdue tasks and posts that failed
- * to publish. Titles drop the business name: they show inside its tab.
- */
-export function detailAttention(b: BusinessDetail, today: Date): AttentionItem[] {
-  const items = [...renewalAttention(b, ""), ...leadDropAttention(b, "")];
+/** Inside one business: a lead drop, overdue tasks and posts that failed to publish. */
+export function liveAttention(b: BusinessDetail): AttentionItem[] {
+  const items = leadDrop(b, "");
   if (b.tasks.overdue > 0) {
     items.push({
       level: "warning",
       title: `${b.tasks.overdue} overdue task${b.tasks.overdue === 1 ? "" : "s"}`,
       detail: "Past their due date and not done yet.",
-      href: businessHref(b.slug),
+      href: businessHref(b.slug, "leads"),
       sort: 50,
     });
   }
@@ -521,8 +450,7 @@ export function detailAttention(b: BusinessDetail, today: Date): AttentionItem[]
       sort: 60,
     });
   }
-  items.push(...subscriptionAttention(b.spending?.upcomingRenewals ?? [], today, () => businessHref(b.slug, "money")));
-  return sortAttention(items);
+  return items;
 }
 
 export { formatMoney };

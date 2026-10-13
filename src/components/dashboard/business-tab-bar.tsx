@@ -6,7 +6,8 @@ import { useEffect, useRef } from "react";
 import { businessHref, isSection } from "@/lib/business-sections";
 import { cx } from "@/components/ui/primitives";
 
-export type TabItem = { slug: string; name: string; leads: number; active: boolean };
+/** `leads` is the 30-day count from OS Analytics, or null when it isn't connected. */
+export type TabItem = { slug: string; name: string; leads: number | null; active: boolean };
 
 /** A thin bar under the clicked tab while its page loads. */
 function Pending() {
@@ -71,15 +72,17 @@ export function BusinessTabBar({ items, current }: { items: TabItem[]; current: 
                 )}
               >
                 {b.name}
-                <span
-                  className={cx(
-                    "rounded-full px-1.5 text-xs font-semibold tabular-nums",
-                    on ? "bg-paper/20 text-paper" : b.active ? "bg-paper text-muted" : "text-muted",
-                  )}
-                >
-                  {b.active ? b.leads : "paused"}
-                  {b.active ? <span className="sr-only"> leads in the last 30 days</span> : null}
-                </span>
+                {!b.active || b.leads !== null ? (
+                  <span
+                    className={cx(
+                      "rounded-full px-1.5 text-xs font-semibold tabular-nums",
+                      on ? "bg-paper/20 text-paper" : b.active ? "bg-paper text-muted" : "text-muted",
+                    )}
+                  >
+                    {b.active ? b.leads : "paused"}
+                    {b.active ? <span className="sr-only"> leads in the last 30 days</span> : null}
+                  </span>
+                ) : null}
                 <Pending />
               </Link>
             </li>

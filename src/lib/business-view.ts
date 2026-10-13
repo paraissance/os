@@ -1,8 +1,8 @@
-import { formatDay, formatMoney, type BusinessDetail, type BusinessList, type Link, type Renewal } from "@/lib/os-analytics";
+import { formatDay, formatMoney, type BusinessDetail } from "@/lib/os-analytics";
 
 /*
- * Pure helpers that turn OS Analytics data into what the dashboard shows:
- * plain words, grouped links and small derived numbers. No I/O.
+ * Pure helpers for showing business data in plain words: about text,
+ * clickable links, dates and times, labels and the live funnel. No I/O.
  */
 
 /* ─── About ───────────────────────────────────────────────────────── */
@@ -51,11 +51,6 @@ export function linkify(text: string): ({ text: string } | { url: string })[] {
   return out;
 }
 
-/* ─── Links ───────────────────────────────────────────────────────── */
-
-export type LinkRow = Link & { note?: string | null };
-export type LinkGroup = { id: "website" | "logins" | "saved" | "admin"; title: string; links: LinkRow[] };
-
 /** "leads.example.com/pricing" for display: no scheme, "www." or trailing slash; the query stays. */
 export function shortUrl(url: string): string {
   try {
@@ -65,63 +60,6 @@ export function shortUrl(url: string): string {
   } catch {
     return url;
   }
-}
-
-function sameUrl(url: string) {
-  return shortUrl(url).toLowerCase();
-}
-
-function dedupe(rows: LinkRow[]): LinkRow[] {
-  const seen = new Set<string>();
-  return rows.filter((r) => {
-    const key = sameUrl(r.url);
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
-}
-
-const ADMIN_PAGES: [key: string, label: string][] = [
-  ["dashboard", "Dashboard"],
-  ["leads", "Leads"],
-  ["campaigns", "Campaigns"],
-  ["content", "Content"],
-  ["publisher", "Social Publisher"],
-  ["social", "Social stats"],
-  ["sites", "Sites"],
-  ["spending", "Spending"],
-  ["tasks", "Tasks"],
-];
-
-/** Every link the plugin knows for a business, grouped; empty groups are left out. */
-export function businessLinks(b: BusinessDetail): LinkGroup[] {
-  const website: LinkRow[] = [];
-  if (b.siteUrl) website.push({ label: "Website", url: b.siteUrl });
-  if (b.about?.cta) website.push({ ...b.about.cta, note: "Main call to action" });
-  website.push(...(b.about?.links ?? []));
-  for (const q of b.about?.questions ?? []) if (q.link) website.push(q.link);
-
-  const logins: LinkRow[] = [];
-  const site = b.site;
-  if (site?.registrarLoginUrl) {
-    logins.push({ label: `Domain${site.registrar ? ` · ${site.registrar}` : ""}`, url: site.registrarLoginUrl, note: site.registrarAccount });
-  }
-  if (site?.hostingLoginUrl) {
-    logins.push({ label: `Hosting${site.hostingProvider ? ` · ${site.hostingProvider}` : ""}`, url: site.hostingLoginUrl, note: site.hostingAccount });
-  }
-  for (const s of b.spending?.subscriptions ?? []) {
-    if (s.loginUrl) logins.push({ label: s.name, url: s.loginUrl, note: [s.account, s.shared ? "shared" : null].filter(Boolean).join(" · ") || null });
-  }
-
-  const admin: LinkRow[] = ADMIN_PAGES.flatMap(([key, label]) => (b.adminLinks[key] ? [{ label, url: b.adminLinks[key] }] : []));
-
-  const groups: LinkGroup[] = [
-    { id: "website", title: "Website and pages", links: dedupe(website) },
-    { id: "logins", title: "Logins", links: dedupe(logins) },
-    { id: "saved", title: "Saved links", links: dedupe(site?.importantLinks ?? []) },
-    { id: "admin", title: "Open in OS Analytics", links: admin },
-  ];
-  return groups.filter((g) => g.links.length);
 }
 
 /* ─── Words ───────────────────────────────────────────────────────── */
@@ -134,23 +72,6 @@ export function formatWhen(iso: string | null, timeZone: string): string | null 
   const ms = Date.parse(iso);
   if (Number.isNaN(ms)) return null;
   return new Intl.DateTimeFormat("en-GB", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone }).format(ms);
-}
-
-/** "Expired 9 days ago", "Renews in 10 days", "OK until 1 Mar 2027". */
-export function renewalPhrase(r: Pick<Renewal, "status" | "daysLeft" | "date">): string {
-  const n = (d: number) => `${d} day${d === 1 ? "" : "s"}`;
-  if (r.status === "expired") return r.daysLeft === null ? "Expired" : `Expired ${n(Math.abs(r.daysLeft))} ago`;
-  if (r.status === "soon") return r.daysLeft === null ? "Renews soon" : r.daysLeft === 0 ? "Renews today" : `Renews in ${n(r.daysLeft)}`;
-  if (r.status === "ok") return `OK until ${formatDay(r.date)}`;
-  return "No date";
-}
-
-/** The renewal that most needs action: expired first, then the soonest due. Null when all are fine. */
-export function worstRenewal<R extends Pick<Renewal, "status" | "daysLeft">>(renewals: R[]): R | null {
-  const rank = (r: R) => (r.status === "expired" ? 0 : r.status === "soon" ? 1 : 2);
-  const urgent = renewals.filter((r) => rank(r) < 2);
-  urgent.sort((a, b) => rank(a) - rank(b) || (a.daysLeft ?? 0) - (b.daysLeft ?? 0));
-  return urgent[0] ?? null;
 }
 
 const CYCLE: Record<string, string> = { monthly: "a month", yearly: "a year", quarterly: "a quarter", one_time: "one-time" };
@@ -216,19 +137,3 @@ export function funnelSteps(f: BusinessDetail["funnel"]): FunnelStep[] {
   });
 }
 
-/** Monthly software cost per business; shared tools under "Shared". Largest first. */
-export function spendByBusiness(list: BusinessList): { name: string; slug: string | null; monthly: number; count: number }[] {
-  const byId = new Map(list.businesses.map((b) => [b.id, b]));
-  const rows = new Map<string, { name: string; slug: string | null; monthly: number; count: number }>();
-  for (const s of list.spending?.subscriptions ?? []) {
-    const b = s.shared ? undefined : byId.get(s.businessId);
-    const key = b ? b.slug : "";
-    const row = rows.get(key) ?? { name: b ? b.name : "Shared by all businesses", slug: b ? b.slug : null, monthly: 0, count: 0 };
-    row.monthly += s.monthly;
-    row.count += 1;
-    rows.set(key, row);
-  }
-  return [...rows.values()]
-    .map((r) => ({ ...r, monthly: Math.round(r.monthly * 100) / 100 }))
-    .sort((a, b) => b.monthly - a.monthly);
-}

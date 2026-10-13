@@ -11,9 +11,11 @@ import { cx } from "@/components/ui/primitives";
  * reload or a shared link opens the same section. A black bar slides under
  * the open section, and the panel rises in.
  */
-export function SectionTabs({ slug, panels }: { slug: string; panels: Record<SectionId, ReactNode> }) {
+export function SectionTabs({ slug, panels }: { slug: string; panels: Partial<Record<SectionId, ReactNode>> }) {
+  // Only sections with a panel get a tab (Marketing and Leads need live numbers).
+  const sections = SECTIONS.filter((sec) => panels[sec.id] !== undefined);
   const s = useSearchParams().get("s");
-  const fromUrl: SectionId = isSection(s) ? s : "summary";
+  const fromUrl: SectionId = isSection(s) && panels[s] !== undefined ? s : "summary";
   const [active, setActive] = useState<SectionId>(fromUrl);
   // A link elsewhere on the page can change the section through the URL: follow it.
   const [lastUrl, setLastUrl] = useState<SectionId>(fromUrl);
@@ -63,12 +65,12 @@ export function SectionTabs({ slug, panels }: { slug: string; panels: Record<Sec
   }
 
   function onKeyDown(e: KeyboardEvent, i: number) {
-    const last = SECTIONS.length - 1;
+    const last = sections.length - 1;
     const next =
       e.key === "ArrowRight" ? (i === last ? 0 : i + 1) : e.key === "ArrowLeft" ? (i === 0 ? last : i - 1) : e.key === "Home" ? 0 : e.key === "End" ? last : -1;
     if (next < 0) return;
     e.preventDefault();
-    select(SECTIONS[next].id, true);
+    select(sections[next].id, true);
   }
 
   return (
@@ -79,7 +81,7 @@ export function SectionTabs({ slug, panels }: { slug: string; panels: Record<Sec
         aria-label="Sections"
         className="no-scrollbar relative mb-10 flex overflow-x-auto overflow-y-hidden border-b border-hair"
       >
-        {SECTIONS.map((sec, i) => {
+        {sections.map((sec, i) => {
           const on = sec.id === active;
           return (
             <a
@@ -115,7 +117,7 @@ export function SectionTabs({ slug, panels }: { slug: string; panels: Record<Sec
           />
         ) : null}
       </div>
-      {SECTIONS.map((sec) => (
+      {sections.map((sec) => (
         <div
           key={sec.id}
           role="tabpanel"

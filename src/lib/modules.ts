@@ -53,7 +53,7 @@ export const MODULES: ModuleDef[] = [
     href: "/businesses",
     group: "Business",
     phase: 1,
-    summary: "Every business, live from OS Analytics: leads, spend, pipeline, sites and renewals.",
+    summary: "Every business: details, websites and renewals, links, common questions and subscriptions. Optional live numbers from OS Analytics.",
     planned: [],
   },
   {

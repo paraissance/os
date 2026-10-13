@@ -39,7 +39,7 @@ export function listIntegrations(): Integration[] {
       category: "Analytics",
       phase: 1,
       description:
-        "Every business from the WordPress plugin: profile, links, leads, spend, pipeline, website and logins, social, campaigns, tasks and subscriptions. Read-only.",
+        "Optional. Adds live numbers from the WordPress plugin to each business: leads, pipeline, marketing spend, social, campaigns and tasks. Read-only. Business details work without it.",
       status: env.osAnalytics ? "connected" : "not_configured",
       envVars: ["OS_ANALYTICS_URL", "OS_ANALYTICS_KEY"],
       setup:

@@ -1,14 +1,24 @@
+import Link from "next/link";
 import type { ReactNode } from "react";
 import {
-  dayCount,
-  daysUntil,
-  detailAttention,
-  formatMoney,
-  percentChange,
-  type BusinessDetail,
-} from "@/lib/os-analytics";
+  dayLabel,
+  linkGroups,
+  mostUrgent,
+  recordAttention,
+  renewalLabel,
+  renewalWords,
+  siteRenewals,
+  sortAttention,
+  spending,
+  toolsFor,
+  upcomingDates,
+  type BusinessRecord,
+  type BusinessSite,
+  type Subscription,
+} from "@/lib/business-model";
+import { CYCLE_LABELS } from "@/lib/business-input";
+import { formatMoney, liveAttention, percentChange, type BusinessDetail } from "@/lib/os-analytics";
 import {
-  businessLinks,
   compactMoney,
   cycleLabel,
   formatDay,
@@ -17,20 +27,29 @@ import {
   humanize,
   knowledgeSections,
   leadStatusLabel,
-  renewalPhrase,
 } from "@/lib/business-view";
 import { BarChart, Delta } from "@/components/business-bits";
 import { CountUp } from "@/components/motion/count-up";
-import { Badge, cx, type Tone } from "@/components/ui/primitives";
+import { Badge, buttonClass, cx, type Tone } from "@/components/ui/primitives";
 import { AttentionList, Bars, Facts, LinkRow, Linked, Muted, Out, Rows, Sentence, Tile, Tiles, Title as BaseTitle } from "./ui";
 
 /*
- * The seven sections of a business tab. Each one leads with a plain
- * sentence, then the detail on soft cards. Everything comes from one
- * OS Analytics call.
+ * The sections of a business tab. Each one leads with a plain sentence,
+ * then the detail on soft cards. Details come from the owner's own records
+ * in JodyOS; when OS Analytics is connected, live numbers (leads,
+ * marketing) are added on top.
  */
 
-type Props = { b: BusinessDetail; timeZone: string; today: Date };
+/** Everything one business tab shows. */
+export type BusinessPage = {
+  record: BusinessRecord;
+  shared: Subscription[];
+  live: BusinessDetail | null;
+  timeZone: string;
+  today: Date;
+};
+
+type LiveProps = { b: BusinessDetail; timeZone: string };
 
 /** Section titles sit under the business name (h2). */
 function Title(props: Omit<Parameters<typeof BaseTitle>[0], "level">) {
@@ -61,21 +80,158 @@ function Grid({ children, wide = false }: { children: ReactNode; wide?: boolean 
   );
 }
 
+/** "Edit websites" and the like: straight to that part of the edit page. */
+function EditLink({ slug, part, children }: { slug: string; part: string; children: ReactNode }) {
+  return (
+    <Link href={`/businesses/${slug}/edit#${part}`} className={buttonClass("secondary", "min-h-9 px-4")}>
+      {children}
+    </Link>
+  );
+}
+
+/** An empty part: what's missing, and the button that adds it. */
+function Empty({ slug, part, text, action }: { slug: string; part: string; text: string; action: string }) {
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-wash px-5 py-4">
+      <p className="text-muted">{text}</p>
+      <Link href={`/businesses/${slug}/edit#${part}`} className={buttonClass("primary", "min-h-9 px-4")}>
+        {action}
+      </Link>
+    </div>
+  );
+}
+
 /* ─── Summary ─────────────────────────────────────────────────────── */
 
-export function SummarySection({ b, timeZone, today }: Props) {
+export function SummarySection({ record, shared, live, timeZone, today }: BusinessPage) {
+  const tools = spending(toolsFor(record, shared), today);
+  const renewals = record.sites.flatMap((s) => siteRenewals(s, today));
+  const worst = mostUrgent(renewals);
+  const attention = sortAttention([...recordAttention(record, shared, today), ...(live ? liveAttention(live) : [])]);
+  const due = upcomingDates(record, shared, today).slice(0, 6);
+  const next = due.find((d) => d.daysLeft >= 0);
+  const linkCount = linkGroups(record, shared).reduce((n, g) => n + g.links.length, 0);
+
+  return (
+    <div className="space-y-12">
+      {live ? <LiveStory b={live} /> : null}
+
+      <Sentence>
+        <b>{plural(record.sites.length, "website")}</b> and <b>{plural(linkCount, "saved link")}</b>
+        {tools.count ? (
+          <>
+            , plus <b>{plural(tools.count, "paid tool")}</b>
+            {tools.monthly > 0 ? (
+              <>
+                {" "}
+                costing <b>{formatMoney(tools.monthly, "USD")} a month</b>
+              </>
+            ) : null}
+          </>
+        ) : null}
+        .{" "}
+        {worst ? (
+          <>
+            {worst.label}
+            {record.sites.length > 1 ? ` (${worst.domain})` : ""}: <b>{renewalWords(worst).toLowerCase()}</b>.
+          </>
+        ) : renewals.length ? (
+          "Every renewal is up to date."
+        ) : record.sites.length ? (
+          "Add the renewal dates to get reminders before anything expires."
+        ) : null}
+      </Sentence>
+
+      <Tiles className="sm:grid-cols-4">
+        <Tile label="Websites" value={<CountUp value={record.sites.length} />}>
+          {record.sites.map((s) => s.domain).join(", ") || "none yet"}
+        </Tile>
+        <Tile label="Tools a month" value={<CountUp value={tools.monthly} currency="USD" />}>
+          {plural(tools.count, "subscription")}
+        </Tile>
+        <Tile label="Saved links" value={<CountUp value={linkCount} />}>
+          pages, logins and profiles
+        </Tile>
+        <Tile label="Next due" value={next ? (next.daysLeft === 0 ? "Today" : plural(next.daysLeft, "day")) : "—"}>
+          {next ? next.what : "nothing in the next 90 days"}
+        </Tile>
+      </Tiles>
+
+      <Grid wide>
+        <div className="space-y-12">
+          <Block>
+            <Title count={attention.length}>Needs attention</Title>
+            <AttentionList items={attention} empty="Nothing needs you here." />
+          </Block>
+          {live ? (
+            <Block>
+              <Title note="last 30 days">Leads per day</Title>
+              <BarChart points={live.trend} />
+            </Block>
+          ) : null}
+        </div>
+        <div className="space-y-12">
+          <Block>
+            <Title note="next 90 days">Coming up</Title>
+            {due.length ? (
+              <Rows>
+                {due.map((d, i) => (
+                  <li key={i}>
+                    <Link href={d.href} className="group flex items-baseline justify-between gap-4">
+                      <span className="min-w-0 font-bold group-hover:underline group-hover:underline-offset-4">{d.what}</span>
+                      <span className={cx("shrink-0 text-sm tabular-nums", d.daysLeft < 0 ? "font-bold" : "text-muted")}>
+                        {d.daysLeft < 0 ? "overdue" : d.daysLeft === 0 ? "today" : dayLabel(d.date)}
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </Rows>
+            ) : (
+              <Muted>No renewals or payments in the next 90 days.</Muted>
+            )}
+          </Block>
+          {live?.tasks.open.length ? (
+            <Block>
+              <Title count={live.tasks.pending + live.tasks.inProgress}>To do</Title>
+              <Rows>
+                {live.tasks.open.map((t, i) => (
+                  <li key={`${t.title}-${i}`}>
+                    <p className="flex flex-wrap items-center gap-2 font-bold">
+                      {t.title}
+                      {t.overdue ? <Badge tone="bad">Overdue</Badge> : null}
+                    </p>
+                    <p className="text-sm text-muted">
+                      {[t.status === "in_progress" ? "In progress" : "Not started", t.assignee, t.dueAt ? `due ${formatWhen(t.dueAt, timeZone)}` : null]
+                        .filter(Boolean)
+                        .join(" · ")}
+                    </p>
+                  </li>
+                ))}
+              </Rows>
+            </Block>
+          ) : null}
+          {record.notes ? (
+            <Block>
+              <Title>Notes</Title>
+              <p className="whitespace-pre-line rounded-2xl bg-wash p-5 text-[15px] leading-relaxed">
+                <Linked text={record.notes} />
+              </p>
+            </Block>
+          ) : null}
+        </div>
+      </Grid>
+    </div>
+  );
+}
+
+/** The last 30 days from OS Analytics, when it is connected. */
+function LiveStory({ b }: { b: BusinessDetail }) {
   const k = b.last30;
   const p = b.previous30;
   const money = (v: number, d?: number) => formatMoney(v, b.currency, d);
   const showLoans = k.loanVolume > 0 || p.loanVolume > 0;
-  const attention = detailAttention(b, today);
-  const comingUp = [
-    ...b.appointments.slice(0, 3).map((a) => ({ what: `Appointment${a.name ? ` with ${a.name}` : ""}`, when: a.at })),
-    ...(b.publisher?.upcoming.slice(0, 3) ?? []).map((post) => ({ what: `${post.label} post${post.title ? `: ${post.title}` : ""}`, when: post.scheduledAt })),
-  ].sort((x, y) => (x.when ?? "").localeCompare(y.when ?? ""));
-
   return (
-    <div className="space-y-12">
+    <div className="space-y-6">
       <Sentence>
         <b>{plural(k.leads, "lead")}</b> in the last 30 days{changeWords(k.leads, p.leads)}.{" "}
         {k.won ? (
@@ -95,11 +251,8 @@ export function SummarySection({ b, timeZone, today }: Props) {
             ) : null}
             .
           </>
-        ) : (
-          "No marketing spend recorded."
-        )}
+        ) : null}
       </Sentence>
-
       <Tiles className="sm:grid-cols-3">
         <Tile label="Leads" value={<CountUp value={k.leads} />}>
           <Delta current={k.leads} previous={p.leads} />
@@ -126,81 +279,37 @@ export function SummarySection({ b, timeZone, today }: Props) {
           </Tile>
         )}
       </Tiles>
-
-      <Grid wide>
-        <div className="space-y-12">
-          <Block>
-            <Title count={attention.length}>Needs attention</Title>
-            <AttentionList items={attention} empty="Nothing needs you here." />
-          </Block>
-          <Block>
-            <Title note="last 30 days">Leads per day</Title>
-            <BarChart points={b.trend} />
-          </Block>
-        </div>
-        <div className="space-y-12">
-          <Block>
-            <Title count={b.tasks.pending + b.tasks.inProgress}>To do</Title>
-            {b.tasks.open.length ? (
-              <Rows>
-                {b.tasks.open.map((t, i) => (
-                  <li key={`${t.title}-${i}`}>
-                    <p className="flex flex-wrap items-center gap-2 font-bold">
-                      {t.title}
-                      {t.overdue ? <Badge tone="bad">Overdue</Badge> : null}
-                    </p>
-                    <p className="text-sm text-muted">
-                      {[t.status === "in_progress" ? "In progress" : "Not started", t.assignee, t.dueAt ? `due ${formatWhen(t.dueAt, timeZone)}` : null]
-                        .filter(Boolean)
-                        .join(" · ")}
-                    </p>
-                  </li>
-                ))}
-              </Rows>
-            ) : (
-              <Muted>No open tasks.</Muted>
-            )}
-          </Block>
-          <Block>
-            <Title>Coming up</Title>
-            {comingUp.length ? (
-              <Rows>
-                {comingUp.map((c, i) => (
-                  <li key={i}>
-                    <p className="font-bold">{c.what}</p>
-                    <p className="text-sm text-muted">{formatWhen(c.when, timeZone) ?? "No time set"}</p>
-                  </li>
-                ))}
-              </Rows>
-            ) : (
-              <Muted>No appointments or posts scheduled.</Muted>
-            )}
-          </Block>
-        </div>
-      </Grid>
     </div>
   );
 }
 
 /* ─── About ───────────────────────────────────────────────────────── */
 
-export function AboutSection({ b }: Props) {
-  const a = b.about;
-  const sections = knowledgeSections(a?.knowledge ?? null);
-  const tagline = a?.tagline ?? b.tagline;
+export function AboutSection({ record }: BusinessPage) {
+  const sections = knowledgeSections(record.about);
+  const nothing = !record.tagline && !sections.length && !record.faqs.length;
 
   return (
     <div className="space-y-12">
-      {tagline ? (
+      {record.tagline ? (
         <Sentence>
-          <b>{a?.name ?? b.name}</b>: {tagline}.
+          <b>{record.name}</b>: {record.tagline}.
         </Sentence>
       ) : null}
-      {!a ? <Muted>OS Analytics has no business profile for {b.name} yet.</Muted> : null}
+      {record.ctaUrl ? (
+        <div className="flex flex-wrap items-center gap-3">
+          <a href={record.ctaUrl} target="_blank" rel="noopener noreferrer" className={buttonClass("primary")}>
+            {record.ctaLabel ?? "Main call to action"} <span aria-hidden="true">↗</span>
+            <span className="sr-only">(opens in a new tab)</span>
+          </a>
+          <span className="text-sm text-muted">What the website asks visitors to do.</span>
+        </div>
+      ) : null}
+      {nothing ? <Empty slug={record.slug} part="details" text={`Nothing written about ${record.name} yet.`} action="Write about it" /> : null}
 
       <Grid wide>
         <Block>
-          <Title>What it is</Title>
+          <Title note={<EditLink slug={record.slug} part="details">Edit</EditLink>}>What it is</Title>
           {sections.length ? (
             <div className="stagger space-y-3">
               {sections.map((s, i) => (
@@ -221,47 +330,33 @@ export function AboutSection({ b }: Props) {
           )}
         </Block>
 
-        <div className="space-y-12">
-          <Block>
-            <Title count={a?.questions.length}>Common questions</Title>
-            {a?.questions.length ? (
-              <div className="stagger space-y-2">
-                {a.questions.map((q) => (
-                  <details key={q.question} className="group/q rounded-2xl bg-wash px-5 py-4 open:bg-mist">
-                    <summary className="flex cursor-pointer list-none items-start justify-between gap-4 text-lg font-bold leading-snug [&::-webkit-details-marker]:hidden">
-                      {q.question}
-                      <span aria-hidden="true" className="mt-0.5 shrink-0 text-xl transition-transform duration-300 group-open/q:rotate-45">
-                        +
-                      </span>
-                    </summary>
-                    {q.answer ? <p className="mt-2 animate-fade whitespace-pre-line text-[15px] leading-relaxed">{q.answer}</p> : null}
-                    {q.link ? (
-                      <p className="mt-2 text-sm font-semibold">
-                        <Out href={q.link.url}>{q.link.label}</Out>
-                      </p>
-                    ) : null}
-                  </details>
-                ))}
-              </div>
-            ) : (
-              <Muted>None saved.</Muted>
-            )}
-          </Block>
-
-          {a?.greeting || a?.note ? (
-            <Block>
-              <Title>Website chat assistant</Title>
-              <div className="rounded-2xl bg-wash p-5">
-                {a.greeting ? (
-                  <p className="w-fit max-w-full whitespace-pre-line rounded-2xl rounded-tl-sm bg-ink px-4 py-3 text-[15px] leading-relaxed text-paper">
-                    {a.greeting}
-                  </p>
-                ) : null}
-                {a.note ? <p className="mt-3 text-sm text-muted">Small print: {a.note}</p> : null}
-              </div>
-            </Block>
-          ) : null}
-        </div>
+        <Block>
+          <Title count={record.faqs.length} note={<EditLink slug={record.slug} part="questions">Edit</EditLink>}>
+            Common questions
+          </Title>
+          {record.faqs.length ? (
+            <div className="stagger space-y-2">
+              {record.faqs.map((q) => (
+                <details key={q.id} className="group/q rounded-2xl bg-wash px-5 py-4 open:bg-mist">
+                  <summary className="flex cursor-pointer list-none items-start justify-between gap-4 text-lg font-bold leading-snug [&::-webkit-details-marker]:hidden">
+                    {q.question}
+                    <span aria-hidden="true" className="mt-0.5 shrink-0 text-xl transition-transform duration-300 group-open/q:rotate-45">
+                      +
+                    </span>
+                  </summary>
+                  {q.answer ? <p className="mt-2 animate-fade whitespace-pre-line text-[15px] leading-relaxed">{q.answer}</p> : null}
+                  {q.linkUrl ? (
+                    <p className="mt-2 text-sm font-semibold">
+                      <Out href={q.linkUrl}>{q.linkLabel ?? "Learn more"}</Out>
+                    </p>
+                  ) : null}
+                </details>
+              ))}
+            </div>
+          ) : (
+            <Muted>None saved.</Muted>
+          )}
+        </Block>
       </Grid>
     </div>
   );
@@ -269,16 +364,21 @@ export function AboutSection({ b }: Props) {
 
 /* ─── Links ───────────────────────────────────────────────────────── */
 
-export function LinksSection({ b }: Props) {
-  const groups = businessLinks(b);
-  if (!groups.length) return <Muted>No links saved for {b.name} yet.</Muted>;
+export function LinksSection({ record, shared, live }: BusinessPage) {
+  const groups = linkGroups(record, shared, live?.adminLinks);
+  if (!groups.length) return <Empty slug={record.slug} part="links" text={`No links saved for ${record.name} yet.`} action="Add links" />;
   const count = groups.reduce((s, g) => s + g.links.length, 0);
 
   return (
     <div className="space-y-12">
-      <Sentence>
-        <b>{plural(count, "link")}</b> for {b.name}, in one place.
-      </Sentence>
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <Sentence>
+          <b>{plural(count, "link")}</b> for {record.name}, in one place.
+        </Sentence>
+        <EditLink slug={record.slug} part="links">
+          Edit links
+        </EditLink>
+      </div>
       <Grid>
         {groups.map((g) => (
           <Block key={g.id}>
@@ -300,117 +400,123 @@ export function LinksSection({ b }: Props) {
 
 /* ─── Money ───────────────────────────────────────────────────────── */
 
-export function MoneySection({ b, today }: Props) {
-  const sp = b.spending;
-  const subs = [...(sp?.subscriptions ?? [])].sort((x, y) => y.monthly - x.monthly || x.name.localeCompare(y.name));
-  const campaigns = b.campaigns.filter((c) => c.budget > 0 || c.spend > 0);
-  const money = (v: number, d?: number) => formatMoney(v, b.currency, d);
+export function MoneySection({ record, shared, live, today }: BusinessPage) {
+  const all = toolsFor(record, shared);
+  const sp = spending(all, today);
+  const subs = [...all].sort((x, y) => y.amount - x.amount || x.name.localeCompare(y.name));
+  const campaigns = live?.campaigns.filter((c) => c.budget > 0 || c.spend > 0) ?? [];
 
   return (
     <div className="space-y-12">
-      <Sentence>
-        {sp ? (
-          <>
-            Software and tools cost <b>{formatMoney(sp.monthlyTotal, "USD")} a month</b> (<b>{formatMoney(sp.yearlyTotal, "USD", 0)}</b> a
-            year) across <b>{plural(sp.activeSubscriptions, "subscription")}</b>, shared tools included.{" "}
-          </>
-        ) : (
-          "Subscriptions aren't tracked in OS Analytics yet. "
-        )}
-        Marketing in the last 30 days: <b>{money(b.last30.spend, 0)}</b>.
-      </Sentence>
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <Sentence>
+          {sp.count ? (
+            <>
+              Tools and services cost <b>{formatMoney(sp.monthly, "USD")} a month</b> (<b>{formatMoney(sp.yearly, "USD", 0)}</b> a year) across{" "}
+              <b>{plural(sp.count, "subscription")}</b>
+              {shared.length ? ", shared tools included" : ""}.
+            </>
+          ) : (
+            <>No subscriptions saved for {record.name} yet.</>
+          )}
+          {live ? (
+            <>
+              {" "}
+              Marketing in the last 30 days: <b>{formatMoney(live.last30.spend, live.currency, 0)}</b>.
+            </>
+          ) : null}
+        </Sentence>
+        <EditLink slug={record.slug} part="subscriptions">
+          Edit subscriptions
+        </EditLink>
+      </div>
 
-      {sp ? (
+      {sp.count ? (
         <Tiles className="sm:grid-cols-3">
-          <Tile label="Each month" value={<CountUp value={sp.monthlyTotal} currency="USD" />} />
-          <Tile label="Each year" value={<CountUp value={sp.yearlyTotal} currency="USD" digits={0} />} />
-          <Tile label="Subscriptions" value={<CountUp value={sp.activeSubscriptions} />} />
+          <Tile label="Each month" value={<CountUp value={sp.monthly} currency="USD" />} />
+          <Tile label="Each year" value={<CountUp value={sp.yearly} currency="USD" digits={0} />} />
+          <Tile label="Subscriptions" value={<CountUp value={sp.count} />} />
         </Tiles>
+      ) : (
+        <Empty slug={record.slug} part="subscriptions" text="Add the tools and services this business pays for to see the monthly cost." action="Add a subscription" />
+      )}
+
+      {sp.count ? (
+        <>
+          <Grid>
+            <Block>
+              <Title note="per month">By category</Title>
+              <div className="rounded-2xl bg-wash p-5">
+                <Bars rows={sp.byCategory.map((c) => ({ label: c.label, value: c.monthly, display: formatMoney(c.monthly, "USD") }))} empty="Only free or one-time tools." />
+              </div>
+            </Block>
+            <Block>
+              <Title note="next 30 days">Renewing soon</Title>
+              {sp.upcoming.length ? (
+                <Rows>
+                  {sp.upcoming.map(({ sub, daysLeft }) => (
+                    <li key={sub.id} className="flex items-baseline justify-between gap-4">
+                      <span className="min-w-0">
+                        <span className="block font-bold">{sub.name}</span>
+                        <span className="block text-sm text-muted">
+                          {dayLabel(sub.nextRenewal)} · {daysLeft < 0 ? "overdue" : daysLeft === 0 ? "today" : `in ${plural(daysLeft, "day")}`}
+                        </span>
+                      </span>
+                      <span className="shrink-0 text-sm font-semibold tabular-nums">
+                        {formatMoney(sub.amount, sub.currency)} {cycleLabel(sub.billingCycle)}
+                      </span>
+                    </li>
+                  ))}
+                </Rows>
+              ) : (
+                <Muted>Nothing renews in the next 30 days.</Muted>
+              )}
+            </Block>
+          </Grid>
+
+          <Block>
+            <Title count={subs.length}>Every subscription</Title>
+            <Rows>
+              {subs.map((s) => (
+                <li key={s.id} className="grid gap-x-6 gap-y-2 sm:grid-cols-[minmax(0,1fr)_auto]">
+                  <div className="min-w-0">
+                    <p className="flex flex-wrap items-center gap-2 text-lg font-bold leading-snug">
+                      {s.name}
+                      {s.businessId ? null : <Badge>Shared</Badge>}
+                    </p>
+                    <p className="text-sm text-muted">
+                      {[humanCategory(s.category), s.account, s.nextRenewal ? `next payment ${dayLabel(s.nextRenewal)}` : null].filter(Boolean).join(" · ")}
+                    </p>
+                    {s.notes ? <p className="mt-1 whitespace-pre-line text-sm">{s.notes}</p> : null}
+                  </div>
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 sm:flex-col sm:items-end">
+                    <p className="text-base font-bold tabular-nums">
+                      {formatMoney(s.amount, s.currency)} <span className="text-sm font-normal text-muted">{CYCLE_LABELS[s.billingCycle].toLowerCase()}</span>
+                    </p>
+                    {s.loginUrl ? (
+                      <Out href={s.loginUrl} className="text-sm font-semibold">
+                        Log in
+                      </Out>
+                    ) : null}
+                  </div>
+                </li>
+              ))}
+            </Rows>
+          </Block>
+        </>
       ) : null}
 
-      <Grid>
+      {campaigns.length ? (
         <Block>
-          <Title note="per month">By category</Title>
-          <Bars
-            rows={(sp?.byCategory ?? []).map((c) => ({ label: c.label, value: c.monthly, display: formatMoney(c.monthly, "USD") }))}
-            empty="No subscriptions."
-          />
-        </Block>
-        <Block>
-          <Title note="next 30 days">Renewing soon</Title>
-          {sp?.upcomingRenewals.length ? (
-            <Rows>
-              {sp.upcomingRenewals.map((r) => {
-                const d = daysUntil(r.nextRenewal, today);
-                const when = d === null ? "" : d < 0 ? " · overdue" : d === 0 ? " · today" : ` · in ${dayCount(d)}`;
-                return (
-                  <li key={`${r.name}-${r.nextRenewal}`} className="flex items-baseline justify-between gap-4">
-                    <span className="min-w-0">
-                      <span className="block font-bold">{r.name}</span>
-                      <span className="block text-sm text-muted">
-                        {formatDay(r.nextRenewal)}
-                        {when}
-                      </span>
-                    </span>
-                    <span className="shrink-0 text-sm font-semibold tabular-nums">
-                      {formatMoney(r.amount, r.currency)} {cycleLabel(r.cycle)}
-                    </span>
-                  </li>
-                );
-              })}
-            </Rows>
-          ) : (
-            <Muted>Nothing renews in the next 30 days.</Muted>
-          )}
-        </Block>
-      </Grid>
-
-      <Block>
-        <Title count={subs.length}>Every subscription</Title>
-        {subs.length ? (
-          <Rows>
-            {subs.map((s, i) => (
-              <li key={`${s.name}-${s.businessId}-${i}`} className="grid gap-x-6 gap-y-2 sm:grid-cols-[minmax(0,1fr)_auto]">
-                <div className="min-w-0">
-                  <p className="flex flex-wrap items-center gap-2 text-lg font-bold leading-snug">
-                    {s.name}
-                    {s.shared ? <Badge>Shared</Badge> : null}
-                  </p>
-                  <p className="text-sm text-muted">
-                    {[s.categoryLabel, s.account, s.nextRenewal ? `renews ${formatDay(s.nextRenewal)}` : null].filter(Boolean).join(" · ")}
-                  </p>
-                  {s.notes ? <p className="mt-1 whitespace-pre-line text-sm">{s.notes}</p> : null}
-                </div>
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 sm:flex-col sm:items-end">
-                  <p className="text-base font-bold tabular-nums">
-                    {formatMoney(s.amount, s.currency)} <span className="text-sm font-normal text-muted">{cycleLabel(s.cycle)}</span>
-                  </p>
-                  {s.cycle !== "monthly" && s.monthly > 0 ? <p className="text-xs text-muted">{formatMoney(s.monthly, s.currency)} a month</p> : null}
-                  {s.loginUrl ? (
-                    <Out href={s.loginUrl} className="text-sm font-semibold">
-                      Log in
-                    </Out>
-                  ) : null}
-                </div>
-              </li>
-            ))}
-          </Rows>
-        ) : (
-          <Muted>No subscriptions recorded for {b.name}.</Muted>
-        )}
-      </Block>
-
-      <Block>
-        <Title note="spent of budget">Campaigns</Title>
-        {campaigns.length ? (
+          <Title note="spent of budget">Campaigns</Title>
           <Rows>
             {campaigns.map((c, i) => (
               <li key={`${c.name}-${i}`}>
                 <div className="flex items-baseline justify-between gap-4">
                   <span className="min-w-0 font-bold">{c.name}</span>
                   <span className="shrink-0 text-sm font-semibold tabular-nums">
-                    {money(c.spend, 0)}
-                    {c.budget > 0 ? ` of ${money(c.budget, 0)}` : ""}
+                    {formatMoney(c.spend, live!.currency, 0)}
+                    {c.budget > 0 ? ` of ${formatMoney(c.budget, live!.currency, 0)}` : ""}
                   </span>
                 </div>
                 {c.budget > 0 ? (
@@ -421,119 +527,110 @@ export function MoneySection({ b, today }: Props) {
               </li>
             ))}
           </Rows>
-        ) : (
-          <Muted>No campaign spending recorded.</Muted>
-        )}
-      </Block>
+        </Block>
+      ) : null}
     </div>
   );
 }
 
+function humanCategory(category: string) {
+  return humanize(category === "ai" ? "AI" : category);
+}
+
 /* ─── Website ─────────────────────────────────────────────────────── */
 
-export function WebsiteSection({ b }: Props) {
-  const site = b.site;
-  const byItem = new Map(b.renewals.map((r) => [r.item, r]));
+function SiteBlock({ site, today }: { site: BusinessSite; today: Date }) {
+  const renewals = new Map(siteRenewals(site, today).map((r) => [r.item, r]));
   const items = [
-    ["domain", "Domain", site?.registrar],
-    ["hosting", "Hosting", site?.hostingProvider],
-    ["ssl", "SSL certificate", site?.sslProvider],
+    ["domain", site.registrar],
+    ["hosting", site.hostingProvider],
+    ["ssl", site.sslProvider],
   ] as const;
   const login = (url: string | null) => (url ? <Out href={url}>Log in</Out> : null);
-  const siteHref = b.siteUrl ?? (site?.domain && /^[a-z0-9.-]+$/i.test(site.domain) ? `https://${site.domain}` : null);
+  const address = site.url ?? `https://${site.domain}`;
 
   return (
-    <div className="space-y-12">
+    <div className="space-y-8">
+      <div className="flex flex-wrap items-baseline justify-between gap-3">
+        <h4 className="text-2xl font-extrabold tracking-[-0.02em]">
+          <Out href={address} className="no-underline hover:underline">
+            {site.domain}
+          </Out>
+        </h4>
+        {site.platform ? <Badge>{site.platform}</Badge> : null}
+      </div>
       <Tiles className="sm:grid-cols-3">
-        {items.map(([key, label, provider]) => {
-          const r = byItem.get(key);
+        {items.map(([item, provider]) => {
+          const r = renewals.get(item);
           const expired = r?.status === "expired";
           return (
-            <div key={key} className={cx("min-w-0 rounded-2xl p-5", expired ? "bg-ink text-paper" : "bg-wash")}>
-              <p className={cx("text-sm font-semibold", expired ? "text-paper/80" : "text-muted")}>{label}</p>
-              <p className="mt-2 text-2xl font-extrabold leading-tight tracking-[-0.02em] sm:text-3xl">{r ? renewalPhrase(r) : "No date saved"}</p>
-              <p className={cx("mt-1 text-sm", expired ? "text-paper/80" : "text-muted")}>
-                {[r ? formatDay(r.date) : null, provider].filter(Boolean).join(" · ") || "—"}
-              </p>
+            <div key={item} className={cx("min-w-0 rounded-2xl p-5", expired ? "bg-ink text-paper" : "bg-wash")}>
+              <p className={cx("text-sm font-semibold", expired ? "text-paper/80" : "text-muted")}>{renewalLabel(item)}</p>
+              <p className="mt-2 text-2xl font-extrabold leading-tight tracking-[-0.02em] sm:text-3xl">{r ? renewalWords(r) : "No date saved"}</p>
+              <p className={cx("mt-1 text-sm", expired ? "text-paper/80" : "text-muted")}>{[r ? dayLabel(r.date) : null, provider].filter(Boolean).join(" · ") || "—"}</p>
             </div>
           );
         })}
       </Tiles>
+      <Grid>
+        <Facts
+          rows={[
+            ["Registrar", site.registrar],
+            ["Account", site.registrarAccount],
+            ["Login", login(site.registrarLoginUrl)],
+            ["Auto-renew", site.domainAutoRenew ? "On" : "Off"],
+            ["Nameservers", site.nameservers ? <span className="whitespace-pre-line font-mono text-sm">{site.nameservers}</span> : null],
+          ]}
+        />
+        <Facts
+          rows={[
+            ["Hosting", [site.hostingProvider, site.hostingPlan].filter(Boolean).join(" · ") || null],
+            ["Account", site.hostingAccount],
+            ["Login", login(site.hostingLoginUrl)],
+            ["Server IP", site.serverIp ? <span className="font-mono text-sm">{site.serverIp}</span> : null],
+            ["Last backup", dayLabel(site.lastBackup)],
+          ]}
+        />
+      </Grid>
+      {site.notes ? (
+        <p className="whitespace-pre-line rounded-2xl bg-wash p-5 text-[15px] leading-relaxed">
+          <Linked text={site.notes} />
+        </p>
+      ) : null}
+    </div>
+  );
+}
 
-      {site ? (
-        <Grid>
-          <Block>
-            <Title>Domain</Title>
-            <Facts
-              rows={[
-                ["Address", site.domain && siteHref ? <Out href={siteHref}>{site.domain}</Out> : site.domain],
-                ["Registrar", site.registrar],
-                ["Account", site.registrarAccount],
-                ["Login", login(site.registrarLoginUrl)],
-                ["Auto-renew", site.domainAutoRenew ? "On" : "Off"],
-                ["Expires", formatDay(site.domainExpiry)],
-                ["Nameservers", site.nameservers.length ? <span className="font-mono text-sm">{site.nameservers.join(", ")}</span> : null],
-              ]}
-            />
-          </Block>
-          <Block>
-            <Title>Hosting</Title>
-            <Facts
-              rows={[
-                ["Provider", site.hostingProvider],
-                ["Plan", site.hostingPlan],
-                ["Account", site.hostingAccount],
-                ["Login", login(site.hostingLoginUrl)],
-                ["Expires", formatDay(site.hostingExpiry)],
-                ["Server IP", site.serverIp ? <span className="font-mono text-sm">{site.serverIp}</span> : null],
-              ]}
-            />
-          </Block>
-          <Block>
-            <Title>Security and software</Title>
-            <Facts
-              rows={[
-                ["SSL", site.sslProvider],
-                ["SSL expires", formatDay(site.sslExpiry)],
-                ["WordPress", site.wpVersion],
-                ["PHP", site.phpVersion],
-                ["Theme", site.activeTheme],
-                ["Last backup", formatDay(site.lastBackupAt)],
-                ["Reminders", `${site.warnDays} days before anything expires`],
-              ]}
-            />
-          </Block>
-          <Block>
-            <Title>Notes</Title>
-            {site.notes ? (
-              <p className="whitespace-pre-line rounded-2xl bg-wash p-5 text-[17px] leading-relaxed">
-                <Linked text={site.notes} />
-              </p>
-            ) : (
-              <Muted>No notes.</Muted>
-            )}
-            {site.importantLinks.length ? (
-              <>
-                <h4 className="mb-1 mt-8 text-lg font-bold">Saved links</h4>
-                <ul className="stagger">
-                  {site.importantLinks.map((l) => (
-                    <LinkRow key={l.url} label={l.label} url={l.url} />
-                  ))}
-                </ul>
-              </>
-            ) : null}
-          </Block>
-        </Grid>
-      ) : (
-        <Muted>No website details saved for {b.name}. Add them on the Sites page in OS Analytics.</Muted>
-      )}
+export function WebsiteSection({ record, today }: BusinessPage) {
+  if (!record.sites.length) {
+    return (
+      <Empty
+        slug={record.slug}
+        part="websites"
+        text={`No websites saved for ${record.name}. Add the domain, hosting and SSL dates, and JodyOS will warn you before anything expires.`}
+        action="Add a website"
+      />
+    );
+  }
+  return (
+    <div className="space-y-14">
+      <div className="flex justify-end">
+        <EditLink slug={record.slug} part="websites">
+          Edit websites
+        </EditLink>
+      </div>
+      {record.sites.map((site) => (
+        <Block key={site.id}>
+          <SiteBlock site={site} today={today} />
+        </Block>
+      ))}
     </div>
   );
 }
 
 /* ─── Marketing ───────────────────────────────────────────────────── */
 
-export function MarketingSection({ b, timeZone }: Props) {
+export function MarketingSection({ b, timeZone }: LiveProps) {
   const steps = funnelSteps(b.funnel);
   const pub = b.publisher;
   const money = (v: number, d?: number) => formatMoney(v, b.currency, d);
@@ -696,7 +793,7 @@ function statusTone(status: string): Tone {
   return "ok";
 }
 
-export function LeadsSection({ b, timeZone }: Props) {
+export function LeadsSection({ b, timeZone }: LiveProps) {
   const pl = b.pipeline;
   const total = STAGES.reduce((s, [k]) => s + pl[k], 0);
   const where: [string, { label: string; value: number }[], boolean][] = [

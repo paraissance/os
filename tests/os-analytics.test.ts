@@ -133,76 +133,36 @@ describe("client", () => {
   });
 });
 
-describe("attention items", () => {
-  const today = new Date("2026-10-10T12:00:00Z");
-
-  it("flags expired and expiring renewals and near subscription renewals, critical first", () => {
-    const items = mod.businessAttention(mod.businessListSchema.parse(listFixture), today);
-    expect(items.map((i) => [i.level, i.title])).toEqual([
-      ["critical", "Example Leads Co: SSL certificate expired"],
-      ["warning", "Example Scheduler renews in 5 days"],
-      ["warning", "Example Leads Co: Domain expires in 10 days"],
-    ]);
-    // Renewals open the business's Website tab; a shared tool opens the spending overview.
-    expect(items.map((i) => i.href)).toEqual(["/?b=example-leads&s=website", "/#spending", "/?b=example-leads&s=website"]);
-  });
-
-  it("links a subscription that belongs to one business to its Money tab", () => {
+describe("live attention (OS Analytics adds only what JodyOS can't know)", () => {
+  it("flags a lead drop of half or more, named the JodyOS way, but not on a tiny baseline", () => {
     const list = mod.businessListSchema.parse(structuredClone(listFixture));
-    list.businesses[0].renewals = [];
-    list.spending!.upcomingRenewals = [{ name: "Example Host", category: "hosting", amount: 120, currency: "USD", cycle: "yearly", nextRenewal: "2026-10-12", shared: false }];
-    expect(mod.businessAttention(list, today)).toMatchObject([{ title: "Example Host renews in 2 days", href: "/?b=example-leads&s=money" }]);
-  });
-
-  it("flags a lead drop of half or more, but not on a tiny baseline", () => {
-    const list = mod.businessListSchema.parse(structuredClone(listFixture));
-    list.spending = null;
-    list.businesses[0].renewals = [];
     list.businesses[0].previous30.leads = 100;
     list.businesses[0].last30.leads = 42;
-    expect(mod.businessAttention(list, today).map((i) => i.title)).toEqual(["Example Leads Co: Leads down 58%"]);
+    const names = new Map([["example-leads", "Example Leads"]]);
+    expect(mod.liveListAttention(list, names)).toMatchObject([{ title: "Example Leads: Leads down 58%", href: "/?b=example-leads&s=leads" }]);
     list.businesses[0].previous30.leads = 6;
     list.businesses[0].last30.leads = 1;
-    expect(mod.businessAttention(list, today)).toEqual([]);
+    expect(mod.liveListAttention(list)).toEqual([]);
   });
 
-  it("ignores paused businesses", () => {
+  it("ignores paused businesses and never repeats renewals (those come from JodyOS records)", () => {
     const list = mod.businessListSchema.parse(structuredClone(listFixture));
-    list.spending = null;
-    list.businesses = list.businesses.map((b) => ({ ...b, active: false }));
-    expect(mod.businessAttention(list, today)).toEqual([]);
+    expect(mod.liveListAttention(list)).toEqual([]); // the fixture has expired SSL, but that's not a live item
+    list.businesses = list.businesses.map((b) => ({ ...b, active: false, previous30: { ...b.previous30, leads: 100 } }));
+    expect(mod.liveListAttention(list)).toEqual([]);
   });
 
-  it("inside a business: drops the name and adds overdue tasks and failed posts", () => {
-    const b = mod.businessDetailSchema.parse(detailFixture);
-    expect(mod.detailAttention(b, today).map((i) => [i.level, i.title, i.href])).toEqual([
-      ["critical", "SSL certificate expired", "/?b=example-leads&s=website"],
-      ["warning", "Example Scheduler renews in 5 days", "/?b=example-leads&s=money"],
-      ["warning", "Domain expires in 10 days", "/?b=example-leads&s=website"],
-      ["warning", "2 overdue tasks", "/?b=example-leads"],
-      ["warning", "2 social posts failed to publish", "/?b=example-leads&s=marketing"],
-    ]);
-  });
-
-  it("inside a business: nothing to flag means an empty list", () => {
+  it("inside a business: overdue tasks and failed posts", () => {
     const b = mod.businessDetailSchema.parse(structuredClone(detailFixture));
-    b.renewals = [];
-    b.tasks.overdue = 0;
-    b.publisher!.failed = 0;
-    b.spending!.upcomingRenewals = [];
-    expect(mod.detailAttention(b, today)).toEqual([]);
+    expect(mod.liveAttention(b).map((i) => [i.title, i.href])).toEqual([
+      ["2 overdue tasks", "/?b=example-leads&s=leads"],
+      ["2 social posts failed to publish", "/?b=example-leads&s=marketing"],
+    ]);
     b.tasks.overdue = 1;
-    expect(mod.detailAttention(b, today).map((i) => i.title)).toEqual(["1 overdue task"]);
-  });
-
-  it("counts days to a date in UTC", () => {
-    expect(mod.daysUntil("2026-10-15", today)).toBe(5);
-    expect(mod.daysUntil("2026-10-10", today)).toBe(0);
-    expect(mod.daysUntil("2026-10-01", today)).toBe(-9);
-    expect(mod.daysUntil("not a date", today)).toBeNull();
+    b.publisher!.failed = 0;
+    expect(mod.liveAttention(b).map((i) => i.title)).toEqual(["1 overdue task"]);
   });
 });
-
 describe("formatting", () => {
   it("computes percent change, with no baseline as null", () => {
     expect(mod.percentChange(42, 30)).toBe(40);

@@ -1,15 +1,20 @@
 import { sql } from "drizzle-orm";
 import {
+  boolean,
   check,
+  date,
   index,
   integer,
   jsonb,
+  numeric,
   pgTable,
   text,
   timestamp,
   uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
+// Relative on purpose: drizzle-kit loads this file without the "@/" alias.
+import { BILLING_CYCLES, BUSINESS_STATUSES, LINK_KINDS } from "../business-constants";
 
 const createdAt = () =>
   timestamp("created_at", { withTimezone: true }).notNull().defaultNow();
@@ -106,6 +111,133 @@ export const conversations = pgTable(
     updatedAt: updatedAt(),
   },
   (t) => [index("conversations_user_updated_idx").on(t.userId, t.updatedAt)],
+);
+
+/*
+ * Businesses: the owner's own records, kept in JodyOS. Everything here is
+ * typed in (or imported) by the owner; OS Analytics can add live numbers on
+ * top when it is connected, matched by slug.
+ */
+
+export const businesses = pgTable(
+  "businesses",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    slug: text("slug").notNull(),
+    name: text("name").notNull(),
+    tagline: text("tagline"),
+    /** What the business is, in plain text; "# Heading" lines start a section. */
+    about: text("about"),
+    websiteUrl: text("website_url"),
+    ctaLabel: text("cta_label"),
+    ctaUrl: text("cta_url"),
+    status: text("status", { enum: BUSINESS_STATUSES }).notNull().default("active"),
+    notes: text("notes"),
+    sortOrder: integer("sort_order").notNull().default(0),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    uniqueIndex("businesses_slug_unique").on(t.slug),
+    check("businesses_slug_check", sql`${t.slug} ~ '^[a-z0-9]+(-[a-z0-9]+)*$'`),
+    check("businesses_status_check", sql`${t.status} in ('active', 'paused')`),
+  ],
+);
+
+export const businessLinks = pgTable(
+  "business_links",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    businessId: uuid("business_id")
+      .notNull()
+      .references(() => businesses.id, { onDelete: "cascade" }),
+    label: text("label").notNull(),
+    url: text("url").notNull(),
+    kind: text("kind", { enum: LINK_KINDS }).notNull().default("page"),
+    note: text("note"),
+    sortOrder: integer("sort_order").notNull().default(0),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    index("business_links_business_idx").on(t.businessId),
+    check("business_links_kind_check", sql`${t.kind} in ('page', 'social', 'login', 'tool', 'other')`),
+  ],
+);
+
+export const businessFaqs = pgTable(
+  "business_faqs",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    businessId: uuid("business_id")
+      .notNull()
+      .references(() => businesses.id, { onDelete: "cascade" }),
+    question: text("question").notNull(),
+    answer: text("answer"),
+    linkLabel: text("link_label"),
+    linkUrl: text("link_url"),
+    sortOrder: integer("sort_order").notNull().default(0),
+    createdAt: createdAt(),
+  },
+  (t) => [index("business_faqs_business_idx").on(t.businessId)],
+);
+
+/** One website of a business: domain, hosting, SSL and where to log in. Never passwords. */
+export const businessSites = pgTable(
+  "business_sites",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    businessId: uuid("business_id")
+      .notNull()
+      .references(() => businesses.id, { onDelete: "cascade" }),
+    domain: text("domain").notNull(),
+    url: text("url"),
+    platform: text("platform"),
+    registrar: text("registrar"),
+    registrarAccount: text("registrar_account"),
+    registrarLoginUrl: text("registrar_login_url"),
+    domainExpiry: date("domain_expiry", { mode: "string" }),
+    domainAutoRenew: boolean("domain_auto_renew").notNull().default(false),
+    hostingProvider: text("hosting_provider"),
+    hostingPlan: text("hosting_plan"),
+    hostingAccount: text("hosting_account"),
+    hostingLoginUrl: text("hosting_login_url"),
+    hostingExpiry: date("hosting_expiry", { mode: "string" }),
+    sslProvider: text("ssl_provider"),
+    sslExpiry: date("ssl_expiry", { mode: "string" }),
+    serverIp: text("server_ip"),
+    nameservers: text("nameservers"),
+    lastBackup: date("last_backup", { mode: "string" }),
+    notes: text("notes"),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [index("business_sites_business_idx").on(t.businessId)],
+);
+
+/** A paid tool. No business = shared by all businesses. */
+export const subscriptions = pgTable(
+  "subscriptions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    businessId: uuid("business_id").references(() => businesses.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    category: text("category").notNull().default("other"),
+    billingCycle: text("billing_cycle", { enum: BILLING_CYCLES }).notNull().default("monthly"),
+    amount: numeric("amount", { precision: 12, scale: 2, mode: "number" }).notNull().default(0),
+    currency: text("currency").notNull().default("USD"),
+    nextRenewal: date("next_renewal", { mode: "string" }),
+    loginUrl: text("login_url"),
+    account: text("account"),
+    notes: text("notes"),
+    active: boolean("active").notNull().default(true),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    index("subscriptions_business_idx").on(t.businessId),
+    check("subscriptions_cycle_check", sql`${t.billingCycle} in ('monthly', 'yearly', 'quarterly', 'one_time')`),
+    check("subscriptions_amount_check", sql`${t.amount} >= 0`),
+  ],
 );
 
 export const messages = pgTable(

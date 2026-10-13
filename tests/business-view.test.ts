@@ -1,23 +1,8 @@
 import { describe, expect, it } from "vitest";
-import listFixture from "./fixtures/os-analytics-businesses.json";
 import detailFixture from "./fixtures/os-analytics-business-example-leads.json";
 import { businessHref, isSection } from "@/lib/business-sections";
-import {
-  businessLinks,
-  cycleLabel,
-  formatDay,
-  formatWhen,
-  funnelSteps,
-  humanize,
-  knowledgeSections,
-  leadStatusLabel,
-  linkify,
-  renewalPhrase,
-  shortUrl,
-  spendByBusiness,
-  worstRenewal,
-} from "@/lib/business-view";
-import { businessDetailSchema, businessListSchema } from "@/lib/os-analytics";
+import { cycleLabel, formatDay, formatWhen, funnelSteps, humanize, knowledgeSections, leadStatusLabel, linkify, shortUrl } from "@/lib/business-view";
+import { businessDetailSchema } from "@/lib/os-analytics";
 
 const detail = () => businessDetailSchema.parse(structuredClone(detailFixture));
 
@@ -58,46 +43,6 @@ describe("about text", () => {
 });
 
 describe("links", () => {
-  it("groups every link the plugin knows, without duplicates", () => {
-    const groups = businessLinks(detail());
-    expect(groups.map((g) => [g.id, g.links.length])).toEqual([
-      ["website", 5],
-      ["logins", 3],
-      ["saved", 3],
-      ["admin", 9],
-    ]);
-    const [website, logins] = groups;
-    expect(website.links[0]).toEqual({ label: "Website", url: "https://leads.example.com" });
-    expect(logins.links.map((l) => [l.label, l.note])).toEqual([
-      ["Domain · Example Registrar", "Owner registrar account"],
-      ["Hosting · Example Host", "Owner hosting account"],
-      ["Example Scheduler", "owner@business.example · shared"],
-    ]);
-  });
-
-  it("treats a trailing slash or www as the same address", () => {
-    const b = detail();
-    b.about!.links = [
-      { label: "Home", url: "https://www.leads.example.com/" },
-      { label: "Pricing", url: "https://leads.example.com/pricing/" },
-      { label: "Pricing again", url: "https://leads.example.com/pricing" },
-      { label: "Pricing, monthly", url: "https://leads.example.com/pricing?plan=monthly" },
-    ];
-    b.about!.questions = [];
-    b.about!.cta = null;
-    expect(businessLinks(b)[0].links.map((l) => l.label)).toEqual(["Website", "Pricing", "Pricing, monthly"]);
-  });
-
-  it("leaves out empty groups", () => {
-    const b = detail();
-    b.siteUrl = null;
-    b.about = null;
-    b.site = null;
-    b.spending = null;
-    b.adminLinks = {};
-    expect(businessLinks(b)).toEqual([]);
-  });
-
   it("shortens addresses for display", () => {
     expect(shortUrl("https://www.leads.example.com/")).toBe("leads.example.com");
     expect(shortUrl("https://leads.example.com/pricing/")).toBe("leads.example.com/pricing");
@@ -106,24 +51,7 @@ describe("links", () => {
   });
 });
 
-describe("words", () => {
-  it("describes renewals plainly", () => {
-    expect(renewalPhrase({ status: "expired", daysLeft: -9, date: "2026-10-01" })).toBe("Expired 9 days ago");
-    expect(renewalPhrase({ status: "expired", daysLeft: -1, date: "2026-10-09" })).toBe("Expired 1 day ago");
-    expect(renewalPhrase({ status: "soon", daysLeft: 10, date: "2026-10-20" })).toBe("Renews in 10 days");
-    expect(renewalPhrase({ status: "soon", daysLeft: 0, date: "2026-10-10" })).toBe("Renews today");
-    expect(renewalPhrase({ status: "ok", daysLeft: 142, date: "2027-03-01" })).toBe("OK until 1 Mar 2027");
-    expect(renewalPhrase({ status: "unknown", daysLeft: null, date: "" })).toBe("No date");
-  });
-
-  it("picks the renewal that most needs action", () => {
-    const r = (status: "ok" | "soon" | "expired", daysLeft: number) => ({ status, daysLeft });
-    expect(worstRenewal([r("ok", 100), r("soon", 20), r("soon", 5)])).toEqual(r("soon", 5));
-    expect(worstRenewal([r("soon", 1), r("expired", -3), r("expired", -30)])).toEqual(r("expired", -30));
-    expect(worstRenewal([r("ok", 100)])).toBeNull();
-  });
-
-  it("formats dates without a timezone shift, and times in the owner's timezone", () => {
+describe("words", () => {  it("formats dates without a timezone shift, and times in the owner's timezone", () => {
     expect(formatDay("2026-10-20")).toBe("20 Oct 2026");
     expect(formatDay(null)).toBeNull();
     expect(formatWhen("2026-10-11T16:00:00+00:00", "America/Los_Angeles")).toMatch(/^Sun,? 11 Oct,? 09:00$/);
@@ -159,11 +87,4 @@ describe("numbers", () => {
     expect(steps.map((s) => s.rate)).toEqual([null, null, 0, null]);
   });
 
-  it("totals software per business, shared tools apart", () => {
-    const list = businessListSchema.parse(structuredClone(listFixture));
-    expect(spendByBusiness(list)).toEqual([
-      { name: "Shared by all businesses", slug: null, monthly: 29, count: 1 },
-      { name: "Example Leads Co", slug: "example-leads", monthly: 10, count: 2 },
-    ]);
-  });
 });

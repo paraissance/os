@@ -6,6 +6,7 @@ import { requestNow } from "@/lib/clock";
 import { envStatus } from "@/lib/env";
 import { greeting } from "@/lib/format";
 import type { SectionId } from "@/lib/business-sections";
+import { loadBook } from "@/lib/businesses";
 import { getBusiness, listBusinesses, settle } from "@/lib/os-analytics";
 import { getSettings } from "@/lib/settings";
 import { BusinessTabBar } from "@/components/dashboard/business-tab-bar";
@@ -26,8 +27,9 @@ export const metadata: Metadata = { title: "Dashboard" };
 
 /**
  * The dashboard: "All businesses" plus one tab per business (`/?b=<slug>`),
- * each with its own sections (`&s=<section>`). Business data comes live from
- * OS Analytics on every request.
+ * each with its own sections (`&s=<section>`). Business details come from
+ * JodyOS's own records; live numbers from OS Analytics are added when it is
+ * connected.
  */
 export default function DashboardPage(props: PageProps<"/">) {
   return (
@@ -41,7 +43,6 @@ export default function DashboardPage(props: PageProps<"/">) {
     </>
   );
 }
-
 function TabBarSkeleton() {
   return (
     <div className="mb-10 flex gap-2" aria-hidden="true">
@@ -68,20 +69,18 @@ async function Greeting() {
   );
 }
 
+
 async function Body({ searchParams }: { searchParams: PageProps<"/">["searchParams"] }) {
   await requireUser();
   const { b } = await searchParams;
   const slug = typeof b === "string" && b ? b : null;
-  const connected = envStatus().osAnalytics;
 
   return (
     <>
-      {connected ? (
-        <Suspense fallback={<TabBarSkeleton />}>
-          <TabBar current={slug} />
-        </Suspense>
-      ) : null}
-      {connected && slug ? (
+      <Suspense fallback={<TabBarSkeleton />}>
+        <TabBar current={slug} />
+      </Suspense>
+      {slug ? (
         <Suspense key={slug} fallback={<Skeleton className="h-[40rem]" />}>
           <BusinessTab slug={slug} />
         </Suspense>
@@ -94,70 +93,84 @@ async function Body({ searchParams }: { searchParams: PageProps<"/">["searchPara
 
 async function TabBar({ current }: { current: string | null }) {
   await requireUser();
-  const result = await settle(listBusinesses);
-  const all = result.ok ? result.data.businesses : [];
-  const items = [...all.filter((x) => x.active), ...all.filter((x) => !x.active)].map((x) => ({
-    slug: x.slug,
-    name: x.name,
-    leads: x.last30.leads,
-    active: x.active,
-  }));
+  const [book, live] = await Promise.all([loadBook(), envStatus().osAnalytics ? settle(listBusinesses) : Promise.resolve(null)]);
+  if (!book.businesses.length) return null;
+  const leads = new Map(live?.ok ? live.data.businesses.map((x) => [x.slug, x.last30.leads]) : []);
+  const ordered = [...book.businesses.filter((x) => x.status === "active"), ...book.businesses.filter((x) => x.status !== "active")];
+  const items = ordered.map((x) => ({ slug: x.slug, name: x.name, leads: leads.get(x.slug) ?? null, active: x.status === "active" }));
   return <BusinessTabBar items={items} current={current} />;
+}
+
+function NotFoundCard({ slug }: { slug: string }) {
+  return (
+    <div className="animate-rise rounded-3xl bg-wash p-6 sm:p-8">
+      <p className="text-2xl font-extrabold">There is no business called “{slug}”.</p>
+      <div className="mt-4 flex flex-wrap gap-2">
+        <Link href="/" className={buttonClass("light")}>
+          Back to all businesses
+        </Link>
+        <Link href="/businesses/new" className={buttonClass("primary")}>
+          + Add a business
+        </Link>
+      </div>
+    </div>
+  );
 }
 
 async function BusinessTab({ slug }: { slug: string }) {
   await requireUser();
-  const [result, settings] = await Promise.all([settle(() => getBusiness(slug)), getSettings()]);
-  if (!result.ok) return <Alert tone="bad">{result.error.message}</Alert>;
-  const b = result.data;
-  if (!b) {
-    return (
-      <div className="animate-rise rounded-2xl bg-wash p-6">
-        <p className="text-2xl font-extrabold">There is no business called “{slug}”.</p>
-        <Link href="/" className="mt-3 inline-block font-semibold underline decoration-1 underline-offset-4">
-          Back to all businesses
-        </Link>
-      </div>
-    );
-  }
+  const [book, settings] = await Promise.all([loadBook(), getSettings()]);
+  const record = book.businesses.find((x) => x.slug === slug);
+  if (!record) return <NotFoundCard slug={slug} />;
 
-  const props = { b, timeZone: settings.timezone, today: requestNow() };
-  const panels: Record<SectionId, ReactNode> = {
-    summary: <SummarySection {...props} />,
-    about: <AboutSection {...props} />,
-    links: <LinksSection {...props} />,
-    money: <MoneySection {...props} />,
-    website: <WebsiteSection {...props} />,
-    marketing: <MarketingSection {...props} />,
-    leads: <LeadsSection {...props} />,
+  // Live numbers are a bonus: a plugin outage never hides the business itself.
+  const result = envStatus().osAnalytics ? await settle(() => getBusiness(slug)) : null;
+  const live = result?.ok ? result.data : null;
+
+  const page = { record, shared: book.shared, live, timeZone: settings.timezone, today: requestNow() };
+  const panels: Partial<Record<SectionId, ReactNode>> = {
+    summary: <SummarySection {...page} />,
+    about: <AboutSection {...page} />,
+    links: <LinksSection {...page} />,
+    money: <MoneySection {...page} />,
+    website: <WebsiteSection {...page} />,
+    ...(live
+      ? {
+          marketing: <MarketingSection b={live} timeZone={settings.timezone} />,
+          leads: <LeadsSection b={live} timeZone={settings.timezone} />,
+        }
+      : {}),
   };
+  const website = record.websiteUrl ?? record.sites.find((s) => s.url)?.url ?? null;
 
   return (
-    <article aria-label={b.name}>
+    <article aria-label={record.name}>
       <header className="mb-8 flex animate-rise flex-wrap items-end justify-between gap-x-6 gap-y-4">
         <div className="min-w-0">
           <h2 className="flex flex-wrap items-center gap-3 text-4xl font-extrabold leading-[0.95] tracking-[-0.04em] sm:text-6xl">
-            {b.name}
-            {!b.active ? <Badge tone="neutral">Paused</Badge> : null}
+            {record.name}
+            {record.status === "paused" ? <Badge tone="neutral">Paused</Badge> : null}
           </h2>
-          {b.tagline ? <p className="mt-3 text-lg text-muted">{b.tagline}</p> : null}
+          {record.tagline ? <p className="mt-3 text-lg text-muted">{record.tagline}</p> : null}
         </div>
         <div className="flex flex-wrap gap-2">
-          {b.siteUrl ? (
-            <a href={b.siteUrl} target="_blank" rel="noopener noreferrer" className={buttonClass("primary")}>
+          {website ? (
+            <a href={website} target="_blank" rel="noopener noreferrer" className={buttonClass("primary")}>
               Visit website <span aria-hidden="true">↗</span>
               <span className="sr-only">(opens in a new tab)</span>
             </a>
           ) : null}
-          {b.adminLinks.dashboard ? (
-            <a href={b.adminLinks.dashboard} target="_blank" rel="noopener noreferrer" className={buttonClass("secondary")}>
-              Open in OS Analytics <span aria-hidden="true">↗</span>
-              <span className="sr-only">(opens in a new tab)</span>
-            </a>
-          ) : null}
+          <Link href={`/businesses/${record.slug}/edit`} className={buttonClass("secondary")}>
+            Edit details
+          </Link>
         </div>
       </header>
-      <SectionTabs slug={b.slug} panels={panels} />
+      {result && !result.ok ? (
+        <div className="mb-8">
+          <Alert>Live numbers from OS Analytics are unavailable right now: {result.error.message}</Alert>
+        </div>
+      ) : null}
+      <SectionTabs slug={record.slug} panels={panels} />
     </article>
   );
 }

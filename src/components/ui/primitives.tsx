@@ -11,6 +11,8 @@ const buttonBase =
 const buttonVariants = {
   primary: "bg-ink text-paper hover:bg-[#262626]",
   secondary: "bg-wash text-ink hover:bg-mist",
+  /** For use on a grey surface. */
+  light: "bg-paper text-ink hover:bg-mist",
   ghost: "rounded-none px-0 underline decoration-1 underline-offset-4 hover:decoration-2 active:scale-100",
 } as const;
 

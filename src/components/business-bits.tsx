@@ -1,4 +1,4 @@
-import { PLUGIN_MIN_VERSION, formatDay, percentChange } from "@/lib/os-analytics";
+import { formatDay, percentChange } from "@/lib/os-analytics";
 import { cx } from "@/components/ui/primitives";
 
 /** "↑ 40%" / "↓ 20%" / "new" against the previous period, as a small pill. */
@@ -65,22 +65,5 @@ export function BarChart({ points, height = 120 }: { points: { date: string; lea
         <span>{formatDay(points[points.length - 1].date)}</span>
       </figcaption>
     </figure>
-  );
-}
-
-/** Shown wherever business data would appear while the plugin isn't connected. */
-export function OsAnalyticsSetup() {
-  return (
-    <div className="animate-rise rounded-2xl bg-wash p-6">
-      <p className="text-lg font-bold">Connect OS Analytics to see your businesses here.</p>
-      <ol className="mt-3 list-decimal space-y-1.5 pl-5 text-[15px] leading-relaxed text-muted">
-        <li>Install OS Analytics {PLUGIN_MIN_VERSION} or later on the WordPress site that holds your businesses.</li>
-        <li>In WordPress: OS Analytics → Settings → JodyOS connection → Generate key.</li>
-        <li>
-          In Vercel, add <code className="font-mono text-ink">OS_ANALYTICS_URL</code> (the endpoint shown there) and{" "}
-          <code className="font-mono text-ink">OS_ANALYTICS_KEY</code> as Secret variables, then redeploy.
-        </li>
-      </ol>
-    </div>
   );
 }
