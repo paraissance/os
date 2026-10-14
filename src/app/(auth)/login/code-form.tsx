@@ -4,12 +4,13 @@ import { useSearchParams } from "next/navigation";
 import { useActionState, useState } from "react";
 import { requestCodeAction, verifyCodeAction } from "@/app/actions/auth";
 import type { FormState } from "@/app/actions/form-state";
-import { Alert, Button, Field, Input, buttonClass } from "@/components/ui/primitives";
+import { Alert, Button, Field, Input } from "@/components/ui/primitives";
 import { SwitchTo } from "../auth-panels";
 
 /**
  * Sign in with a code: type your email, get 6 digits by email, type them in.
- * `ready` is false until email sending is configured on the server.
+ * `ready` is false until email sending is configured on the server: the form
+ * still shows, with a note, and asking for a code says it can't be sent yet.
  */
 export function CodeForm({ ready }: { ready: boolean }) {
   const params = useSearchParams();
@@ -21,17 +22,6 @@ export function CodeForm({ ready }: { ready: boolean }) {
   }, undefined);
   const [checked, check, checking] = useActionState(verifyCodeAction, undefined);
 
-  if (!ready) {
-    return (
-      <div className="space-y-5">
-        <Alert tone="warn">Sign-in codes aren&apos;t switched on yet. Sign in with your user name and password.</Alert>
-        <SwitchTo mode="login" className={buttonClass("primary", "min-h-12 w-full")}>
-          ← Sign in with password
-        </SwitchTo>
-      </div>
-    );
-  }
-
   if (!sentTo) {
     return (
       <form action={ask} className="space-y-5" noValidate>
@@ -42,6 +32,15 @@ export function CodeForm({ ready }: { ready: boolean }) {
         <Button type="submit" className="min-h-12 w-full" disabled={asking}>
           {asking ? "Sending…" : "Send code →"}
         </Button>
+        {ready ? null : (
+          <p className="text-sm text-muted">
+            Codes can&apos;t be emailed until email sending is switched on. Until then,{" "}
+            <SwitchTo mode="login" className="font-semibold text-ink underline decoration-1 underline-offset-4">
+              sign in with your password
+            </SwitchTo>
+            .
+          </p>
+        )}
       </form>
     );
   }

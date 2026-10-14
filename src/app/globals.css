@@ -72,6 +72,7 @@
 @theme inline {
   --font-sans: var(--font-archivo), "Helvetica Neue", Arial, sans-serif;
   --font-mono: var(--font-plex-mono), ui-monospace, Menlo, Consolas, monospace;
+  --font-script: var(--font-cookie), "Brush Script MT", cursive;
 }
 
 /* Small uppercase label used for section titles and table headings. */
