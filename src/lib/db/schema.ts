@@ -247,6 +247,68 @@ export const businessSites = pgTable(
   (t) => [index("business_sites_business_idx").on(t.businessId)],
 );
 
+/**
+ * A social media account in Blotato (or a Facebook/LinkedIn page under one),
+ * linked to the business it posts for. Only linked businesses appear on the
+ * Social Media page. One business per account.
+ */
+export const socialAccounts = pgTable(
+  "social_accounts",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    businessId: uuid("business_id")
+      .notNull()
+      .references(() => businesses.id, { onDelete: "cascade" }),
+    provider: text("provider").notNull().default("blotato"),
+    accountId: text("account_id").notNull(),
+    // The page under the account (Facebook, LinkedIn); "" when the account itself posts.
+    subaccountId: text("subaccount_id").notNull().default(""),
+    platform: text("platform").notNull(),
+    name: text("name").notNull(),
+    handle: text("handle"),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    uniqueIndex("social_accounts_target_unique").on(t.provider, t.accountId, t.subaccountId),
+    index("social_accounts_business_idx").on(t.businessId),
+  ],
+);
+
+export const SOCIAL_POST_STATUSES = ["scheduled", "published", "failed"] as const;
+export type SocialPostStatus = (typeof SOCIAL_POST_STATUSES)[number];
+export type PostMetrics = { views?: number; likes?: number; comments?: number; shares?: number; reach?: number };
+
+/**
+ * JodyOS's copy of the posts in Blotato (every account, last 90 days and
+ * what's scheduled), refreshed in the background so the page opens at once.
+ */
+export const socialPosts = pgTable(
+  "social_posts",
+  {
+    // Blotato's post id.
+    id: text("id").primaryKey(),
+    provider: text("provider").notNull().default("blotato"),
+    accountId: text("account_id").notNull(),
+    subaccountId: text("subaccount_id").notNull().default(""),
+    accountName: text("account_name"),
+    platform: text("platform").notNull(),
+    status: text("status", { enum: SOCIAL_POST_STATUSES }).notNull(),
+    postTime: timestamp("post_time", { withTimezone: true }).notNull(),
+    text: text("text").notNull(),
+    mediaCount: integer("media_count").notNull().default(0),
+    postUrl: text("post_url"),
+    errorMessage: text("error_message"),
+    metrics: jsonb("metrics").$type<PostMetrics>(),
+    metricsAt: timestamp("metrics_at", { withTimezone: true }),
+    syncedAt: timestamp("synced_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("social_posts_target_time_idx").on(t.accountId, t.subaccountId, t.postTime),
+    index("social_posts_status_time_idx").on(t.status, t.postTime),
+    check("social_posts_status_check", sql`${t.status} in ('scheduled', 'published', 'failed')`),
+  ],
+);
+
 /** A paid tool. No business = shared by all businesses. */
 export const subscriptions = pgTable(
   "subscriptions",

@@ -48,6 +48,12 @@ const schema = z.object({
     .trim()
     .optional()
     .transform((v) => (v ? v : undefined)),
+  // Blotato: social accounts, posts, schedule and analytics (read-only for now).
+  BLOTATO_API_KEY: z
+    .string()
+    .trim()
+    .optional()
+    .transform((v) => (v ? v : undefined)),
   // Email (Resend): sends the 6-digit sign-in codes. EMAIL_FROM is a sender
   // on a domain verified in Resend, like "JodyOS <login@example.com>".
   RESEND_API_KEY: z
@@ -116,5 +122,6 @@ export function envStatus() {
     anthropic: Boolean(e.ANTHROPIC_API_KEY),
     osAnalytics: Boolean(e.OS_ANALYTICS_URL && e.OS_ANALYTICS_KEY),
     email: Boolean(e.RESEND_API_KEY && e.EMAIL_FROM),
+    blotato: Boolean(e.BLOTATO_API_KEY),
   };
 }

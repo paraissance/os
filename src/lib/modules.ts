@@ -75,11 +75,10 @@ export const MODULES: ModuleDef[] = [
     href: "/social",
     group: "Business",
     phase: 1,
-    summary: "Every business's social media accounts in one place. Planning and scheduling posts arrive in Phase 3.",
+    summary: "Each brand's social accounts, calendar, posts and numbers, from Blotato. Creating and scheduling posts from JodyOS comes later.",
     planned: [
-      "Plan, create and schedule posts across every business's channels",
-      "Facebook, Instagram, YouTube, Pinterest, X and more, with Blotato as a publishing provider",
-      "Post status, errors, media and a business filter",
+      "Create, schedule and reschedule posts from JodyOS (Phase 3)",
+      "Comments and direct messages in one place (Phase 3)",
     ],
   },
   {

@@ -43,6 +43,13 @@
       "when": 1792012729541,
       "tag": "0005_admins_called_by_owner_name",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1792013969273,
+      "tag": "0006_social_media",
+      "breakpoints": true
     }
   ]
 }

@@ -96,6 +96,13 @@ function businessValues(input: BusinessInput, slug: string) {
   };
 }
 
+/** A business's id, short name and name, or null. */
+export async function getRecordById(id: string): Promise<{ id: string; slug: string; name: string } | null> {
+  const db = await getDb();
+  const [row] = await db.select({ id: businesses.id, slug: businesses.slug, name: businesses.name }).from(businesses).where(eq(businesses.id, id)).limit(1);
+  return row ?? null;
+}
+
 export async function createBusiness(input: BusinessInput) {
   const db = await getDb();
   const slug = await resolveSlug(db, input);
