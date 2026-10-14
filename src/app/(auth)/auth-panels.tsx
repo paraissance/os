@@ -154,7 +154,7 @@ export function AuthPanels({ login, code }: { login: ReactNode; code: ReactNode 
           <div className="relative grid w-full">
             <Story mode="login" active={isLogin}>
               <p className="label text-paper/70">JodyOS · private</p>
-              <p className="mt-4 text-4xl font-extrabold leading-[0.95] tracking-[-0.04em] sm:text-6xl">Welcome back.</p>
+              <p className="mt-4 text-4xl font-extrabold leading-[0.95] tracking-[-0.04em] sm:text-6xl">Hello Jody.</p>
               <p className="mt-5 max-w-sm text-lg leading-relaxed text-paper/80">Your businesses, websites, links and spending, in one calm place.</p>
               <ul className="mt-8 hidden space-y-3 text-[15px] text-paper/90 sm:block">
                 <Point>Every business in its own tab</Point>
