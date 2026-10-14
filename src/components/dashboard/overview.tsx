@@ -131,7 +131,7 @@ async function BusinessCards() {
 
   return (
     <section className="reveal">
-      <Title note="tap one to open it">Your businesses</Title>
+      <Title>Your businesses</Title>
       {active.length ? (
         <ul className="stagger grid grid-cols-[minmax(0,1fr)] gap-3 sm:grid-cols-2">
           {active.map((b) => {
