@@ -16,7 +16,7 @@ export function SetupForm() {
         <PasswordInput id="setup-token" name="setupToken" autoComplete="off" required />
       </Field>
       <div className="grid items-start gap-4 sm:grid-cols-2">
-        <Field label="Your name" htmlFor="setup-name" error={err.name}>
+        <Field label="Your name" htmlFor="setup-name" error={err.name} hint="Your user name is made from it: Jody → jody.">
           <Input id="setup-name" name="name" autoComplete="name" required defaultValue={state?.values?.name} />
         </Field>
         <Field label="Email" htmlFor="setup-email" error={err.email}>

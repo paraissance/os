@@ -119,7 +119,7 @@ export function PasswordForm() {
   );
 }
 
-/** Add a super admin: they sign in with this email and password and can use all of JodyOS. */
+/** Add a super admin: they sign in with the user name and password (or a code sent to the email) and can use all of JodyOS. */
 export function AddAdminForm() {
   const [state, action, pending] = useActionState(addAdminAction, undefined);
   const err = state?.fieldErrors ?? {};
@@ -127,11 +127,11 @@ export function AddAdminForm() {
     <form action={action} className="space-y-4" noValidate>
       {state?.error ? <Alert tone="bad">{state.error}</Alert> : null}
       {state?.message ? <Alert tone="ok">{state.message}</Alert> : null}
-      <Field label="Email" htmlFor="admin-email" error={err.email} hint="They sign in with this.">
+      <Field label="Email" htmlFor="admin-email" error={err.email} hint="Sign-in codes are sent here.">
         <Input id="admin-email" name="email" type="email" autoComplete="off" required maxLength={254} defaultValue={state?.values?.email} />
       </Field>
-      <Field label="User name" htmlFor="admin-name" error={err.name}>
-        <Input id="admin-name" name="name" autoComplete="off" required maxLength={80} defaultValue={state?.values?.name} />
+      <Field label="User name" htmlFor="admin-username" error={err.username} hint="They sign in with this. Letters, numbers, dots, dashes or underscores.">
+        <Input id="admin-username" name="username" autoComplete="off" autoCapitalize="none" spellCheck={false} required maxLength={32} defaultValue={state?.values?.username} />
       </Field>
       <Field label="Password" htmlFor="admin-password" error={err.password} hint="12 characters or more.">
         <PasswordInput id="admin-password" name="password" autoComplete="new-password" required minLength={12} />

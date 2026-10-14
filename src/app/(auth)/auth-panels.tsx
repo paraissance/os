@@ -4,13 +4,13 @@ import { createContext, use, useEffect, useRef, useState, type ReactNode } from 
 import { cx } from "@/components/ui/primitives";
 
 /*
- * Sign in and setup share one card. A black panel with the words covers one
- * half; the form sits in the other. Switching slides the black panel across
- * and brings the other form in. On a phone the panel sits on top and the
- * forms simply swap. The address follows (/login or /setup) without a reload.
+ * The sign-in card: password on one side, an email code on the other. A
+ * black panel with the words covers one half; the form sits in the other.
+ * Switching slides the black panel across and brings the other form in. On a
+ * phone the panel sits on top and the forms simply swap.
  */
 
-export type AuthMode = "login" | "setup";
+export type AuthMode = "login" | "code";
 
 const ModeContext = createContext<(mode: AuthMode) => void>(() => {});
 
@@ -24,7 +24,7 @@ export function SwitchTo({ mode, children, className }: { mode: AuthMode; childr
   );
 }
 
-const TITLES: Record<AuthMode, string> = { login: "Sign in · JodyOS", setup: "Setup · JodyOS" };
+const TITLES: Record<AuthMode, string> = { login: "Sign in · JodyOS", code: "Get a code · JodyOS" };
 
 function Panel({
   mode,
@@ -48,11 +48,11 @@ function Panel({
       inert={!active}
       className={cx(
         "flex items-center px-6 py-10 sm:px-12 md:row-start-1 md:py-6",
-        mode === "setup" ? "md:col-start-1" : "md:col-start-2",
+        mode === "code" ? "md:col-start-1" : "md:col-start-2",
         "transition-[opacity,transform] duration-500 ease-out",
         active
           ? "translate-x-0 opacity-100 md:delay-300"
-          : cx("pointer-events-none opacity-0 max-md:hidden", mode === "setup" ? "md:-translate-x-12" : "md:translate-x-12"),
+          : cx("pointer-events-none opacity-0 max-md:hidden", mode === "code" ? "md:-translate-x-12" : "md:translate-x-12"),
       )}
     >
       <div className="mx-auto w-full max-w-sm">
@@ -94,8 +94,8 @@ function Story({ mode, active, children }: { mode: AuthMode; active: boolean; ch
 const lightButton =
   "group inline-flex min-h-11 items-center gap-2 rounded-full bg-paper px-5 text-sm font-semibold text-ink transition-[transform,background-color] duration-200 hover:bg-mist active:scale-[0.97]";
 
-export function AuthPanels({ initial, login, setup }: { initial: AuthMode; login: ReactNode; setup: ReactNode }) {
-  const [mode, setMode] = useState<AuthMode>(initial);
+export function AuthPanels({ login, code }: { login: ReactNode; code: ReactNode }) {
+  const [mode, setMode] = useState<AuthMode>("login");
   const panels = useRef(new Map<AuthMode, HTMLElement>());
   const switched = useRef(false);
 
@@ -103,9 +103,6 @@ export function AuthPanels({ initial, login, setup }: { initial: AuthMode; login
     if (next === mode) return;
     switched.current = true;
     setMode(next);
-    // Keep the address in step (and ?next= for sign in) without reloading.
-    const search = next === "login" ? window.location.search : "";
-    window.history.replaceState(null, "", `/${next}${search}`);
     document.title = TITLES[next];
   }
 
@@ -126,13 +123,13 @@ export function AuthPanels({ initial, login, setup }: { initial: AuthMode; login
       <div className="relative mx-auto flex w-full max-w-5xl animate-rise flex-col overflow-hidden rounded-[2rem] bg-paper shadow-[0_50px_100px_-30px_rgba(0,0,0,0.35),0_20px_40px_-20px_rgba(0,0,0,0.2)] md:block md:min-h-[540px]">
         <div className="order-2 md:grid md:min-h-[540px] md:grid-cols-2">
           <Panel
-            mode="setup"
+            mode="code"
             active={!isLogin}
-            title="Set up."
-            intro="Create the owner account. This only works once."
-            panelRef={(el) => (el ? panels.current.set("setup", el) : panels.current.delete("setup"))}
+            title="Get a code."
+            intro="Only for emails a super admin has added."
+            panelRef={(el) => (el ? panels.current.set("code", el) : panels.current.delete("code"))}
           >
-            {setup}
+            {code}
           </Panel>
           <Panel
             mode="login"
@@ -165,28 +162,26 @@ export function AuthPanels({ initial, login, setup }: { initial: AuthMode; login
                 <Point>Jody Core, ready when you are</Point>
               </ul>
               <div className="mt-10 flex flex-wrap items-center gap-4">
-                <span className="text-sm text-paper/70">First time here?</span>
-                <SwitchTo mode="setup" className={lightButton}>
-                  Set up JodyOS
+                <span className="text-sm text-paper/70">No password to hand?</span>
+                <SwitchTo mode="code" className={lightButton}>
+                  Get code
                   <span aria-hidden="true" className="transition-transform duration-200 group-hover:translate-x-1">
                     →
                   </span>
                 </SwitchTo>
               </div>
             </Story>
-            <Story mode="setup" active={!isLogin}>
-              <p className="label text-paper/70">One owner, one key</p>
-              <p className="mt-4 text-4xl font-extrabold leading-[0.95] tracking-[-0.04em] sm:text-6xl">Make it yours.</p>
-              <p className="mt-5 max-w-sm text-lg leading-relaxed text-paper/80">
-                You&apos;ll need the setup token from your Vercel settings. It proves this JodyOS is yours.
-              </p>
+            <Story mode="code" active={!isLogin}>
+              <p className="label text-paper/70">One-time code</p>
+              <p className="mt-4 text-4xl font-extrabold leading-[0.95] tracking-[-0.04em] sm:text-6xl">Just your email.</p>
+              <p className="mt-5 max-w-sm text-lg leading-relaxed text-paper/80">We email you a 6-digit code. Type it in and you&apos;re signed in.</p>
               <ul className="mt-8 hidden space-y-3 text-[15px] text-paper/90 sm:block">
-                <Point>Takes under a minute</Point>
-                <Point>Only you can sign in</Point>
-                <Point>Remove the token afterwards and setup stays locked</Point>
+                <Point>Only for people a super admin added</Point>
+                <Point>Works once, for 10 minutes</Point>
+                <Point>Nothing to remember</Point>
               </ul>
               <div className="mt-10 flex flex-wrap items-center gap-4">
-                <span className="text-sm text-paper/70">Already set up?</span>
+                <span className="text-sm text-paper/70">Have your password?</span>
                 <SwitchTo mode="login" className={lightButton}>
                   <span aria-hidden="true" className="transition-transform duration-200 group-hover:-translate-x-1">
                     ←

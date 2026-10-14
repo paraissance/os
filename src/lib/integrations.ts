@@ -107,13 +107,14 @@ export function listIntegrations(): Integration[] {
     },
     {
       id: "email",
-      name: "Email",
+      name: "Email (Resend)",
       category: "Messaging",
-      phase: 4,
-      description: "Notifications and reports by email.",
-      status: "planned",
-      envVars: [],
-      setup: "Phase 4, with notifications.",
+      phase: 1,
+      description: "Sends the 6-digit sign-in codes. Notifications and reports by email come later, in Phase 4.",
+      status: env.email ? "connected" : "not_configured",
+      envVars: ["RESEND_API_KEY", "EMAIL_FROM"],
+      setup:
+        'Create an account at resend.com, add your domain and the DNS records it shows, then create an API key. In Vercel add RESEND_API_KEY and EMAIL_FROM (like "JodyOS <login@yourdomain.com>", on that domain) and redeploy.',
     },
     {
       id: "mcp",

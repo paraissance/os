@@ -59,7 +59,14 @@ async function SettingsView() {
                     {a.role === "owner" ? <Badge tone="accent">Default</Badge> : null}
                     {a.id === user.id ? <Badge>You</Badge> : null}
                   </p>
-                  <p className="truncate text-sm text-muted">{a.email}</p>
+                  <p className="truncate text-sm text-muted">
+                    {a.username ? (
+                      <>
+                        Signs in as <span className="font-semibold text-ink">{a.username}</span> ·{" "}
+                      </>
+                    ) : null}
+                    {a.email}
+                  </p>
                 </div>
                 {a.role !== "owner" && a.id !== user.id ? <RemoveAdminButton id={a.id} name={a.name} /> : null}
               </li>

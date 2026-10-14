@@ -4,5 +4,5 @@ import { AuthScreen } from "../auth-screen";
 export const metadata: Metadata = { title: "Sign in" };
 
 export default function LoginPage() {
-  return <AuthScreen initial="login" />;
+  return <AuthScreen />;
 }

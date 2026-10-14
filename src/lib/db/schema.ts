@@ -35,6 +35,8 @@ export const users = pgTable(
     id: uuid("id").primaryKey().defaultRandom(),
     // Always stored lower-cased; see normalizeEmail().
     email: text("email").notNull(),
+    // What they sign in with. Lower-cased; see normalizeUsername().
+    username: text("username"),
     name: text("name").notNull(),
     passwordHash: text("password_hash").notNull(),
     role: text("role", { enum: USER_ROLES }).notNull().default("owner"),
@@ -44,8 +46,29 @@ export const users = pgTable(
   },
   (t) => [
     uniqueIndex("users_email_unique").on(t.email),
+    uniqueIndex("users_username_unique").on(t.username),
     check("users_role_check", sql`${t.role} in ('owner', 'admin')`),
   ],
+);
+
+/**
+ * A 6-digit sign-in code sent by email. Only a hash is kept; one per user
+ * (a new request replaces the old one); it expires in minutes and allows a
+ * few tries before it is thrown away.
+ */
+export const loginCodes = pgTable(
+  "login_codes",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    codeHash: text("code_hash").notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    attempts: integer("attempts").notNull().default(0),
+    createdAt: createdAt(),
+  },
+  (t) => [index("login_codes_user_idx").on(t.userId)],
 );
 
 export const sessions = pgTable(

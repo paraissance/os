@@ -139,6 +139,12 @@ describe("environment", () => {
     expect(parseEnv({ VERCEL: "1", DATABASE_URL: "postgresql://u:p@h/db" }).DATABASE_URL).toBe("postgresql://u:p@h/db");
   });
 
+  it("checks the sender address for sign-in code emails", () => {
+    expect(parseEnv({ EMAIL_FROM: "JodyOS <login@example.com>" }).EMAIL_FROM).toBe("JodyOS <login@example.com>");
+    expect(parseEnv({ EMAIL_FROM: "login@example.com" }).EMAIL_FROM).toBe("login@example.com");
+    expect(() => parseEnv({ EMAIL_FROM: "JodyOS" })).toThrow(/EMAIL_FROM/);
+  });
+
   it("rejects a weak setup token without echoing it", () => {
     try {
       parseEnv({ SETUP_TOKEN: "tooshort" });

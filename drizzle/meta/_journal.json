@@ -29,6 +29,13 @@
       "when": 1792007790906,
       "tag": "0003_super_admins",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1792009039278,
+      "tag": "0004_usernames_and_codes",
+      "breakpoints": true
     }
   ]
 }

@@ -14,8 +14,18 @@ export function LoginForm() {
     <form action={action} className="space-y-5" noValidate>
       <input type="hidden" name="next" value={params.get("next") ?? "/"} />
       {state?.error ? <Alert tone="bad">{state.error}</Alert> : null}
-      <Field label="Email" htmlFor="login-email">
-        <Input id="login-email" name="email" type="email" autoComplete="username" required autoFocus defaultValue={state?.values?.email} />
+      <Field label="User name" htmlFor="login-username">
+        <Input
+          id="login-username"
+          name="username"
+          autoComplete="username"
+          autoCapitalize="none"
+          spellCheck={false}
+          required
+          autoFocus
+          maxLength={254}
+          defaultValue={state?.values?.username}
+        />
       </Field>
       <Field label="Password" htmlFor="login-password">
         <PasswordInput id="login-password" name="password" autoComplete="current-password" required />

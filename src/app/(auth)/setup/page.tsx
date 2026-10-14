@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import { AuthScreen } from "../auth-screen";
+import { SetupScreen } from "../auth-screen";
 
 export const metadata: Metadata = { title: "Setup" };
 
 export default function SetupPage() {
-  return <AuthScreen initial="setup" />;
+  return <SetupScreen />;
 }
