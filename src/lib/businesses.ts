@@ -181,6 +181,18 @@ export async function saveSite(businessId: string, id: string | null, input: Sit
   return row;
 }
 
+/** Sets (or, with null, clears) where a website is edited: what puts it on the Websites page. */
+export async function setSiteEditLink(siteId: string, editUrl: string | null) {
+  const db = await getDb();
+  const [row] = await db
+    .update(businessSites)
+    .set({ editUrl, updatedAt: new Date() })
+    .where(eq(businessSites.id, siteId))
+    .returning({ domain: businessSites.domain, editUrl: businessSites.editUrl });
+  if (!row) throw new BusinessError("That website no longer exists.");
+  return row;
+}
+
 /** businessId null = a tool shared by every business. */
 export async function saveSubscription(businessId: string | null, id: string | null, input: SubscriptionInput) {
   const db = await getDb();

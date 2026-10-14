@@ -9,6 +9,7 @@ import {
   saveFaqAction,
   saveLinkAction,
   saveSiteAction,
+  saveSiteEditLinkAction,
   saveSubscriptionAction,
 } from "@/app/actions/businesses";
 import type { FormState } from "@/app/actions/form-state";
@@ -451,7 +452,7 @@ export function SitesEditor({ businessId, sites }: { businessId: string; sites: 
               </div>
               {text("editUrl", "Edit link", {
                 url: true,
-                hint: "Where you edit this website, like its Claude Code session or the WordPress admin. Websites with an edit link are listed on the Businesses page.",
+                hint: "Where you edit this website, like its Claude Code session or the WordPress admin. Websites with an edit link are listed on the Websites page.",
               })}
             </Group>
             <Group title="Domain">
@@ -608,6 +609,52 @@ export function SubscriptionsEditor({ businessId, subscriptions }: { businessId:
         </>
       )}
     />
+  );
+}
+
+/* ─── Websites page ───────────────────────────────────────────────── */
+
+export type SiteChoice = { id: string; label: string; editUrl: string | null };
+
+/** Pick one of the businesses' websites and paste where it's edited. The link box follows the website picked. */
+export function WebsiteLinkForm({ sites }: { sites: SiteChoice[] }) {
+  const firstFree = sites.find((s) => !s.editUrl) ?? sites[0];
+  const [siteId, setSiteId] = useState(firstFree?.id ?? "");
+  const [url, setUrl] = useState(firstFree?.editUrl ?? "");
+  const { state, pending, onSubmit, err } = useForm(saveSiteEditLinkAction);
+  const current = sites.find((s) => s.id === siteId);
+  return (
+    <form onSubmit={onSubmit} className="space-y-4">
+      <Status state={state} />
+      <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
+        <Field label="Website" htmlFor="weblink-site" error={err.siteId}>
+          <Select
+            id="weblink-site"
+            name="siteId"
+            value={siteId}
+            onChange={(e) => {
+              setSiteId(e.target.value);
+              setUrl(sites.find((s) => s.id === e.target.value)?.editUrl ?? "");
+            }}
+          >
+            {sites.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.label}
+                {s.editUrl ? " (listed)" : ""}
+              </option>
+            ))}
+          </Select>
+        </Field>
+        <Field label="Edit link" htmlFor="weblink-url" error={err.editUrl} hint="Where you edit it, like its Claude Code session. Leave it empty to take the website off this page.">
+          <Input id="weblink-url" name="editUrl" value={url} onChange={(e) => setUrl(e.target.value)} inputMode="url" placeholder="claude.ai/code/session_…" />
+        </Field>
+      </div>
+      <div className="flex justify-end">
+        <Button type="submit" disabled={pending || (!url.trim() && !current?.editUrl)}>
+          {pending ? "Saving…" : current?.editUrl && !url.trim() ? "Take off this page" : "Save"}
+        </Button>
+      </div>
+    </form>
   );
 }
 

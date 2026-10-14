@@ -7,25 +7,32 @@ import { Wordmark } from "@/components/ui/logo";
 import { cx } from "@/components/ui/primitives";
 
 /**
- * Six places, nothing more. Everything else (AI Command, Activity,
- * Integrations and the pages still to come) lives under Others.
+ * The main places, nothing more. Everything else (Activity, Integrations and
+ * the pages still to come) lives under Others. `also` lists pages that belong
+ * to a place without being its address (AI Command is part of AI & Analytics).
  */
-const NAV = [
+const NAV: { href: string; label: string; also?: string[] }[] = [
   { href: "/", label: "Dashboard" },
   { href: "/businesses", label: "Businesses" },
+  { href: "/websites", label: "Websites" },
   { href: "/social", label: "Social Media" },
   { href: "/spending", label: "Spending" },
+  { href: "/analytics", label: "AI & Analytics", also: ["/command"] },
   { href: "/others", label: "Others" },
   { href: "/settings", label: "Settings" },
-] as const;
+];
+
+function under(pathname: string, href: string) {
+  return href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`);
+}
 
 function isActive(pathname: string, href: string) {
-  if (href === "/") return pathname === "/";
   if (href === "/others") {
     // Any page that isn't one of the other main places belongs to Others.
-    return !NAV.some((n) => n.href !== "/others" && (n.href === "/" ? pathname === "/" : pathname === n.href || pathname.startsWith(`${n.href}/`)));
+    return !NAV.some((n) => n.href !== "/others" && [n.href, ...(n.also ?? [])].some((h) => under(pathname, h)));
   }
-  return pathname === href || pathname.startsWith(`${href}/`);
+  const item = NAV.find((n) => n.href === href);
+  return [href, ...(item?.also ?? [])].some((h) => under(pathname, h));
 }
 
 function NavGroups({ activePath, onNavigate }: { activePath: string | null; onNavigate?: () => void }) {

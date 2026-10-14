@@ -1,8 +1,8 @@
 /**
  * The JodyOS module map: one list drives the Others page and the "coming in
  * Phase N" pages, so a module goes live by flipping its `phase` once its
- * real page replaces the placeholder. The sidebar itself has six fixed
- * places (see src/components/shell/app-shell.tsx).
+ * real page replaces the placeholder. The sidebar itself has a fixed set of
+ * main places (see src/components/shell/app-shell.tsx).
  */
 export type ModuleGroup = "Core" | "Business" | "Operations" | "System";
 
@@ -62,12 +62,11 @@ export const MODULES: ModuleDef[] = [
     label: "Websites",
     href: "/websites",
     group: "Business",
-    phase: 3,
-    summary: "All sites across WordPress, Vercel and GitHub, with deploy and health status.",
+    phase: 1,
+    summary: "The websites you work on, with links to visit them and to where they're edited. Deploy and health status arrive in Phase 3.",
     planned: [
-      "Domain, business, platform, hosting, repo, deploy provider",
-      "Status and last deploy pulled live from GitHub and Vercel",
-      "Analytics and SEO per site",
+      "Status and last deploy pulled live from GitHub and Vercel (Phase 3)",
+      "Site health, uptime and SEO per site (Phase 3)",
     ],
   },
   {
@@ -94,15 +93,14 @@ export const MODULES: ModuleDef[] = [
   },
   {
     id: "analytics",
-    label: "Analytics",
+    label: "AI & Analytics",
     href: "/analytics",
-    group: "Business",
-    phase: 3,
-    summary: "Traffic and conversions per business, starting with Google Analytics 4.",
+    group: "Core",
+    phase: 1,
+    summary: "Jody Core and your numbers: ask anything, pick up recent conversations, and see leads per business when OS Analytics is connected.",
     planned: [
-      "Users, sessions, sources, top pages, conversions",
-      "Trends and period comparisons",
-      "More providers later",
+      "Website traffic from Google Analytics 4: users, sessions, sources, top pages, conversions (Phase 3)",
+      "Trends and period comparisons (Phase 3)",
     ],
   },
   {

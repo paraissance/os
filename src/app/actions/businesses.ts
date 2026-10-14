@@ -26,6 +26,7 @@ import {
   saveLink,
   saveSite,
   saveSubscription,
+  setSiteEditLink,
   updateBusiness,
   type PartKind,
 } from "@/lib/businesses";
@@ -154,6 +155,30 @@ export async function saveSiteAction(_prev: FormState, formData: FormData) {
 }
 export async function saveSubscriptionAction(_prev: FormState, formData: FormData) {
   return savePart("subscription", formData);
+}
+
+const editLinkInput = siteInput.pick({ editUrl: true });
+
+/** From the Websites page: pick a website, paste where it's edited (empty takes it off the page). */
+export async function saveSiteEditLinkAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const user = await requireUser();
+  const siteId = uuid.safeParse(formData.get("siteId"));
+  if (!siteId.success) return { error: "Choose a website.", fieldErrors: { siteId: "Choose a website." } };
+  const parsed = editLinkInput.safeParse({ editUrl: formData.get("editUrl") ?? "" });
+  if (!parsed.success) return { error: "Check the edit link.", fieldErrors: fieldErrors(parsed.error) };
+  try {
+    const site = await setSiteEditLink(siteId.data, parsed.data.editUrl);
+    await logActivity({
+      action: "business.site_updated",
+      status: "success",
+      userId: user.id,
+      result: site.editUrl ? `Saved the edit link for ${site.domain}` : `Removed the edit link for ${site.domain}`,
+    });
+    refresh();
+    return { message: site.editUrl ? `${site.domain} is on the Websites page.` : `${site.domain} was taken off the Websites page.` };
+  } catch (err) {
+    return failure(err);
+  }
 }
 
 export async function deletePartAction(_prev: FormState, formData: FormData): Promise<FormState> {
