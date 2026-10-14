@@ -54,6 +54,12 @@ describe("what the owner may type", () => {
     expect(siteInput.safeParse({ domain: "a.com", sslExpiry: "2026-02-31" }).success).toBe(false);
   });
 
+  it("keeps a website's edit link only when it is a web address", () => {
+    expect(siteInput.parse({ domain: "a.com", editUrl: "editor.example.com/site/1" }).editUrl).toBe("https://editor.example.com/site/1");
+    expect(siteInput.parse({ domain: "a.com", editUrl: " " }).editUrl).toBeNull();
+    expect(siteInput.safeParse({ domain: "a.com", editUrl: "javascript:alert(1)" }).success).toBe(false);
+  });
+
   it("reads prices the way people type them", () => {
     expect(subscriptionInput.parse({ name: "Canva", amount: "$1,299.50" }).amount).toBe(1299.5);
     expect(subscriptionInput.parse({ name: "Free", amount: "" })).toMatchObject({ amount: 0, currency: "USD", billingCycle: "monthly", category: "other" });
@@ -126,7 +132,7 @@ describe("businesses in the database", () => {
           name: "Example Leads Co",
           tagline: "Leads for agents",
           links: [{ label: "Facebook", url: "facebook.com/x", kind: "social" }],
-          sites: [{ domain: "leads.example.com", registrar: "Example Registrar" }],
+          sites: [{ domain: "leads.example.com", registrar: "Example Registrar", editUrl: "https://editor.example.com/leads" }],
         },
         { slug: "new-one", name: "New One", faqs: [{ question: "Price?", answer: "Ask us." }], subscriptions: [{ name: "Host", amount: 120, billingCycle: "yearly" }] },
       ],
@@ -140,7 +146,7 @@ describe("businesses in the database", () => {
     expect(leads).toMatchObject({ name: "Example Leads Co", tagline: "Leads for agents" });
     expect(leads.links.map((l) => l.label)).toEqual(["Facebook"]); // the old Instagram link was replaced
     expect(leads.subscriptions).toEqual([]); // Canva wasn't in the file
-    expect(leads.sites.map((s) => s.registrar)).toEqual(["Example Registrar"]);
+    expect(leads.sites.map((s) => [s.registrar, s.editUrl])).toEqual([["Example Registrar", "https://editor.example.com/leads"]]);
     expect(book.businesses.find((b) => b.slug === "new-one")!.faqs.map((f) => f.question)).toEqual(["Price?"]);
     expect(book.shared.map((s) => s.name)).toEqual(["AI tool"]);
   });
@@ -157,6 +163,7 @@ describe("businesses in the database", () => {
     const file = await exportBook(new Date("2026-10-14T10:00:00Z"));
     const parsed = importFileSchema.parse(JSON.parse(JSON.stringify(file)));
     expect(parsed.businesses.map((b) => b.slug)).toEqual(["example-leads", "new-one"]);
+    expect(file.businesses[0].sites[0].editUrl).toBe("https://editor.example.com/leads");
 
     for (const b of (await loadBook()).businesses) await deleteBusiness(b.id);
     expect((await loadBook()).businesses).toEqual([]);

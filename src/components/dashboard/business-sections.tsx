@@ -557,7 +557,15 @@ function SiteBlock({ site, today }: { site: BusinessSite; today: Date }) {
             {site.domain}
           </Out>
         </h4>
-        {site.platform ? <Badge>{site.platform}</Badge> : null}
+        <div className="flex flex-wrap items-center gap-2">
+          {site.platform ? <Badge>{site.platform}</Badge> : null}
+          {site.editUrl ? (
+            <a href={site.editUrl} target="_blank" rel="noopener noreferrer" className={buttonClass("primary", "min-h-9 px-4")}>
+              Edit website <span aria-hidden="true">↗</span>
+              <span className="sr-only">(opens in a new tab)</span>
+            </a>
+          ) : null}
+        </div>
       </div>
       <Tiles className="sm:grid-cols-3">
         {items.map(([item, provider]) => {

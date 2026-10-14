@@ -303,6 +303,7 @@ export async function exportBook(now: Date) {
         domain: s.domain,
         url: s.url,
         platform: s.platform,
+        editUrl: s.editUrl,
         registrar: s.registrar,
         registrarAccount: s.registrarAccount,
         registrarLoginUrl: s.registrarLoginUrl,

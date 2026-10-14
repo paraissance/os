@@ -192,6 +192,8 @@ export const businessSites = pgTable(
     domain: text("domain").notNull(),
     url: text("url"),
     platform: text("platform"),
+    /** Where the owner edits the site: a Claude Code session, the WordPress admin, the Kajabi dashboard… */
+    editUrl: text("edit_url"),
     registrar: text("registrar"),
     registrarAccount: text("registrar_account"),
     registrarLoginUrl: text("registrar_login_url"),

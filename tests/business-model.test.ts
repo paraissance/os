@@ -26,6 +26,7 @@ function site(over: Partial<BusinessSite> = {}): BusinessSite {
     domain: "leads.example.com",
     url: null,
     platform: null,
+    editUrl: null,
     registrar: null,
     registrarAccount: null,
     registrarLoginUrl: null,
@@ -208,7 +209,9 @@ describe("links and dates", () => {
       { id: "l3", businessId: "b1", label: "CRM", url: "https://crm.example/login", kind: "login", note: "owner", sortOrder: 2, createdAt: at },
     ],
     faqs: [{ id: "f1", businessId: "b1", question: "Price?", answer: null, linkLabel: "Pricing", linkUrl: "https://leads.example.com/pricing", sortOrder: 0, createdAt: at }],
-    sites: [site({ registrar: "GoDaddy", registrarLoginUrl: "https://sso.godaddy.com", registrarAccount: "Main", domainExpiry: "2026-12-01" })],
+    sites: [
+      site({ registrar: "GoDaddy", registrarLoginUrl: "https://sso.godaddy.com", registrarAccount: "Main", domainExpiry: "2026-12-01", editUrl: "https://editor.example.com/leads" }),
+    ],
     subscriptions: [sub({ name: "Canva", loginUrl: "https://canva.com/login", account: "me@x", nextRenewal: "2026-10-20" })],
   });
   const shared = [sub({ businessId: null, name: "Scheduler", loginUrl: "https://sched.example", nextRenewal: "2027-05-01" })];
@@ -218,7 +221,7 @@ describe("links and dates", () => {
     expect(groups.map((g) => [g.id, g.links.map((l) => l.label)])).toEqual([
       ["pages", ["Website", "Book a call", "Pricing"]],
       ["social", ["Instagram"]],
-      ["logins", ["CRM", "Domain · GoDaddy", "Canva", "Scheduler"]],
+      ["logins", ["CRM", "Edit leads.example.com", "Domain · GoDaddy", "Canva", "Scheduler"]],
     ]);
     expect(groups[2].links.find((l) => l.label === "Scheduler")?.note).toBe("shared");
     expect(linkGroups(r, shared, { leads: "https://wp.example/wp-admin/admin.php?page=jdy-leads" }).at(-1)).toMatchObject({ id: "admin", links: [{ label: "Leads" }] });

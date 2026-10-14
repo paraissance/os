@@ -386,7 +386,7 @@ export function FaqsEditor({ businessId, faqs }: { businessId: string; faqs: Bus
 /* ─── Websites ────────────────────────────────────────────────────── */
 
 const SITE_FIELDS = [
-  "domain", "url", "platform", "registrar", "registrarAccount", "registrarLoginUrl", "domainExpiry", "hostingProvider",
+  "domain", "url", "platform", "editUrl", "registrar", "registrarAccount", "registrarLoginUrl", "domainExpiry", "hostingProvider",
   "hostingPlan", "hostingAccount", "hostingLoginUrl", "hostingExpiry", "sslProvider", "sslExpiry", "serverIp", "nameservers",
   "lastBackup", "notes",
 ] as const;
@@ -449,6 +449,10 @@ export function SitesEditor({ businessId, sites }: { businessId: string; sites: 
                 {text("url", "Address", { placeholder: "example.com", url: true })}
                 {text("platform", "Built with", { placeholder: "WordPress, Kajabi…" })}
               </div>
+              {text("editUrl", "Edit link", {
+                url: true,
+                hint: "Where you edit this website, like its Claude Code session or the WordPress admin. Websites with an edit link are listed on the Businesses page.",
+              })}
             </Group>
             <Group title="Domain">
               <div className="grid gap-4 sm:grid-cols-2">

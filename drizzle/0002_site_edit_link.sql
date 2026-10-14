@@ -1,0 +1,1 @@
+ALTER TABLE "business_sites" ADD COLUMN "edit_url" text;

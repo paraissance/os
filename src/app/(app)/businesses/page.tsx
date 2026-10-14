@@ -5,9 +5,10 @@ import { moveBusinessAction } from "@/app/actions/businesses";
 import { requireUser } from "@/lib/auth/current-user";
 import { businessHref } from "@/lib/business-sections";
 import { loadBook } from "@/lib/businesses";
-import { mostUrgent, monthlyTotal, renewalWords, siteRenewals, toolsFor } from "@/lib/business-model";
+import { mostUrgent, monthlyTotal, renewalWords, siteRenewals, toolsFor, type BusinessBook } from "@/lib/business-model";
 import { requestNow } from "@/lib/clock";
 import { formatMoney } from "@/lib/money";
+import { Title } from "@/components/dashboard/ui";
 import { Badge, PageHeader, Skeleton, StatusDot, buttonClass } from "@/components/ui/primitives";
 
 export const metadata: Metadata = { title: "Businesses" };
@@ -51,6 +52,42 @@ function MoveButton({ id, direction, disabled }: { id: string; direction: "up" |
         {direction === "up" ? "↑" : "↓"}
       </button>
     </form>
+  );
+}
+
+/** The websites the owner works on: every site with an edit link, to open or to edit. */
+function WebsiteList({ book }: { book: BusinessBook }) {
+  const sites = book.businesses.flatMap((b) => b.sites.filter((s) => s.editUrl).map((s) => ({ site: s, business: b })));
+  return (
+    <section className="reveal">
+      <Title count={sites.length}>Websites</Title>
+      {sites.length ? (
+        <ul className="stagger grid grid-cols-[minmax(0,1fr)] gap-3 sm:grid-cols-2">
+          {sites.map(({ site, business }) => (
+            <li key={site.id} className="flex flex-col gap-4 rounded-2xl bg-wash p-5">
+              <div className="min-w-0">
+                <p className="truncate text-xl font-extrabold tracking-[-0.02em]">{site.domain}</p>
+                <p className="truncate text-sm text-muted">{[business.name, site.platform].filter(Boolean).join(" · ")}</p>
+              </div>
+              <div className="mt-auto flex flex-wrap gap-2">
+                <a href={site.url ?? `https://${site.domain}`} target="_blank" rel="noopener noreferrer" className={buttonClass("light", "min-h-9 px-4")}>
+                  Visit <span aria-hidden="true">↗</span>
+                  <span className="sr-only">(opens in a new tab)</span>
+                </a>
+                <a href={site.editUrl ?? undefined} target="_blank" rel="noopener noreferrer" className={buttonClass("primary", "min-h-9 px-4")}>
+                  Edit website <span aria-hidden="true">↗</span>
+                  <span className="sr-only">(opens in a new tab)</span>
+                </a>
+              </div>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="rounded-2xl bg-wash px-5 py-4 text-muted">
+          No edit links saved yet. Open a business, choose Edit, and add the edit link to its website: it shows up here.
+        </p>
+      )}
+    </section>
   );
 }
 
@@ -122,6 +159,8 @@ async function BusinessList() {
           );
         })}
       </ul>
+
+      <WebsiteList book={book} />
 
       <p className="reveal flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-wash px-5 py-4">
         <span className="text-muted">What each business pays for, and the tools they share, is on the Spending page.</span>

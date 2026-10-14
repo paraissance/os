@@ -295,6 +295,7 @@ export function linkGroups(record: BusinessRecord, shared: Subscription[], admin
 
   const logins: LinkRow[] = [...by("login")];
   for (const s of record.sites) {
+    if (s.editUrl) logins.push({ label: `Edit ${s.domain}`, url: s.editUrl, note: "Where you edit the website" });
     if (s.registrarLoginUrl) logins.push({ label: `Domain · ${s.registrar ?? s.domain}`, url: s.registrarLoginUrl, note: s.registrarAccount });
     if (s.hostingLoginUrl) logins.push({ label: `Hosting · ${s.hostingProvider ?? s.domain}`, url: s.hostingLoginUrl, note: s.hostingAccount });
   }

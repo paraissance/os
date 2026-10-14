@@ -144,6 +144,7 @@ export const siteInput = z.object({
   ),
   url: optUrl,
   platform: optText(80),
+  editUrl: optUrl,
   registrar: optText(120),
   registrarAccount: optText(200),
   registrarLoginUrl: optUrl,

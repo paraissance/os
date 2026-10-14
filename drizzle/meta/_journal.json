@@ -15,6 +15,13 @@
       "when": 1791918302832,
       "tag": "0001_businesses",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792006972250,
+      "tag": "0002_site_edit_link",
+      "breakpoints": true
     }
   ]
 }
