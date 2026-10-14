@@ -21,6 +21,14 @@ const createdAt = () =>
 const updatedAt = () =>
   timestamp("updated_at", { withTimezone: true }).notNull().defaultNow();
 
+/**
+ * Everyone who can sign in is a super admin with full access. "owner" is the
+ * default one, made at setup, and can't be removed; "admin" is one added
+ * later in Settings.
+ */
+export const USER_ROLES = ["owner", "admin"] as const;
+export type UserRole = (typeof USER_ROLES)[number];
+
 export const users = pgTable(
   "users",
   {
@@ -29,14 +37,14 @@ export const users = pgTable(
     email: text("email").notNull(),
     name: text("name").notNull(),
     passwordHash: text("password_hash").notNull(),
-    role: text("role", { enum: ["owner"] }).notNull().default("owner"),
+    role: text("role", { enum: USER_ROLES }).notNull().default("owner"),
     lastLoginAt: timestamp("last_login_at", { withTimezone: true }),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
   (t) => [
     uniqueIndex("users_email_unique").on(t.email),
-    check("users_role_check", sql`${t.role} in ('owner')`),
+    check("users_role_check", sql`${t.role} in ('owner', 'admin')`),
   ],
 );
 

@@ -22,6 +22,13 @@
       "when": 1792006972250,
       "tag": "0002_site_edit_link",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1792007790906,
+      "tag": "0003_super_admins",
+      "breakpoints": true
     }
   ]
 }

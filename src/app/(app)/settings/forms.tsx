@@ -1,7 +1,8 @@
 "use client";
 
 import { startTransition, useActionState, useState, type FormEvent } from "react";
-import { changePasswordAction, revokeOtherSessionsAction, saveSettingsAction } from "@/app/actions/settings";
+import { addAdminAction, changePasswordAction, removeAdminAction, saveSettingsAction } from "@/app/actions/settings";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Alert, Button, Field, Input, Select, Textarea } from "@/components/ui/primitives";
 
 type Initial = {
@@ -118,16 +119,57 @@ export function PasswordForm() {
   );
 }
 
-export function RevokeSessionsForm({ disabled }: { disabled: boolean }) {
-  const [state, action, pending] = useActionState(revokeOtherSessionsAction, undefined);
+/** Add a super admin: they sign in with this email and password and can use all of JodyOS. */
+export function AddAdminForm() {
+  const [state, action, pending] = useActionState(addAdminAction, undefined);
+  const err = state?.fieldErrors ?? {};
   return (
-    <form action={action} className="flex flex-wrap items-center justify-between gap-3">
-      <span className="text-sm font-semibold" role="status">
-        {state?.message ?? ""}
-      </span>
-      <Button type="submit" variant="ghost" disabled={disabled || pending}>
-        {pending ? "Signing out…" : "Sign out other sessions"}
+    <form action={action} className="space-y-4" noValidate>
+      {state?.error ? <Alert tone="bad">{state.error}</Alert> : null}
+      {state?.message ? <Alert tone="ok">{state.message}</Alert> : null}
+      <Field label="Email" htmlFor="admin-email" error={err.email} hint="They sign in with this.">
+        <Input id="admin-email" name="email" type="email" autoComplete="off" required maxLength={254} defaultValue={state?.values?.email} />
+      </Field>
+      <Field label="User name" htmlFor="admin-name" error={err.name}>
+        <Input id="admin-name" name="name" autoComplete="off" required maxLength={80} defaultValue={state?.values?.name} />
+      </Field>
+      <Field label="Password" htmlFor="admin-password" error={err.password} hint="12 characters or more.">
+        <PasswordInput id="admin-password" name="password" autoComplete="new-password" required minLength={12} />
+      </Field>
+      <Field label="Confirm password" htmlFor="admin-confirm" error={err.confirm}>
+        <PasswordInput id="admin-confirm" name="confirm" autoComplete="new-password" required />
+      </Field>
+      <Button type="submit" disabled={pending}>
+        {pending ? "Adding…" : "Add super admin"}
       </Button>
     </form>
+  );
+}
+
+/** A plain button, not a form: before the page is interactive a click does nothing, and it always asks first. */
+export function RemoveAdminButton({ id, name }: { id: string; name: string }) {
+  const [state, run, pending] = useActionState(removeAdminAction, undefined);
+  const remove = () => {
+    if (!window.confirm(`Remove ${name}? They are signed out and can't sign in again.`)) return;
+    const data = new FormData();
+    data.set("id", id);
+    startTransition(() => run(data));
+  };
+  return (
+    <div className="flex shrink-0 flex-col items-end gap-1">
+      <button
+        type="button"
+        onClick={remove}
+        disabled={pending}
+        className="min-h-9 rounded-full bg-paper px-3.5 text-sm font-semibold transition-colors hover:bg-ink hover:text-paper"
+      >
+        {pending ? "Removing…" : "Remove"}
+      </button>
+      {state?.error ? (
+        <span className="text-xs font-semibold" role="alert">
+          {state.error}
+        </span>
+      ) : null}
+    </div>
   );
 }

@@ -4,6 +4,7 @@ import { eq } from "drizzle-orm";
 import { refresh } from "next/cache";
 import { z } from "zod";
 import { logActivity } from "@/lib/activity";
+import { AdminError, addAdmin, adminInput, removeAdmin } from "@/lib/auth/admins";
 import { requireSession } from "@/lib/auth/current-user";
 import { hashPassword, validatePasswordStrength, verifyPassword } from "@/lib/auth/password";
 import { revokeOtherSessions } from "@/lib/auth/sessions";
@@ -90,15 +91,42 @@ export async function changePasswordAction(_prev: FormState, formData: FormData)
   return { message: "Password changed. Other devices were signed out." };
 }
 
-export async function revokeOtherSessionsAction(): Promise<FormState> {
-  const { user, sessionId } = await requireSession();
-  const removed = await revokeOtherSessions(user.id, sessionId);
-  await logActivity({
-    action: "auth.sessions_revoked",
-    status: "success",
-    userId: user.id,
-    result: `Signed out ${removed} other session${removed === 1 ? "" : "s"}`,
-  });
-  refresh();
-  return { message: removed ? `Signed out ${removed} other session${removed === 1 ? "" : "s"}.` : "No other sessions." };
+export async function addAdminAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const { user } = await requireSession();
+  const limit = await consumeRateLimit(`admin:add:${user.id}`, 10, 15 * 60 * 1000);
+  if (!limit.allowed) return { error: `Too many attempts. Try again in ${minutesUntil(limit.resetAt)} min.` };
+
+  // Echo back only what is safe to re-display: never the passwords.
+  const values = { email: String(formData.get("email") ?? "").slice(0, 254), name: String(formData.get("name") ?? "").slice(0, 80) };
+  const parsed = adminInput.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) {
+    const fieldErrors: Record<string, string> = {};
+    for (const issue of parsed.error.issues) fieldErrors[String(issue.path[0])] ??= issue.message;
+    return { error: "Check the highlighted fields.", fieldErrors, values };
+  }
+
+  try {
+    const added = await addAdmin(parsed.data);
+    await logActivity({ action: "auth.admin_added", status: "success", userId: user.id, result: `Added super admin ${added.name} (${added.email})` });
+    refresh();
+    return { message: `${added.name} is now a super admin and can sign in with ${added.email}.` };
+  } catch (e) {
+    if (e instanceof AdminError) return { error: e.message, fieldErrors: { email: e.message }, values };
+    throw e;
+  }
+}
+
+export async function removeAdminAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const { user } = await requireSession();
+  const id = z.uuid().safeParse(formData.get("id"));
+  if (!id.success) return { error: "That super admin was already removed." };
+  try {
+    const removed = await removeAdmin(id.data, user.id);
+    await logActivity({ action: "auth.admin_removed", status: "success", userId: user.id, result: `Removed super admin ${removed.email}` });
+    refresh();
+    return { message: `Removed ${removed.email}.` };
+  } catch (e) {
+    if (e instanceof AdminError) return { error: e.message };
+    throw e;
+  }
 }

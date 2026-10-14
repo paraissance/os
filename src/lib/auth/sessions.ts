@@ -1,7 +1,7 @@
 import "server-only";
 import { and, desc, eq, gt, lt, ne } from "drizzle-orm";
 import { getDb } from "@/lib/db";
-import { sessions, users } from "@/lib/db/schema";
+import { sessions, users, type UserRole } from "@/lib/db/schema";
 import { generateSessionToken, hashToken } from "./tokens";
 
 export const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
@@ -11,7 +11,7 @@ export type SessionUser = {
   id: string;
   email: string;
   name: string;
-  role: "owner";
+  role: UserRole;
 };
 
 export type ValidSession = {

@@ -168,7 +168,7 @@ export const MODULES: ModuleDef[] = [
     href: "/settings",
     group: "System",
     phase: 1,
-    summary: "Profile, AI behaviour, security and environment.",
+    summary: "Profile, AI behaviour, password and super admin access.",
     planned: [],
   },
 ];

@@ -1,21 +1,18 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import { listAdmins } from "@/lib/auth/admins";
 import { requireSession } from "@/lib/auth/current-user";
-import { requestNow } from "@/lib/clock";
-import { listActiveSessions } from "@/lib/auth/sessions";
-import { envStatus } from "@/lib/env";
-import { describeUserAgent, formatDateTime, formatRelative } from "@/lib/format";
 import { getSettings } from "@/lib/settings";
 import { AI_EFFORTS, AI_MODELS } from "@/lib/ai/models";
-import { Badge, PageHeader, Panel, PanelHeader, Skeleton, StatusDot } from "@/components/ui/primitives";
-import { PasswordForm, RevokeSessionsForm, SettingsForm } from "./forms";
+import { Badge, PageHeader, Panel, PanelHeader, Skeleton } from "@/components/ui/primitives";
+import { AddAdminForm, PasswordForm, RemoveAdminButton, SettingsForm } from "./forms";
 
 export const metadata: Metadata = { title: "Settings" };
 
 export default function SettingsPage() {
   return (
     <>
-      <PageHeader eyebrow="System" title="Settings" description="Profile, AI behaviour, security and environment." />
+      <PageHeader eyebrow="System" title="Settings" description="Your profile, how Jody Core works, your password and who has access." />
       <Suspense fallback={<Skeleton className="h-[36rem]" />}>
         <SettingsView />
       </Suspense>
@@ -29,37 +26,8 @@ function timeZones() {
 }
 
 async function SettingsView() {
-  const { user, sessionId } = await requireSession();
-  const [settings, sessions] = await Promise.all([getSettings(), listActiveSessions(user.id)]);
-  const env = envStatus();
-  const now = requestNow();
-
-  const envRows: { label: string; value: string; ok: boolean; note?: string }[] = [
-    {
-      label: "DATABASE_URL",
-      value: env.database === "postgres" ? "PostgreSQL" : "Local PGlite",
-      ok: true,
-      note: env.database === "pglite" ? "Development only. Production uses DATABASE_URL." : undefined,
-    },
-    {
-      label: "ANTHROPIC_API_KEY",
-      value: env.anthropic ? "Set" : "Not set",
-      ok: env.anthropic,
-      note: env.anthropic ? undefined : "AI Command stays offline until this is set.",
-    },
-    {
-      label: "OS_ANALYTICS_URL / KEY",
-      value: env.osAnalytics ? "Set" : "Not set",
-      ok: env.osAnalytics,
-      note: env.osAnalytics ? undefined : "Businesses stay empty until both are set.",
-    },
-    {
-      label: "SETUP_TOKEN",
-      value: env.setupToken ? "Set" : "Not set",
-      ok: !env.setupToken,
-      note: env.setupToken ? "Setup is done. Remove this variable." : undefined,
-    },
-  ];
+  const { user } = await requireSession();
+  const [settings, admins] = await Promise.all([getSettings(), listAdmins()]);
 
   return (
     <div className="grid grid-cols-[minmax(0,1fr)] gap-10 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
@@ -81,44 +49,26 @@ async function SettingsView() {
         </Panel>
 
         <Panel>
-          <PanelHeader title="Active sessions" description={`${sessions.length} signed-in device${sessions.length === 1 ? "" : "s"}`} />
+          <PanelHeader title="Super admin access" description="Everyone here can sign in and use all of JodyOS." />
           <ul>
-            {sessions.map((s) => (
-              <li key={s.id} className="flex items-start justify-between gap-3 border-b border-hair px-5 py-3">
+            {admins.map((a) => (
+              <li key={a.id} className="flex items-center justify-between gap-3 border-b border-hair px-5 py-3">
                 <div className="min-w-0">
-                  <p className="flex flex-wrap items-center gap-2 text-sm font-semibold">
-                    {describeUserAgent(s.userAgent)}
-                    {s.id === sessionId ? <Badge tone="accent">This device</Badge> : null}
+                  <p className="flex flex-wrap items-center gap-2 font-semibold">
+                    {a.name}
+                    {a.role === "owner" ? <Badge tone="accent">Default</Badge> : null}
+                    {a.id === user.id ? <Badge>You</Badge> : null}
                   </p>
-                  <p className="text-xs text-muted">
-                    {s.ip ?? "unknown IP"} · signed in {formatDateTime(s.createdAt, settings.timezone)}
-                  </p>
+                  <p className="truncate text-sm text-muted">{a.email}</p>
                 </div>
-                <span className="shrink-0 font-mono text-xs text-subtle">{formatRelative(s.lastSeenAt, now)}</span>
+                {a.role !== "owner" && a.id !== user.id ? <RemoveAdminButton id={a.id} name={a.name} /> : null}
               </li>
             ))}
           </ul>
-          <div className="px-5 py-3">
-            <RevokeSessionsForm disabled={sessions.length <= 1} />
+          <div className="p-5">
+            <h3 className="mb-4 font-bold">Add a super admin</h3>
+            <AddAdminForm />
           </div>
-        </Panel>
-
-        <Panel>
-          <PanelHeader title="Environment" description="Configuration checks. Values are never shown." />
-          <ul>
-            {envRows.map((r) => (
-              <li key={r.label} className="border-b border-hair px-5 py-3 last:border-b-0">
-                <div className="flex items-center justify-between gap-3">
-                  <code className="font-mono text-[13px] font-semibold">{r.label}</code>
-                  <span className="flex items-center gap-2 text-sm">
-                    <StatusDot tone={r.ok ? "ok" : "warn"} />
-                    {r.value}
-                  </span>
-                </div>
-                {r.note ? <p className="mt-1 text-xs text-muted">{r.note}</p> : null}
-              </li>
-            ))}
-          </ul>
         </Panel>
       </div>
     </div>
