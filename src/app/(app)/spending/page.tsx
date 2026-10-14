@@ -9,7 +9,7 @@ import { SubscriptionsEditor } from "@/components/businesses/editors";
 import { Bars, Rows, Sentence, Title } from "@/components/dashboard/ui";
 import { PageHeader, Skeleton, StatusDot } from "@/components/ui/primitives";
 
-export const metadata: Metadata = { title: "Spending" };
+export const metadata: Metadata = { title: "Spendings" };
 
 /**
  * Everything the businesses pay for, in one place: the totals, what's due
@@ -20,7 +20,7 @@ export default function SpendingPage() {
     <>
       <PageHeader
         eyebrow="Money"
-        title="Spending"
+        title="Spendings"
         description="What your businesses pay for: software, hosting, domains and services. Add each one once; JodyOS adds up the totals and reminds you before a payment is due."
       />
       <Suspense fallback={<Skeleton className="h-96" />}>

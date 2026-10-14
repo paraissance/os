@@ -103,7 +103,7 @@ async function EditView({
         id="subscriptions"
         title="Subscriptions"
         count={record.subscriptions.length}
-        intro="Tools and services this business pays for. Tools every business shares are on the Spending page."
+        intro="Tools and services this business pays for. Tools every business shares are on the Spendings page."
       >
         <SubscriptionsEditor businessId={record.id} subscriptions={record.subscriptions} />
       </Part>

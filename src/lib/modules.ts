@@ -83,7 +83,7 @@ export const MODULES: ModuleDef[] = [
   },
   {
     id: "spending",
-    label: "Spending",
+    label: "Spendings",
     href: "/spending",
     group: "Business",
     phase: 1,

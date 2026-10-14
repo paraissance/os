@@ -117,7 +117,7 @@ export function SummarySection({ record, shared, live, timeZone, today }: Busine
       {live ? <LiveStory b={live} /> : null}
 
       <Sentence>
-        <b>{plural(record.sites.length, "website")}</b> and <b>{plural(linkCount, "saved link")}</b>
+        <b>{plural(record.sites.length, "site")}</b> and <b>{plural(linkCount, "saved link")}</b>
         {tools.count ? (
           <>
             , plus <b>{plural(tools.count, "paid tool")}</b>

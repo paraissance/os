@@ -16,7 +16,7 @@ const NAV: { href: string; label: string; also?: string[] }[] = [
   { href: "/businesses", label: "Businesses" },
   { href: "/websites", label: "Websites" },
   { href: "/social", label: "Social Media" },
-  { href: "/spending", label: "Spending" },
+  { href: "/spending", label: "Spendings" },
   { href: "/analytics", label: "AI & Analytics", also: ["/command"] },
   { href: "/others", label: "Others" },
   { href: "/settings", label: "Settings" },

@@ -123,6 +123,11 @@
     color-scheme: light;
   }
 
+  /* The bold words in summary sentences read as titles: "7 Active Businesses". */
+  b {
+    text-transform: capitalize;
+  }
+
   html {
     background: var(--color-paper);
   }

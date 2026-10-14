@@ -124,9 +124,9 @@ async function BusinessList() {
       </ul>
 
       <p className="reveal flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-wash px-5 py-4">
-        <span className="text-muted">What each business pays for, and the tools they share, is on the Spending page.</span>
+        <span className="text-muted">What each business pays for, and the tools they share, is on the Spendings page.</span>
         <Link href="/spending" className={buttonClass("light", "min-h-9 px-4")}>
-          Open Spending →
+          Open Spendings →
         </Link>
       </p>
     </div>

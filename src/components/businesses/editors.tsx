@@ -503,7 +503,7 @@ export function SitesEditor({ businessId, sites }: { businessId: string; sites: 
 
 /**
  * The tools a business pays for. With no businessId this edits the tools
- * shared by every business. The Spending page shows one per business, so
+ * shared by every business. The Spendings page shows one per business, so
  * field ids are unique per editor.
  */
 export function SubscriptionsEditor({ businessId, subscriptions }: { businessId: string | null; subscriptions: Subscription[] }) {

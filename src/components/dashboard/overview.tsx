@@ -75,7 +75,7 @@ async function Headline() {
   return (
     <Sentence>
       You have <b>{active.length} active business{active.length === 1 ? "" : "es"}</b>
-      {paused ? ` (and ${paused} paused)` : ""} with <b>{sites} website{sites === 1 ? "" : "s"}</b>.{" "}
+      {paused ? ` (and ${paused} paused)` : ""} with <b>{sites} site{sites === 1 ? "" : "s"}</b>.{" "}
       {monthly > 0 ? (
         <>
           Tools and services cost{" "}
