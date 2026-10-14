@@ -309,6 +309,35 @@ export const socialPosts = pgTable(
   ],
 );
 
+/** Where an invoice comes from: the Spendings page has a tab for each. */
+export const INVOICE_SOURCES = ["claude", "console"] as const;
+export type InvoiceSource = (typeof INVOICE_SOURCES)[number];
+export const INVOICE_STATUSES = ["paid", "unpaid", "refunded", "void"] as const;
+export type InvoiceStatus = (typeof INVOICE_STATUSES)[number];
+
+/**
+ * An invoice the owner pasted in (Claude subscription, Anthropic Console).
+ * The same date and amount from the same place is only kept once, so pasting
+ * a list again only adds what's new. No card or payment details.
+ */
+export const invoices = pgTable(
+  "invoices",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    source: text("source", { enum: INVOICE_SOURCES }).notNull(),
+    billedOn: date("billed_on", { mode: "string" }).notNull(),
+    amount: numeric("amount", { precision: 12, scale: 2, mode: "number" }).notNull(),
+    currency: text("currency").notNull().default("USD"),
+    status: text("status", { enum: INVOICE_STATUSES }).notNull().default("paid"),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    uniqueIndex("invoices_source_day_amount_unique").on(t.source, t.billedOn, t.amount),
+    check("invoices_source_check", sql`${t.source} in ('claude', 'console')`),
+    check("invoices_status_check", sql`${t.status} in ('paid', 'unpaid', 'refunded', 'void')`),
+  ],
+);
+
 /** A paid tool. No business = shared by all businesses. */
 export const subscriptions = pgTable(
   "subscriptions",

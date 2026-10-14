@@ -78,11 +78,7 @@ async function Headline() {
       {paused ? ` (and ${paused} paused)` : ""} with <b>{sites} site{sites === 1 ? "" : "s"}</b>.{" "}
       {monthly > 0 ? (
         <>
-          Tools and services cost{" "}
-          <Link href="/spending" className="underline decoration-2 underline-offset-4">
-            <b>{formatMoney(monthly, "USD")} a month</b>
-          </Link>
-          .{" "}
+          Tools and services cost <b>{formatMoney(monthly, "USD")} a month</b>.{" "}
         </>
       ) : null}
       {liveActive.length ? (

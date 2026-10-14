@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
   bookAttention,
-  costByBusiness,
   daysFrom,
   linkGroups,
   monthlyCost,
@@ -151,17 +150,6 @@ describe("money", () => {
       ["Canva", 2],
     ]);
   });
-
-  it("gives each business its monthly cost, shared tools as their own row", () => {
-    const book = {
-      businesses: [record({ subscriptions: [sub({ amount: 10 })] }), record({ id: "b2", slug: "two", name: "Two", subscriptions: [sub({ amount: 0 })] })],
-      shared: [sub({ businessId: null, amount: 240, billingCycle: "yearly" })],
-    };
-    expect(costByBusiness(book)).toEqual([
-      { name: "Shared by all businesses", slug: null, monthly: 20 },
-      { name: "Example Leads", slug: "example-leads", monthly: 10 },
-    ]);
-  });
 });
 
 describe("attention", () => {
@@ -194,7 +182,7 @@ describe("attention", () => {
       "Scheduler renews in 5 days",
       "Example Leads: Domain renews in 10 days",
     ]);
-    expect(items[2].href).toBe("/spending");
+    expect(items[2].href).toBe("/businesses#shared-tools");
   });
 });
 

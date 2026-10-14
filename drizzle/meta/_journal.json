@@ -50,6 +50,13 @@
       "when": 1792013969273,
       "tag": "0006_social_media",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1792016067899,
+      "tag": "0007_invoices",
+      "breakpoints": true
     }
   ]
 }

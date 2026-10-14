@@ -503,8 +503,8 @@ export function SitesEditor({ businessId, sites }: { businessId: string; sites: 
 
 /**
  * The tools a business pays for. With no businessId this edits the tools
- * shared by every business. The Spendings page shows one per business, so
- * field ids are unique per editor.
+ * shared by every business. Field ids are unique per editor, so several can
+ * share a page.
  */
 export function SubscriptionsEditor({ businessId, subscriptions }: { businessId: string | null; subscriptions: Subscription[] }) {
   const byId = new Map(subscriptions.map((s) => [s.id, s]));

@@ -169,16 +169,6 @@ export function monthlyTotal(subs: Subscription[]): number {
   return round2(subs.filter((s) => s.active).reduce((t, s) => t + monthlyCost(s.amount, s.billingCycle), 0));
 }
 
-/** Monthly software cost per business, shared tools as their own row; largest first. */
-export function costByBusiness(book: BusinessBook): { name: string; slug: string | null; monthly: number }[] {
-  const rows = book.businesses
-    .map((b) => ({ name: b.name, slug: b.slug as string | null, monthly: monthlyTotal(b.subscriptions) }))
-    .filter((r) => r.monthly > 0);
-  const shared = monthlyTotal(book.shared);
-  if (shared > 0) rows.push({ name: "Shared by all businesses", slug: null, monthly: shared });
-  return rows.sort((a, b) => b.monthly - a.monthly);
-}
-
 /* ─── Attention ───────────────────────────────────────────────────── */
 
 function renewalAttention(record: BusinessRecord, today: Date, prefix: string): Attention[] {
@@ -238,7 +228,7 @@ export function bookAttention(book: BusinessBook, today: Date): Attention[] {
     items.push(...renewalAttention(b, today, `${b.name}: `));
     items.push(...subscriptionAttention(b.subscriptions, today, businessHref(b.slug, "money")).map((a) => ({ ...a, title: `${b.name}: ${a.title}` })));
   }
-  items.push(...subscriptionAttention(book.shared, today, "/spending"));
+  items.push(...subscriptionAttention(book.shared, today, "/businesses#shared-tools"));
   return sortAttention(items);
 }
 

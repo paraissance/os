@@ -87,7 +87,7 @@ export const MODULES: ModuleDef[] = [
     href: "/spending",
     group: "Business",
     phase: 1,
-    summary: "What every business pays for: tools, hosting and services, with monthly and yearly totals.",
+    summary: "What is paid to Claude: the Chat & Code subscription and the Console API, from their invoices.",
     planned: [],
   },
   {

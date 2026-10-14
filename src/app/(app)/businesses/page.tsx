@@ -8,6 +8,8 @@ import { loadBook } from "@/lib/businesses";
 import { mostUrgent, monthlyTotal, renewalWords, siteRenewals, toolsFor } from "@/lib/business-model";
 import { requestNow } from "@/lib/clock";
 import { formatMoney } from "@/lib/money";
+import { SubscriptionsEditor } from "@/components/businesses/editors";
+import { Title } from "@/components/dashboard/ui";
 import { Badge, PageHeader, Skeleton, StatusDot, buttonClass } from "@/components/ui/primitives";
 
 export const metadata: Metadata = { title: "Businesses" };
@@ -123,12 +125,11 @@ async function BusinessList() {
         })}
       </ul>
 
-      <p className="reveal flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-wash px-5 py-4">
-        <span className="text-muted">What each business pays for, and the tools they share, is on the Spendings page.</span>
-        <Link href="/spending" className={buttonClass("light", "min-h-9 px-4")}>
-          Open Spendings →
-        </Link>
-      </p>
+      <section id="shared-tools" className="reveal scroll-mt-24">
+        <Title note={book.shared.length ? `${formatMoney(monthlyTotal(book.shared), "USD")} a month` : undefined}>Tools shared by all businesses</Title>
+        <p className="-mt-2 mb-4 text-muted">Things you pay for once that every business uses, like a scheduler or an AI tool. Each business&apos;s own tools are under its Edit.</p>
+        <SubscriptionsEditor businessId={null} subscriptions={book.shared} />
+      </section>
     </div>
   );
 }
