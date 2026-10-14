@@ -47,8 +47,15 @@ export async function listAdmins() {
   return [...rows.filter((u) => u.role === "owner"), ...rows.filter((u) => u.role !== "owner")];
 }
 
-/** `displayName` is the user name as typed ("Sam"); the stored username is lower-cased ("sam"). */
-export async function addAdmin(input: AdminInput, displayName = input.username) {
+/** The default super admin's name ("Jody"): what JodyOS calls everyone. Null before setup. */
+export async function ownerName(): Promise<string | null> {
+  const db = await getDb();
+  const [owner] = await db.select({ name: users.name }).from(users).where(eq(users.role, "owner")).limit(1);
+  return owner?.name ?? null;
+}
+
+/** A new super admin is called by the owner's name (Jody); the user name is only what they sign in with. */
+export async function addAdmin(input: AdminInput) {
   const db = await getDb();
   const email = normalizeEmail(input.email);
   const taken = await db
@@ -57,9 +64,10 @@ export async function addAdmin(input: AdminInput, displayName = input.username) 
     .where(or(eq(users.email, email), eq(users.username, input.username)));
   if (taken.some((t) => t.email === email)) throw new AdminError("That email can already sign in.", "email");
   if (taken.some((t) => t.username === input.username)) throw new AdminError("That user name is taken.", "username");
+  const name = (await ownerName()) ?? input.username;
   const [row] = await db
     .insert(users)
-    .values({ email, username: input.username, name: displayName.trim() || input.username, passwordHash: await hashPassword(input.password), role: "admin" })
+    .values({ email, username: input.username, name, passwordHash: await hashPassword(input.password), role: "admin" })
     .returning({ id: users.id, name: users.name, username: users.username, email: users.email });
   return row;
 }

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense, type ReactNode } from "react";
+import { ownerName } from "@/lib/auth/admins";
 import { requireUser } from "@/lib/auth/current-user";
 import { requestNow } from "@/lib/clock";
 import { envStatus } from "@/lib/env";
@@ -57,14 +58,15 @@ function TabBarSkeleton() {
 
 async function Greeting() {
   const user = await requireUser();
-  const { timezone } = await getSettings();
+  // Every super admin is greeted by the owner's name: this is Jody's OS.
+  const [{ timezone }, owner] = await Promise.all([getSettings(), ownerName()]);
   const now = requestNow();
   const date = new Intl.DateTimeFormat("en-GB", { timeZone: timezone, weekday: "long", day: "numeric", month: "long" }).format(now);
   return (
     <header className="mb-6 animate-rise">
       <p className="label mb-3 text-muted">{date}</p>
       <h1 className="text-5xl font-extrabold leading-[0.95] tracking-[-0.045em] sm:text-7xl">
-        {greeting(now, timezone)}, {user.name.split(" ")[0]}.
+        {greeting(now, timezone)}, {(owner ?? user.name).split(" ")[0]}.
       </h1>
       <p className="mt-3 text-lg text-muted">Here&apos;s how your businesses are doing.</p>
     </header>

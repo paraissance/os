@@ -97,8 +97,7 @@ export async function addAdminAction(_prev: FormState, formData: FormData): Prom
   if (!limit.allowed) return { error: `Too many attempts. Try again in ${minutesUntil(limit.resetAt)} min.` };
 
   // Echo back only what is safe to re-display: never the passwords.
-  const typedName = String(formData.get("username") ?? "").slice(0, 80);
-  const values = { email: String(formData.get("email") ?? "").slice(0, 254), username: typedName };
+  const values = { email: String(formData.get("email") ?? "").slice(0, 254), username: String(formData.get("username") ?? "").slice(0, 80) };
   const parsed = adminInput.safeParse(Object.fromEntries(formData));
   if (!parsed.success) {
     const fieldErrors: Record<string, string> = {};
@@ -107,10 +106,10 @@ export async function addAdminAction(_prev: FormState, formData: FormData): Prom
   }
 
   try {
-    const added = await addAdmin(parsed.data, typedName);
+    const added = await addAdmin(parsed.data);
     await logActivity({ action: "auth.admin_added", status: "success", userId: user.id, result: `Added super admin ${added.username} (${added.email})` });
     refresh();
-    return { message: `${added.name} is now a super admin and signs in as ${added.username}.` };
+    return { message: `Added. They sign in as ${added.username}, or with a code sent to ${added.email}.` };
   } catch (e) {
     if (e instanceof AdminError) return { error: e.message, fieldErrors: e.field ? { [e.field]: e.message } : undefined, values };
     throw e;

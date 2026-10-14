@@ -1,6 +1,9 @@
+import { readFileSync } from "node:fs";
+import path from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { eq } from "drizzle-orm";
-import { AdminError, addAdmin, adminInput, listAdmins, removeAdmin } from "@/lib/auth/admins";
+import { eq, sql } from "drizzle-orm";
+import { MIGRATIONS_FOLDER } from "@/lib/db";
+import { AdminError, addAdmin, adminInput, listAdmins, ownerName, removeAdmin } from "@/lib/auth/admins";
 import { verifyPassword } from "@/lib/auth/password";
 import { createSession, validateSessionToken } from "@/lib/auth/sessions";
 import { users } from "@/lib/db/schema";
@@ -37,9 +40,10 @@ describe("super admins (database)", () => {
   });
   afterAll(() => ctx.close());
 
-  it("adds a super admin who signs in with a username, and lists the owner first", async () => {
-    const added = await addAdmin(adminInput.parse(good), "Sam");
-    expect(added).toMatchObject({ name: "Sam", username: "sam", email: "second@example.com" });
+  it("adds a super admin who signs in with a username, is called by the owner's name, and is listed after the owner", async () => {
+    expect(await ownerName()).toBe("Jody");
+    const added = await addAdmin(adminInput.parse(good));
+    expect(added).toMatchObject({ name: "Jody", username: "sam", email: "second@example.com" });
     const list = await listAdmins();
     expect(list.map((a) => [a.username, a.role])).toEqual([
       ["jody", "owner"],
@@ -48,6 +52,19 @@ describe("super admins (database)", () => {
     expect(list[0]).not.toHaveProperty("passwordHash");
     const [row] = await ctx.db.select().from(users).where(eq(users.id, added.id));
     expect(await verifyPassword(good.password, row.passwordHash)).toBe(true);
+  });
+
+  it("migration 0005 renames admins that were named after their user name, and nobody else", async () => {
+    const [old] = await ctx.db.insert(users).values({ email: "old@example.com", username: "jody1234", name: "jody1234", passwordHash: "x", role: "admin" }).returning({ id: users.id });
+    const [named] = await ctx.db.insert(users).values({ email: "kept@example.com", username: "kept", name: "Kept Name", passwordHash: "x", role: "admin" }).returning({ id: users.id });
+    const file = readFileSync(path.join(MIGRATIONS_FOLDER, "0005_admins_called_by_owner_name.sql"), "utf8");
+    await ctx.db.execute(sql.raw(file));
+    const names = await ctx.db.select({ id: users.id, name: users.name }).from(users);
+    expect(names.find((n) => n.id === old.id)?.name).toBe("Jody");
+    expect(names.find((n) => n.id === named.id)?.name).toBe("Kept Name");
+    expect(names.filter((n) => n.name === "Jody").length).toBeGreaterThanOrEqual(2); // owner untouched
+    await ctx.db.delete(users).where(eq(users.email, "old@example.com"));
+    await ctx.db.delete(users).where(eq(users.email, "kept@example.com"));
   });
 
   it("refuses an email or a user name that is already used, whatever the capitals", async () => {
