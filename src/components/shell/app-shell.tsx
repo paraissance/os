@@ -7,12 +7,14 @@ import { Wordmark } from "@/components/ui/logo";
 import { cx } from "@/components/ui/primitives";
 
 /**
- * Four places, nothing more. Everything else (AI Command, Activity,
+ * Six places, nothing more. Everything else (AI Command, Activity,
  * Integrations and the pages still to come) lives under Others.
  */
 const NAV = [
   { href: "/", label: "Dashboard" },
   { href: "/businesses", label: "Businesses" },
+  { href: "/social", label: "Social Media" },
+  { href: "/spending", label: "Spending" },
   { href: "/others", label: "Others" },
   { href: "/settings", label: "Settings" },
 ] as const;
@@ -20,7 +22,7 @@ const NAV = [
 function isActive(pathname: string, href: string) {
   if (href === "/") return pathname === "/";
   if (href === "/others") {
-    // Any page that isn't one of the other three belongs to Others.
+    // Any page that isn't one of the other main places belongs to Others.
     return !NAV.some((n) => n.href !== "/others" && (n.href === "/" ? pathname === "/" : pathname === n.href || pathname.startsWith(`${n.href}/`)));
   }
   return pathname === href || pathname.startsWith(`${href}/`);

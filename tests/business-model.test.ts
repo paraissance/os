@@ -193,7 +193,7 @@ describe("attention", () => {
       "Scheduler renews in 5 days",
       "Example Leads: Domain renews in 10 days",
     ]);
-    expect(items[2].href).toBe("/#spending");
+    expect(items[2].href).toBe("/spending");
   });
 });
 

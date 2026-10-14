@@ -8,8 +8,6 @@ import { loadBook } from "@/lib/businesses";
 import { mostUrgent, monthlyTotal, renewalWords, siteRenewals, toolsFor } from "@/lib/business-model";
 import { requestNow } from "@/lib/clock";
 import { formatMoney } from "@/lib/money";
-import { SubscriptionsEditor } from "@/components/businesses/editors";
-import { Title } from "@/components/dashboard/ui";
 import { Badge, PageHeader, Skeleton, StatusDot, buttonClass } from "@/components/ui/primitives";
 
 export const metadata: Metadata = { title: "Businesses" };
@@ -20,7 +18,7 @@ export default function BusinessesPage() {
       <PageHeader
         eyebrow="Business"
         title="Businesses"
-        description="Everything about each business lives here in JodyOS: details, websites, links, common questions and what you pay for. Edit it here; see it on the dashboard."
+        description="Everything about each business lives here in JodyOS: details, websites, links and common questions. Edit it here; see it on the dashboard. The order here is the order of the tabs."
         action={
           <div className="flex flex-wrap gap-2">
             <Link href="/businesses/new" className={buttonClass("primary")}>
@@ -125,11 +123,12 @@ async function BusinessList() {
         })}
       </ul>
 
-      <section className="reveal">
-        <Title note={book.shared.length ? `${formatMoney(monthlyTotal(book.shared), "USD")} a month` : undefined}>Tools shared by all businesses</Title>
-        <p className="-mt-2 mb-4 text-muted">Things you pay for once that every business uses, like a scheduler or an AI tool.</p>
-        <SubscriptionsEditor businessId={null} subscriptions={book.shared} />
-      </section>
+      <p className="reveal flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-wash px-5 py-4">
+        <span className="text-muted">What each business pays for, and the tools they share, is on the Spending page.</span>
+        <Link href="/spending" className={buttonClass("light", "min-h-9 px-4")}>
+          Open Spending →
+        </Link>
+      </p>
     </div>
   );
 }

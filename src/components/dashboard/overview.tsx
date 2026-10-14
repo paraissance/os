@@ -1,9 +1,8 @@
-import Form from "next/form";
 import Link from "next/link";
 import { Suspense } from "react";
 import { requireUser } from "@/lib/auth/current-user";
 import { businessHref } from "@/lib/business-sections";
-import { bookAttention, costByBusiness, monthlyTotal, mostUrgent, renewalWords, siteRenewals, sortAttention, type Attention } from "@/lib/business-model";
+import { bookAttention, monthlyTotal, mostUrgent, renewalWords, siteRenewals, sortAttention, type Attention } from "@/lib/business-model";
 import { shortUrl } from "@/lib/business-view";
 import { loadBook } from "@/lib/businesses";
 import { requestNow } from "@/lib/clock";
@@ -13,32 +12,25 @@ import { ImportForm } from "@/components/businesses/editors";
 import { Delta } from "@/components/business-bits";
 import { CountUp } from "@/components/motion/count-up";
 import { EmptyState, Skeleton, StatusDot, buttonClass } from "@/components/ui/primitives";
-import { AttentionList, Bars, Sentence, Title } from "./ui";
+import { AttentionList, Sentence, Title } from "./ui";
 
-/** The "All businesses" tab: the businesses, what needs doing, and nothing else. */
+/**
+ * The "All businesses" tab: the businesses and what needs doing, nothing
+ * else. Money has its own page (/spending); Ask Jody Core sits under the greeting.
+ */
 export function Overview() {
   return (
     <div className="space-y-12">
       <Suspense fallback={<Skeleton className="h-28" />}>
         <Headline />
       </Suspense>
-
-      <div className="grid grid-cols-[minmax(0,1fr)] gap-12 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
-        <div className="space-y-12">
-          <Suspense fallback={<Skeleton className="h-40" />}>
-            <Attention />
-          </Suspense>
-          <Suspense fallback={<Skeleton className="h-96" />}>
-            <BusinessCards />
-          </Suspense>
-        </div>
-        <div className="space-y-12">
-          <AskJodyCore />
-          <Suspense fallback={<Skeleton className="h-60" />}>
-            <Spending />
-          </Suspense>
-        </div>
-      </div>
+      {/* Usually empty, so no placeholder that would only flash and vanish. */}
+      <Suspense fallback={null}>
+        <Attention />
+      </Suspense>
+      <Suspense fallback={<Skeleton className="h-96" />}>
+        <BusinessCards />
+      </Suspense>
     </div>
   );
 }
@@ -86,7 +78,11 @@ async function Headline() {
       {paused ? ` (and ${paused} paused)` : ""} with <b>{sites} website{sites === 1 ? "" : "s"}</b>.{" "}
       {monthly > 0 ? (
         <>
-          Tools and services cost <b>{formatMoney(monthly, "USD")} a month</b>.{" "}
+          Tools and services cost{" "}
+          <Link href="/spending" className="underline decoration-2 underline-offset-4">
+            <b>{formatMoney(monthly, "USD")} a month</b>
+          </Link>
+          .{" "}
         </>
       ) : null}
       {liveActive.length ? (
@@ -133,7 +129,7 @@ async function BusinessCards() {
     <section className="reveal">
       <Title>Your businesses</Title>
       {active.length ? (
-        <ul className="stagger grid grid-cols-[minmax(0,1fr)] gap-3 sm:grid-cols-2">
+        <ul className="stagger grid grid-cols-[minmax(0,1fr)] gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {active.map((b) => {
             const renewals = b.sites.flatMap((s) => siteRenewals(s, today));
             const worst = mostUrgent(renewals);
@@ -205,54 +201,6 @@ async function BusinessCards() {
         <Link href="/businesses" className="text-sm font-semibold underline decoration-1 underline-offset-4">
           Add, edit or reorder businesses
         </Link>
-      </p>
-    </section>
-  );
-}
-
-function AskJodyCore() {
-  return (
-    <section>
-      <Title>Ask Jody Core</Title>
-      <Form
-        action="/command"
-        className="flex items-center gap-2 rounded-full border border-line bg-paper p-1.5 pl-5 transition-colors focus-within:border-ink hover:border-ink"
-      >
-        <label htmlFor="quick-command" className="sr-only">
-          Ask Jody Core
-        </label>
-        <input
-          id="quick-command"
-          name="q"
-          required
-          maxLength={2000}
-          placeholder="Which business needs me most this week?"
-          className="min-h-10 min-w-0 flex-1 bg-transparent text-[15px] placeholder:text-subtle focus:outline-none"
-        />
-        <button type="submit" className={buttonClass("primary", "min-h-10 shrink-0 px-5")}>
-          Ask <span aria-hidden="true">→</span>
-        </button>
-      </Form>
-    </section>
-  );
-}
-
-async function Spending() {
-  await requireUser();
-  const book = await loadBook();
-  const rows = costByBusiness(book);
-  if (!rows.length) return null;
-  const total = rows.reduce((s, r) => s + r.monthly, 0);
-  return (
-    <section className="reveal">
-      <Title id="spending" note="per month">
-        Tools and services
-      </Title>
-      <div className="rounded-2xl bg-wash p-5">
-        <Bars rows={rows.map((r) => ({ label: r.name, value: r.monthly, display: formatMoney(r.monthly, "USD") }))} empty="No subscriptions saved." />
-      </div>
-      <p className="mt-4 text-sm text-muted">
-        {formatMoney(total, "USD")} a month in total, {formatMoney(total * 12, "USD", 0)} a year. Open a business&apos;s Money tab for every subscription.
       </p>
     </section>
   );

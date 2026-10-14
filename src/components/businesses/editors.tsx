@@ -1,6 +1,6 @@
 "use client";
 
-import { startTransition, useActionState, useRef, useState, type FormEvent, type ReactNode } from "react";
+import { startTransition, useActionState, useId, useRef, useState, type FormEvent, type ReactNode } from "react";
 import {
   deleteBusinessAction,
   deletePartAction,
@@ -270,13 +270,20 @@ function shortUrl(url: string) {
 
 /* ─── Links ───────────────────────────────────────────────────────── */
 
-export function LinksEditor({ businessId, links }: { businessId: string; links: BusinessLink[] }) {
+/**
+ * A business's links. With `only`, it lists and adds just that kind (the
+ * Social Media page uses it for social accounts, one editor per business).
+ */
+export function LinksEditor({ businessId, links, only }: { businessId: string; links: BusinessLink[]; only?: BusinessLink["kind"] }) {
   const byId = new Map(links.map((l) => [l.id, l]));
+  const uid = useId();
+  const fid = (field: string) => `${uid}-${field}`;
+  const social = only === "social";
   return (
     <ItemList
       kind="link"
-      noun="link"
-      empty="No links yet. Add pages, social profiles, login pages and tools."
+      noun={social ? "account" : "link"}
+      empty={social ? "No social media accounts saved yet." : "No links yet. Add pages, social profiles, login pages and tools."}
       action={saveLinkAction}
       hidden={{ businessId }}
       rows={links.map((l) => ({
@@ -285,24 +292,30 @@ export function LinksEditor({ businessId, links }: { businessId: string; links: 
         summary: (
           <>
             <p className="flex flex-wrap items-center gap-2 font-bold">
-              {l.label} <Badge>{LINK_KIND_LABELS[l.kind]}</Badge>
+              {l.label} {only ? null : <Badge>{LINK_KIND_LABELS[l.kind]}</Badge>}
             </p>
-            <p className="truncate text-sm text-muted">{[l.note, shortUrl(l.url)].filter(Boolean).join(" · ")}</p>
+            <p className="truncate text-sm text-muted">
+              {l.note ? `${l.note} · ` : ""}
+              <a href={l.url} target="_blank" rel="noopener noreferrer" className="underline decoration-1 underline-offset-4 hover:text-ink">
+                {shortUrl(l.url)}
+                <span className="sr-only"> (opens in a new tab)</span>
+              </a>
+            </p>
           </>
         ),
       }))}
       valuesFor={(id) => {
         const l = id ? byId.get(id) : undefined;
-        return { label: v(l?.label), url: v(l?.url), kind: l?.kind ?? "page", note: v(l?.note) };
+        return { label: v(l?.label), url: v(l?.url), kind: l?.kind ?? only ?? "page", note: v(l?.note) };
       }}
       fields={(values, err) => (
         <>
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Name" htmlFor="link-label" error={err.label}>
-              <Input id="link-label" name="label" defaultValue={values.label} required maxLength={120} placeholder="Instagram" />
+            <Field label="Name" htmlFor={fid("label")} error={err.label}>
+              <Input id={fid("label")} name="label" defaultValue={values.label} required maxLength={120} placeholder="Instagram" />
             </Field>
-            <Field label="Type" htmlFor="link-kind" error={err.kind}>
-              <Select id="link-kind" name="kind" defaultValue={values.kind}>
+            <Field label="Type" htmlFor={fid("kind")} error={err.kind}>
+              <Select id={fid("kind")} name="kind" defaultValue={values.kind}>
                 {Object.entries(LINK_KIND_LABELS).map(([k, label]) => (
                   <option key={k} value={k}>
                     {label}
@@ -311,11 +324,11 @@ export function LinksEditor({ businessId, links }: { businessId: string; links: 
               </Select>
             </Field>
           </div>
-          <Field label="Web address" htmlFor="link-url" error={err.url}>
-            <Input id="link-url" name="url" defaultValue={values.url} required placeholder="instagram.com/yourbusiness" inputMode="url" />
+          <Field label="Web address" htmlFor={fid("url")} error={err.url}>
+            <Input id={fid("url")} name="url" defaultValue={values.url} required placeholder="instagram.com/yourbusiness" inputMode="url" />
           </Field>
-          <Field label="Note" htmlFor="link-note" error={err.note} hint="Optional, like which account it is.">
-            <Input id="link-note" name="note" defaultValue={values.note} maxLength={200} />
+          <Field label="Note" htmlFor={fid("note")} error={err.note} hint={social ? "Optional, like the @handle." : "Optional, like which account it is."}>
+            <Input id={fid("note")} name="note" defaultValue={values.note} maxLength={200} />
           </Field>
         </>
       )}
@@ -485,10 +498,13 @@ export function SitesEditor({ businessId, sites }: { businessId: string; sites: 
 
 /**
  * The tools a business pays for. With no businessId this edits the tools
- * shared by every business.
+ * shared by every business. The Spending page shows one per business, so
+ * field ids are unique per editor.
  */
 export function SubscriptionsEditor({ businessId, subscriptions }: { businessId: string | null; subscriptions: Subscription[] }) {
   const byId = new Map(subscriptions.map((s) => [s.id, s]));
+  const uid = useId();
+  const fid = (field: string) => `${uid}-${field}`;
   return (
     <ItemList
       kind="subscription"
@@ -535,11 +551,11 @@ export function SubscriptionsEditor({ businessId, subscriptions }: { businessId:
       fields={(values, err) => (
         <>
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Tool or service" htmlFor="sub-name" error={err.name}>
-              <Input id="sub-name" name="name" defaultValue={values.name} required maxLength={120} placeholder="Canva" />
+            <Field label="Tool or service" htmlFor={fid("name")} error={err.name}>
+              <Input id={fid("name")} name="name" defaultValue={values.name} required maxLength={120} placeholder="Canva" />
             </Field>
-            <Field label="Category" htmlFor="sub-category" error={err.category}>
-              <Select id="sub-category" name="category" defaultValue={values.category}>
+            <Field label="Category" htmlFor={fid("category")} error={err.category}>
+              <Select id={fid("category")} name="category" defaultValue={values.category}>
                 {Object.entries(CATEGORIES).map(([k, label]) => (
                   <option key={k} value={k}>
                     {label}
@@ -549,11 +565,11 @@ export function SubscriptionsEditor({ businessId, subscriptions }: { businessId:
             </Field>
           </div>
           <div className="grid gap-4 sm:grid-cols-3">
-            <Field label="Price" htmlFor="sub-amount" error={err.amount}>
-              <Input id="sub-amount" name="amount" defaultValue={values.amount} inputMode="decimal" placeholder="29.99" />
+            <Field label="Price" htmlFor={fid("amount")} error={err.amount}>
+              <Input id={fid("amount")} name="amount" defaultValue={values.amount} inputMode="decimal" placeholder="29.99" />
             </Field>
-            <Field label="Billed" htmlFor="sub-cycle" error={err.billingCycle}>
-              <Select id="sub-cycle" name="billingCycle" defaultValue={values.billingCycle}>
+            <Field label="Billed" htmlFor={fid("cycle")} error={err.billingCycle}>
+              <Select id={fid("cycle")} name="billingCycle" defaultValue={values.billingCycle}>
                 {Object.entries(CYCLE_LABELS).map(([k, label]) => (
                   <option key={k} value={k}>
                     {label}
@@ -561,23 +577,23 @@ export function SubscriptionsEditor({ businessId, subscriptions }: { businessId:
                 ))}
               </Select>
             </Field>
-            <Field label="Currency" htmlFor="sub-currency" error={err.currency}>
-              <Input id="sub-currency" name="currency" defaultValue={values.currency} maxLength={3} />
+            <Field label="Currency" htmlFor={fid("currency")} error={err.currency}>
+              <Input id={fid("currency")} name="currency" defaultValue={values.currency} maxLength={3} />
             </Field>
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Next payment" htmlFor="sub-renewal" error={err.nextRenewal}>
-              <Input id="sub-renewal" name="nextRenewal" type="date" defaultValue={values.nextRenewal} />
+            <Field label="Next payment" htmlFor={fid("renewal")} error={err.nextRenewal}>
+              <Input id={fid("renewal")} name="nextRenewal" type="date" defaultValue={values.nextRenewal} />
             </Field>
-            <Field label="Login page" htmlFor="sub-login" error={err.loginUrl}>
-              <Input id="sub-login" name="loginUrl" defaultValue={values.loginUrl} inputMode="url" />
+            <Field label="Login page" htmlFor={fid("login")} error={err.loginUrl}>
+              <Input id={fid("login")} name="loginUrl" defaultValue={values.loginUrl} inputMode="url" />
             </Field>
           </div>
-          <Field label="Account" htmlFor="sub-account" error={err.account} hint="Which login, not the password.">
-            <Input id="sub-account" name="account" defaultValue={values.account} maxLength={200} />
+          <Field label="Account" htmlFor={fid("account")} error={err.account} hint="Which login, not the password.">
+            <Input id={fid("account")} name="account" defaultValue={values.account} maxLength={200} />
           </Field>
-          <Field label="Notes" htmlFor="sub-notes" error={err.notes}>
-            <Textarea id="sub-notes" name="notes" defaultValue={values.notes} rows={2} maxLength={2000} />
+          <Field label="Notes" htmlFor={fid("notes")} error={err.notes}>
+            <Textarea id={fid("notes")} name="notes" defaultValue={values.notes} rows={2} maxLength={2000} />
           </Field>
           {businessId ? (
             <label className="flex items-center gap-2 text-[15px]">

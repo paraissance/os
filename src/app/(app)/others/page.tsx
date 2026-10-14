@@ -5,8 +5,8 @@ import { Badge, PageHeader } from "@/components/ui/primitives";
 
 export const metadata: Metadata = { title: "Others" };
 
-/** The main menu has four places; everything else is one click away here. */
-const MAIN = new Set(["dashboard", "businesses", "settings"]);
+/** The main menu has six places; everything else is one click away here. */
+const MAIN = new Set(["dashboard", "businesses", "social", "spending", "settings"]);
 const READY = MODULES.filter((m) => m.phase === 1 && !MAIN.has(m.id));
 const LATER = MODULES.filter((m) => m.phase > 1);
 

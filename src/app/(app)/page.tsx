@@ -9,6 +9,7 @@ import type { SectionId } from "@/lib/business-sections";
 import { loadBook } from "@/lib/businesses";
 import { getBusiness, listBusinesses, settle } from "@/lib/os-analytics";
 import { getSettings } from "@/lib/settings";
+import { AskBar } from "@/components/dashboard/ask-bar";
 import { BusinessTabBar } from "@/components/dashboard/business-tab-bar";
 import {
   AboutSection,
@@ -34,9 +35,10 @@ export const metadata: Metadata = { title: "Dashboard" };
 export default function DashboardPage(props: PageProps<"/">) {
   return (
     <>
-      <Suspense fallback={<Skeleton className="mb-8 h-32 w-full" />}>
+      <Suspense fallback={<Skeleton className="mb-6 h-32 w-full" />}>
         <Greeting />
       </Suspense>
+      <AskBar />
       <Suspense fallback={<TabBarSkeleton />}>
         <Body searchParams={props.searchParams} />
       </Suspense>
@@ -59,7 +61,7 @@ async function Greeting() {
   const now = requestNow();
   const date = new Intl.DateTimeFormat("en-GB", { timeZone: timezone, weekday: "long", day: "numeric", month: "long" }).format(now);
   return (
-    <header className="mb-8 animate-rise">
+    <header className="mb-6 animate-rise">
       <p className="label mb-3 text-muted">{date}</p>
       <h1 className="text-5xl font-extrabold leading-[0.95] tracking-[-0.045em] sm:text-7xl">
         {greeting(now, timezone)}, {user.name.split(" ")[0]}.

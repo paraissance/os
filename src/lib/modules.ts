@@ -1,7 +1,7 @@
 /**
  * The JodyOS module map: one list drives the Others page and the "coming in
  * Phase N" pages, so a module goes live by flipping its `phase` once its
- * real page replaces the placeholder. The sidebar itself has four fixed
+ * real page replaces the placeholder. The sidebar itself has six fixed
  * places (see src/components/shell/app-shell.tsx).
  */
 export type ModuleGroup = "Core" | "Business" | "Operations" | "System";
@@ -33,7 +33,7 @@ export const MODULES: ModuleDef[] = [
     href: "/",
     group: "Core",
     phase: 1,
-    summary: "System status, recent activity and what needs attention.",
+    summary: "Every business at a glance, and what needs attention.",
     planned: [],
   },
   {
@@ -72,16 +72,25 @@ export const MODULES: ModuleDef[] = [
   },
   {
     id: "social",
-    label: "Social",
+    label: "Social Media",
     href: "/social",
     group: "Business",
-    phase: 3,
-    summary: "Plan, create and schedule posts across every business's channels.",
+    phase: 1,
+    summary: "Every business's social media accounts in one place. Planning and scheduling posts arrive in Phase 3.",
     planned: [
-      "Facebook, Instagram, YouTube, Pinterest, X and more",
-      "Blotato as a pluggable publishing provider",
+      "Plan, create and schedule posts across every business's channels",
+      "Facebook, Instagram, YouTube, Pinterest, X and more, with Blotato as a publishing provider",
       "Post status, errors, media and a business filter",
     ],
+  },
+  {
+    id: "spending",
+    label: "Spending",
+    href: "/spending",
+    group: "Business",
+    phase: 1,
+    summary: "What every business pays for: tools, hosting and services, with monthly and yearly totals.",
+    planned: [],
   },
   {
     id: "analytics",

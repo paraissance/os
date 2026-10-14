@@ -238,7 +238,7 @@ export function bookAttention(book: BusinessBook, today: Date): Attention[] {
     items.push(...renewalAttention(b, today, `${b.name}: `));
     items.push(...subscriptionAttention(b.subscriptions, today, businessHref(b.slug, "money")).map((a) => ({ ...a, title: `${b.name}: ${a.title}` })));
   }
-  items.push(...subscriptionAttention(book.shared, today, "/#spending"));
+  items.push(...subscriptionAttention(book.shared, today, "/spending"));
   return sortAttention(items);
 }
 
