@@ -48,8 +48,15 @@ export function AgentsImport() {
         )}
       >
         <span className="text-lg font-bold">{pending ? "Importing…" : dragging ? "Drop it here" : "Choose or drop the agents file"}</span>
-        <span className="text-sm text-muted">{pending ? `Reading ${fileName ?? "the file"}.` : "jodyos-agents.json, made from the OS Analytics plugin."}</span>
-        <input ref={input} type="file" name="file" accept="application/json,.json" className="sr-only" onChange={(e) => picked(e.target.files)} />
+        <span className="text-sm text-muted">{pending ? `Reading ${fileName ?? "the file"}.` : "jodyos-agents.zip (or .json), made from the OS Analytics plugin."}</span>
+        <input
+          ref={input}
+          type="file"
+          name="file"
+          accept=".zip,application/zip,application/x-zip-compressed,.json,application/json"
+          className="sr-only"
+          onChange={(e) => picked(e.target.files)}
+        />
       </label>
     </form>
   );
