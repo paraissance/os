@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { BlotatoPost, PostWindow } from "@/lib/blotato";
 import { businesses, socialPosts } from "@/lib/db/schema";
-import { brandPostPage, brandPosts, getSyncState, isRunning, isStale, listBrands, setBrandAccounts, syncBlotato, syncWindows } from "@/lib/social";
+import { brandPosts, getSyncState, isRunning, isStale, listBrands, setBrandAccounts, syncBlotato, syncWindows } from "@/lib/social";
 import type { Channel } from "@/lib/social-model";
 import { useTestDatabase } from "./helpers/db";
 
@@ -81,10 +81,11 @@ describe("social media (database)", () => {
       post("c", { accountId: "5", subaccountId: "9000002", platform: "facebook" }), // the other brand's page
       post("d", { status: "scheduled", postTime: new Date(now.getTime() + 2 * DAY) }),
       post("e", { status: "failed", errorMessage: "Token expired", metrics: null }),
+      post("g", { postTime: new Date(now.getTime() - 10 * DAY) }), // kept, but older than the page's 7 days
       post("old", { postTime: new Date(now.getTime() - 40 * DAY) }), // outside every window
     ]);
     const result = await syncBlotato({ now, fetchPosts: blotato.fetchPosts });
-    expect(result).toEqual({ ok: true, posts: 5, full: true });
+    expect(result).toEqual({ ok: true, posts: 6, full: true });
 
     const state = await getSyncState();
     expect(state.lastSyncAt).toBe(now.toISOString());
@@ -129,15 +130,6 @@ describe("social media (database)", () => {
     const state = await getSyncState();
     expect(state.lastError).toBe("Blotato asked JodyOS to slow down.");
     expect(isStale(state, new Date(failAt.getTime() + 60_000))).toBe(false);
-  });
-
-  it("lists a brand's posts a page at a time, by status", async () => {
-    const [leads] = await listBrands();
-    const all = await brandPostPage(leads.accounts, null, 1);
-    expect(all.total).toBe(3); // a, b and f; c belongs to the other brand
-    const scheduled = await brandPostPage(leads.accounts, "scheduled", 1);
-    expect(scheduled.rows.map((r) => r.id)).toEqual(["f"]);
-    expect((await brandPostPage(leads.accounts, null, 2)).rows).toEqual([]);
   });
 
   it("forgets a brand's accounts when the business is deleted", async () => {

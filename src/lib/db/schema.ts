@@ -8,6 +8,7 @@ import {
   jsonb,
   numeric,
   pgTable,
+  primaryKey,
   text,
   timestamp,
   uniqueIndex,
@@ -245,6 +246,26 @@ export const businessSites = pgTable(
     updatedAt: updatedAt(),
   },
   (t) => [index("business_sites_business_idx").on(t.businessId)],
+);
+
+/**
+ * Visits to a business's website, one row per day (in the owner's timezone),
+ * counted by the agent line on the site (public/agent.js). No cookies, no IP
+ * addresses, nothing about who visited: just how many.
+ */
+export const siteTraffic = pgTable(
+  "site_traffic",
+  {
+    businessId: uuid("business_id")
+      .notNull()
+      .references(() => businesses.id, { onDelete: "cascade" }),
+    day: date("day", { mode: "string" }).notNull(),
+    views: integer("views").notNull().default(0),
+    // A browser's first page view that day.
+    visitors: integer("visitors").notNull().default(0),
+    lastVisitAt: timestamp("last_visit_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.businessId, t.day] })],
 );
 
 /**

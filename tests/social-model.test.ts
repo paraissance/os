@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import { toPost } from "@/lib/blotato";
 import {
   byPlatform,
-  calendarDays,
   channelKey,
   groupByDay,
   normalizeMetrics,
@@ -83,33 +82,17 @@ describe("numbers", () => {
   });
 });
 
-describe("calendar", () => {
-  const now = new Date("2026-10-15T09:00:00Z");
+describe("schedule", () => {
   const at = (iso: string) => ({ postTime: new Date(iso) });
 
-  it("counts posts per day in the owner's time zone, starting today", () => {
-    const days = calendarDays([at("2026-10-15T12:00:00Z"), at("2026-10-16T03:00:00Z"), at("2026-10-17T10:00:00Z")], now, "America/Los_Angeles", 4);
+  it("groups posts by day in the owner's time zone, in order", () => {
+    const posts = [at("2026-10-15T12:00:00Z"), at("2026-10-16T03:00:00Z"), at("2026-10-17T10:00:00Z")];
     // 03:00 UTC on the 16th is still the evening of the 15th in Los Angeles.
-    expect(days.map((d) => [d.key, d.count])).toEqual([
+    expect(groupByDay(posts, "America/Los_Angeles").map((g) => [g.key, g.posts.length])).toEqual([
       ["2026-10-15", 2],
-      ["2026-10-16", 0],
       ["2026-10-17", 1],
-      ["2026-10-18", 0],
     ]);
-    expect(calendarDays([at("2026-10-16T03:00:00Z")], now, "UTC", 2).map((d) => d.count)).toEqual([0, 1]);
-  });
-
-  it("does not skip or repeat a day when the clocks change", () => {
-    const keys = calendarDays([], new Date("2026-10-24T12:00:00Z"), "Europe/London", 3).map((d) => d.key);
-    expect(keys).toEqual(["2026-10-24", "2026-10-25", "2026-10-26"]);
-  });
-
-  it("groups posts by day in order", () => {
-    const groups = groupByDay([at("2026-10-15T10:00:00Z"), at("2026-10-15T11:00:00Z"), at("2026-10-16T10:00:00Z")], "UTC");
-    expect(groups.map((g) => [g.key, g.posts.length])).toEqual([
-      ["2026-10-15", 2],
-      ["2026-10-16", 1],
-    ]);
+    expect(groupByDay(posts, "UTC").map((g) => g.key)).toEqual(["2026-10-15", "2026-10-16", "2026-10-17"]);
   });
 });
 

@@ -7,35 +7,11 @@ import { BlotatoError, listChannels } from "@/lib/blotato";
 import { loadBook } from "@/lib/businesses";
 import { requestNow } from "@/lib/clock";
 import { envStatus } from "@/lib/env";
-import { formatRelative } from "@/lib/format";
+import { dayKey, formatRelative } from "@/lib/format";
 import { getModule } from "@/lib/modules";
 import { getSettings } from "@/lib/settings";
-import {
-  PAGE_SIZE,
-  brandPostPage,
-  brandPosts,
-  getSyncState,
-  isRunning,
-  isStale,
-  linkedChannelOwners,
-  listBrands,
-  syncBlotato,
-  type Brand,
-} from "@/lib/social";
-import {
-  byPlatform,
-  calendarDays,
-  channelKey,
-  dayKey,
-  groupByDay,
-  platformLabel,
-  profileUrl,
-  suggestChannels,
-  topPosts,
-  totals,
-  type PostRow,
-} from "@/lib/social-model";
-import type { SocialPostStatus } from "@/lib/db/schema";
+import { STATS_DAYS, brandPosts, getSyncState, isRunning, isStale, linkedChannelOwners, listBrands, syncBlotato, type Brand } from "@/lib/social";
+import { byPlatform, channelKey, groupByDay, platformLabel, profileUrl, suggestChannels, topPosts, totals, type PostRow } from "@/lib/social-model";
 import { BrandAccountsForm, RemoveBrandButton } from "@/components/social/brand-accounts-form";
 import { AutoRefresh, RefreshButton } from "@/components/social/refresh";
 import { Rows, Sentence, Title } from "@/components/dashboard/ui";
@@ -47,15 +23,16 @@ export const metadata: Metadata = { title: "Social Media" };
 export const maxDuration = 300;
 
 /**
- * Social Media: each linked brand's accounts, calendar, posts and numbers,
- * from JodyOS's copy of Blotato (refreshed in the background).
- * /social?b=<slug>&s=<status>&p=<page>; /social?add[=<slug>] links accounts.
+ * Social Media: each linked brand's accounts, one day of its schedule and
+ * the last 7 days' numbers, from JodyOS's copy of Blotato (refreshed in the
+ * background). Anything more is a link to Blotato.
+ * /social?b=<slug>; /social?add[=<slug>] links accounts.
  */
 export default function SocialPage(props: PageProps<"/social">) {
   const later = getModule("social").planned;
   return (
     <>
-      <PageHeader eyebrow="Business" title="Social Media" description="Each brand's accounts, calendar, posts and numbers, from Blotato." />
+      <PageHeader eyebrow="Business" title="Social Media" description="Each brand's accounts, today's schedule and the last 7 days, from Blotato." />
       <Suspense fallback={<Skeleton className="h-[40rem]" />}>
         <SocialBody searchParams={props.searchParams} />
       </Suspense>
@@ -71,8 +48,7 @@ export default function SocialPage(props: PageProps<"/social">) {
   );
 }
 
-const STATUSES: SocialPostStatus[] = ["scheduled", "published", "failed"];
-const first = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
+const first =(v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
 const n = (v: number) => v.toLocaleString("en-US");
 
 async function SocialBody({ searchParams }: { searchParams: PageProps<"/social">["searchParams"] }) {
@@ -91,8 +67,6 @@ async function SocialBody({ searchParams }: { searchParams: PageProps<"/social">
   const add = first(sp.add);
   const adding = add !== undefined || !brands.length;
   const current = brands.find((b) => b.business.slug === first(sp.b)) ?? brands[0];
-  const status = STATUSES.find((s) => s === first(sp.s)) ?? null;
-  const page = Math.max(1, Math.min(1000, Number.parseInt(first(sp.p) ?? "1", 10) || 1));
 
   return (
     <div className="space-y-10">
@@ -120,7 +94,7 @@ async function SocialBody({ searchParams }: { searchParams: PageProps<"/social">
           <Setup editSlug={add || null} brands={brands} />
         </Suspense>
       ) : current ? (
-        <BrandView brand={current} now={now} timeZone={timezone} status={status} page={page} waiting={!state.lastSyncAt} />
+        <BrandView brand={current} now={now} timeZone={timezone} waiting={!state.lastSyncAt} />
       ) : null}
     </div>
   );
@@ -213,30 +187,29 @@ function dayTitle(key: string) {
   return new Intl.DateTimeFormat("en-GB", { timeZone: "UTC", weekday: "long", day: "numeric", month: "long" }).format(new Date(`${key}T12:00:00Z`));
 }
 
-async function BrandView({
-  brand,
-  now,
-  timeZone,
-  status,
-  page,
-  waiting,
-}: {
-  brand: Brand;
-  now: Date;
-  timeZone: string;
-  status: SocialPostStatus | null;
-  page: number;
-  waiting: boolean;
-}) {
-  const [{ scheduled, published, failed }, list] = await Promise.all([brandPosts(brand.accounts, now), brandPostPage(brand.accounts, status, page)]);
+/** Everything beyond today's schedule and the last 7 days lives in Blotato. */
+const BLOTATO_CALENDAR = "https://my.blotato.com/calendar";
+
+function BlotatoLink() {
+  return (
+    <a href={BLOTATO_CALENDAR} target="_blank" rel="noopener noreferrer" className={buttonClass("secondary", "min-h-9 px-4")}>
+      Full calendar in Blotato <span aria-hidden="true">↗</span>
+      <span className="sr-only">(opens in a new tab)</span>
+    </a>
+  );
+}
+
+async function BrandView({ brand, now, timeZone, waiting }: { brand: Brand; now: Date; timeZone: string; waiting: boolean }) {
+  const { scheduled, published, failed } = await brandPosts(brand.accounts, now);
   const t = totals(published);
-  const days = calendarDays(scheduled, now, timeZone, 14);
-  const inStrip = new Set(days.map((d) => d.key));
-  const soon = scheduled.filter((p) => inStrip.has(dayKey(p.postTime, timeZone)));
-  const maxDay = Math.max(1, ...days.map((d) => d.count));
+  const today = dayKey(now, timeZone);
+  // One day only: today's posts, or the next day that has some.
+  const next = groupByDay(scheduled, timeZone)[0] ?? null;
+  const todayCount = next?.key === today ? next.posts.length : 0;
   const platforms = byPlatform(published);
   const top = topPosts(published, 5);
   const slug = brand.business.slug;
+  const week = `last ${STATS_DAYS} days`;
 
   return (
     <article aria-label={brand.business.name} className="space-y-14">
@@ -276,9 +249,9 @@ async function BrandView({
       ) : (
         <Sentence>
           <b>
-            {n(scheduled.length)} post{scheduled.length === 1 ? "" : "s"}
+            {n(todayCount)} post{todayCount === 1 ? "" : "s"}
           </b>{" "}
-          {scheduled.length === 1 ? "is" : "are"} in the calendar. <b>{n(t.posts)}</b> went out in the last 30 days and were seen <b>{n(t.views)} times</b>
+          {todayCount === 1 ? "is" : "are"} scheduled today. <b>{n(t.posts)}</b> went out in the {week} and were seen <b>{n(t.views)} times</b>
           {failed.length ? (
             <>
               ; <b>{n(failed.length)} failed</b>
@@ -289,61 +262,36 @@ async function BrandView({
       )}
 
       <div className="stagger grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-        <Stat label="In the calendar" value={scheduled.length} />
-        <Stat label="Published · 30 days" value={t.posts} />
-        <Stat label="Views · 30 days" value={t.views} />
-        <Stat label="Likes · 30 days" value={t.likes} />
-        <Stat label="Comments · 30 days" value={t.comments} />
-        <Stat label="Failed · 30 days" value={failed.length} dark={failed.length > 0} />
+        <Stat label="Scheduled today" value={todayCount} />
+        <Stat label={`Published · ${STATS_DAYS} days`} value={t.posts} />
+        <Stat label={`Views · ${STATS_DAYS} days`} value={t.views} />
+        <Stat label={`Likes · ${STATS_DAYS} days`} value={t.likes} />
+        <Stat label={`Comments · ${STATS_DAYS} days`} value={t.comments} />
+        <Stat label={`Failed · ${STATS_DAYS} days`} value={failed.length} dark={failed.length > 0} />
       </div>
-
-      <section className="reveal">
-        <Title note="next 14 days">Calendar</Title>
-        <ol className="grid grid-cols-7 gap-1.5 sm:gap-2">
-          {days.map((d) => (
-            <li key={d.key}>
-              <a
-                href={d.count ? `#day-${d.key}` : undefined}
-                className={cx("flex h-full flex-col justify-between rounded-xl bg-wash p-2 sm:p-3", d.count > 0 && "transition-colors hover:bg-mist")}
-              >
-                <span className="text-[11px] font-semibold text-muted sm:text-xs">{d.label}</span>
-                <span className="mt-1 text-lg font-extrabold tabular-nums sm:text-2xl">{d.count || "·"}</span>
-                <span className="mt-2 h-1.5 overflow-hidden rounded-full bg-mist" aria-hidden="true">
-                  <span className="block h-full rounded-full bg-ink" style={{ width: `${(d.count / maxDay) * 100}%` }} />
-                </span>
-              </a>
-            </li>
-          ))}
-        </ol>
-      </section>
 
       <div className="grid grid-cols-[minmax(0,1fr)] gap-12 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
         <section className="reveal">
-          <Title count={soon.length} note="next 14 days">
-            Scheduled
+          <Title count={next?.posts.length} note={next && next.key !== today ? "nothing more today" : undefined}>
+            {!next || next.key === today ? "Scheduled today" : `Next up: ${dayTitle(next.key)}`}
           </Title>
-          {soon.length ? (
-            <div className="space-y-6">
-              {groupByDay(soon.slice(0, 80), timeZone).map((g) => (
-                <div key={g.key} id={`day-${g.key}`} className="scroll-mt-24">
-                  <h3 className="mb-2 text-sm font-extrabold uppercase tracking-[0.08em] text-muted">{dayTitle(g.key)}</h3>
-                  <Rows>
-                    {g.posts.map((p) => (
-                      <PostItem key={p.id} post={p} timeZone={timeZone} timeOnly />
-                    ))}
-                  </Rows>
-                </div>
+          {next ? (
+            <Rows>
+              {next.posts.map((p) => (
+                <PostItem key={p.id} post={p} timeZone={timeZone} timeOnly />
               ))}
-              {soon.length > 80 ? <p className="text-sm text-muted">And {soon.length - 80} more: see All posts below.</p> : null}
-            </div>
+            </Rows>
           ) : (
-            <p className="rounded-2xl bg-wash px-5 py-4 text-muted">Nothing scheduled for the next 14 days.</p>
+            <p className="rounded-2xl bg-wash px-5 py-4 text-muted">Nothing scheduled.</p>
           )}
+          <div className="mt-4">
+            <BlotatoLink />
+          </div>
         </section>
 
         <div className="space-y-12">
           <section className="reveal">
-            <Title note="last 30 days">By platform</Title>
+            <Title note={week}>By platform</Title>
             {platforms.length ? (
               <Rows>
                 {platforms.map((p) => (
@@ -361,12 +309,12 @@ async function BrandView({
                 ))}
               </Rows>
             ) : (
-              <p className="rounded-2xl bg-wash px-5 py-4 text-muted">Nothing published in the last 30 days.</p>
+              <p className="rounded-2xl bg-wash px-5 py-4 text-muted">Nothing published in the {week}.</p>
             )}
           </section>
 
           <section className="reveal">
-            <Title note="most seen, last 30 days">Top posts</Title>
+            <Title note={`most seen, ${week}`}>Top posts</Title>
             {top.length ? (
               <Rows>
                 {top.map((p) => (
@@ -380,51 +328,18 @@ async function BrandView({
         </div>
       </div>
 
-      <section id="all" className="reveal scroll-mt-24">
-        <Title count={list.total}>All posts</Title>
-        <nav aria-label="Filter posts" className="mb-4 flex flex-wrap gap-2">
-          {[null, ...STATUSES].map((s) => (
-            <Link
-              key={s ?? "all"}
-              href={`/social?b=${slug}${s ? `&s=${s}` : ""}#all`}
-              aria-current={status === s ? "page" : undefined}
-              className={cx("rounded-full px-4 py-2 text-sm font-semibold transition-colors", status === s ? "bg-ink text-paper" : "bg-wash hover:bg-mist")}
-            >
-              {s ? s[0].toUpperCase() + s.slice(1) : "All"}
-            </Link>
-          ))}
-        </nav>
-        {list.rows.length ? (
+      {failed.length ? (
+        <section className="reveal">
+          <Title count={failed.length} note={week}>
+            Failed
+          </Title>
           <Rows>
-            {list.rows.map((p) => (
-              <PostItem key={p.id} post={p} timeZone={timeZone} showStatus />
+            {failed.map((p) => (
+              <PostItem key={p.id} post={p} timeZone={timeZone} />
             ))}
           </Rows>
-        ) : (
-          <p className="rounded-2xl bg-wash px-5 py-4 text-muted">No posts here.</p>
-        )}
-        {list.total > PAGE_SIZE ? (
-          <div className="mt-4 flex items-center justify-between gap-3 text-sm">
-            {page > 1 ? (
-              <Link href={`/social?b=${slug}${status ? `&s=${status}` : ""}&p=${page - 1}#all`} className={buttonClass("light", "min-h-9 px-4")}>
-                ← Previous
-              </Link>
-            ) : (
-              <span />
-            )}
-            <span className="text-muted">
-              Page {page} of {Math.ceil(list.total / PAGE_SIZE)}
-            </span>
-            {page * PAGE_SIZE < list.total ? (
-              <Link href={`/social?b=${slug}${status ? `&s=${status}` : ""}&p=${page + 1}#all`} className={buttonClass("light", "min-h-9 px-4")}>
-                Next →
-              </Link>
-            ) : (
-              <span />
-            )}
-          </div>
-        ) : null}
-      </section>
+        </section>
+      ) : null}
     </article>
   );
 }
@@ -438,9 +353,7 @@ function Stat({ label, value, dark = false }: { label: string; value: number; da
   );
 }
 
-const STATUS_WORDS: Record<SocialPostStatus, string> = { scheduled: "Scheduled", published: "Published", failed: "Failed" };
-
-function PostItem({ post, timeZone, timeOnly = false, showStatus = false }: { post: PostRow; timeZone: string; timeOnly?: boolean; showStatus?: boolean }) {
+function PostItem({ post, timeZone, timeOnly = false }: { post: PostRow; timeZone: string; timeOnly?: boolean }) {
   const m = post.metrics;
   const numbers = m ? [m.views !== undefined && `${n(m.views)} views`, m.likes !== undefined && `${n(m.likes)} likes`, m.comments !== undefined && `${n(m.comments)} comments`].filter(Boolean) : [];
   return (
@@ -448,7 +361,6 @@ function PostItem({ post, timeZone, timeOnly = false, showStatus = false }: { po
       <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
         <span className="flex min-w-0 flex-wrap items-center gap-2 text-sm">
           <Badge>{platformLabel(post.platform)}</Badge>
-          {showStatus ? <Badge tone={post.status === "failed" ? "bad" : "neutral"}>{STATUS_WORDS[post.status]}</Badge> : null}
           {post.accountName ? <span className="truncate font-semibold">{post.accountName}</span> : null}
         </span>
         <span className="text-sm tabular-nums text-muted">{when(post.postTime, timeZone, !timeOnly)}</span>

@@ -1,9 +1,10 @@
 import type { PostMetrics, SocialPostStatus } from "@/lib/db/schema";
+import { dayKey } from "@/lib/format";
 
 /*
  * Social media, the pure part: Blotato's numbers made tidy, which accounts
- * look like a business's, and the totals, platforms and calendar days the
- * Social Media page shows. No database or network code here.
+ * look like a business's, and the totals, platforms and days the Social
+ * Media page shows. No database or network code here.
  */
 
 export const PLATFORM_LABELS: Record<string, string> = {
@@ -173,30 +174,6 @@ export function topPosts<T extends Pick<PostRow, "metrics">>(posts: T[], n = 5):
     .filter((p) => (p.metrics?.views ?? 0) + (p.metrics?.likes ?? 0) + (p.metrics?.comments ?? 0) > 0)
     .sort((a, b) => (b.metrics?.views ?? 0) - (a.metrics?.views ?? 0) || (b.metrics?.likes ?? 0) - (a.metrics?.likes ?? 0))
     .slice(0, n);
-}
-
-/** "2026-10-15" for a moment, in a time zone. */
-export function dayKey(d: Date, timeZone: string) {
-  return new Intl.DateTimeFormat("en-CA", { timeZone, year: "numeric", month: "2-digit", day: "2-digit" }).format(d);
-}
-
-const DAY_MS = 86_400_000;
-
-/** The next `days` days (today first) with how many posts are scheduled on each. */
-export function calendarDays(scheduled: Pick<PostRow, "postTime">[], now: Date, timeZone: string, days = 14) {
-  const counts = new Map<string, number>();
-  for (const p of scheduled) counts.set(dayKey(p.postTime, timeZone), (counts.get(dayKey(p.postTime, timeZone)) ?? 0) + 1);
-  const label = new Intl.DateTimeFormat("en-GB", { timeZone, weekday: "short", day: "numeric" });
-  const seen = new Set<string>();
-  const out: { key: string; label: string; count: number }[] = [];
-  // Step in half days so a daylight-saving change can't skip or repeat a date.
-  for (let t = now.getTime(); out.length < days; t += DAY_MS / 2) {
-    const key = dayKey(new Date(t), timeZone);
-    if (seen.has(key)) continue;
-    seen.add(key);
-    out.push({ key, label: label.format(new Date(t)), count: counts.get(key) ?? 0 });
-  }
-  return out;
 }
 
 /** Posts grouped by day in a time zone, in the order given. */

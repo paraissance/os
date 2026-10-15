@@ -2,7 +2,6 @@ import "server-only";
 import { cache } from "react";
 import { z } from "zod";
 import { env } from "@/lib/env";
-import { businessHref } from "@/lib/business-sections";
 import type { Attention } from "@/lib/business-model";
 import { formatMoney } from "@/lib/money";
 
@@ -405,52 +404,28 @@ export function formatDay(date: string | null): string | null {
 }
 
 /*
- * Live numbers only add what JodyOS can't know by itself: leads falling,
- * overdue tasks and posts that failed to publish. Renewals and subscriptions
- * come from the owner's own records (src/lib/business-model.ts).
+ * Live numbers only add what JodyOS can't know by itself: leads falling.
+ * Renewals and subscriptions come from the owner's own records
+ * (src/lib/business-model.ts).
  */
 
-function leadDrop(b: BusinessSummary, prefix: string): AttentionItem[] {
-  const change = percentChange(b.last30.leads, b.previous30.leads);
-  if (b.previous30.leads < 10 || change === null || change > -50) return [];
-  return [
-    {
-      level: "warning",
-      title: `${prefix}Leads down ${Math.abs(change)}%`,
-      detail: `${b.last30.leads} in the last 30 days, ${b.previous30.leads} the 30 days before.`,
-      href: businessHref(b.slug, "leads"),
-      sort: 100,
-    },
-  ];
-}
-
-/** Across every active business in OS Analytics: big lead drops. */
+/** Across every active business in OS Analytics: lead drops of half or more. Leads are shown on AI & Analytics. */
 export function liveListAttention(list: BusinessList, names: Map<string, string> = new Map()): AttentionItem[] {
-  return list.businesses.filter((b) => b.active).flatMap((b) => leadDrop(b, `${names.get(b.slug) ?? b.name}: `));
-}
-
-/** Inside one business: a lead drop, overdue tasks and posts that failed to publish. */
-export function liveAttention(b: BusinessDetail): AttentionItem[] {
-  const items = leadDrop(b, "");
-  if (b.tasks.overdue > 0) {
-    items.push({
-      level: "warning",
-      title: `${b.tasks.overdue} overdue task${b.tasks.overdue === 1 ? "" : "s"}`,
-      detail: "Past their due date and not done yet.",
-      href: businessHref(b.slug, "leads"),
-      sort: 50,
+  return list.businesses
+    .filter((b) => b.active)
+    .flatMap((b): AttentionItem[] => {
+      const change = percentChange(b.last30.leads, b.previous30.leads);
+      if (b.previous30.leads < 10 || change === null || change > -50) return [];
+      return [
+        {
+          level: "warning",
+          title: `${names.get(b.slug) ?? b.name}: Leads down ${Math.abs(change)}%`,
+          detail: `${b.last30.leads} in the last 30 days, ${b.previous30.leads} the 30 days before.`,
+          href: "/analytics",
+          sort: 100,
+        },
+      ];
     });
-  }
-  if (b.publisher && b.publisher.failed > 0) {
-    items.push({
-      level: "warning",
-      title: `${b.publisher.failed} social post${b.publisher.failed === 1 ? "" : "s"} failed to publish`,
-      detail: "Open Social Publisher in OS Analytics to retry them.",
-      href: businessHref(b.slug, "marketing"),
-      sort: 60,
-    });
-  }
-  return items;
 }
 
 export { formatMoney };

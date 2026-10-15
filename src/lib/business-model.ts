@@ -1,13 +1,11 @@
-import { businessHref } from "@/lib/business-sections";
-import { CATEGORIES } from "@/lib/business-input";
+import { editHref } from "@/lib/business-href";
 import type { businessFaqs, businessLinks, businessSites, businesses, subscriptions } from "@/lib/db/schema";
 import { formatMoney } from "@/lib/money";
 
 /*
  * The owner's businesses as JodyOS stores them, and what the dashboard
- * derives from them: renewals, monthly costs, what needs attention and
- * grouped links. Pure functions only; the database code lives in
- * src/lib/businesses.ts.
+ * derives from them: renewals, monthly costs and what needs attention.
+ * Pure functions only; the database code lives in src/lib/businesses.ts.
  */
 
 export type Business = typeof businesses.$inferSelect;
@@ -117,47 +115,7 @@ export function monthlyCost(amount: number, cycle: Subscription["billingCycle"])
   return amount;
 }
 
-export function categoryLabel(category: string): string {
-  return CATEGORIES[category as keyof typeof CATEGORIES] ?? "Other";
-}
-
 const round2 = (n: number) => Math.round(n * 100) / 100;
-
-export type Spending = {
-  monthly: number;
-  yearly: number;
-  count: number;
-  byCategory: { category: string; label: string; monthly: number }[];
-  /** Renewing in the next 30 days, or already overdue; soonest first. */
-  upcoming: { sub: Subscription; daysLeft: number }[];
-};
-
-/** Totals for a set of subscriptions (inactive ones are left out). */
-export function spending(subs: Subscription[], today: Date): Spending {
-  const active = subs.filter((s) => s.active);
-  const byCat = new Map<string, number>();
-  let monthly = 0;
-  const upcoming: Spending["upcoming"] = [];
-  for (const s of active) {
-    const m = monthlyCost(s.amount, s.billingCycle);
-    monthly += m;
-    byCat.set(s.category, (byCat.get(s.category) ?? 0) + m);
-    if (s.nextRenewal) {
-      const d = daysFrom(today, s.nextRenewal);
-      if (d !== null && d <= WARN_DAYS) upcoming.push({ sub: s, daysLeft: d });
-    }
-  }
-  return {
-    monthly: round2(monthly),
-    yearly: round2(monthly * 12),
-    count: active.length,
-    byCategory: [...byCat]
-      .map(([category, m]) => ({ category, label: categoryLabel(category), monthly: round2(m) }))
-      .filter((c) => c.monthly > 0)
-      .sort((a, b) => b.monthly - a.monthly),
-    upcoming: upcoming.sort((a, b) => a.daysLeft - b.daysLeft),
-  };
-}
 
 /** A business's own tools plus the ones shared by every business. */
 export function toolsFor(record: BusinessRecord, shared: Subscription[]): Subscription[] {
@@ -172,7 +130,7 @@ export function monthlyTotal(subs: Subscription[]): number {
 /* ─── Attention ───────────────────────────────────────────────────── */
 
 function renewalAttention(record: BusinessRecord, today: Date, prefix: string): Attention[] {
-  const href = businessHref(record.slug, "website");
+  const href = editHref(record.slug, "websites");
   const many = record.sites.length > 1;
   return record.sites.flatMap((site) =>
     siteRenewals(site, today).flatMap((r): Attention[] => {
@@ -210,115 +168,14 @@ export function sortAttention<T extends Attention>(items: T[]): T[] {
   return items.sort((a, b) => (a.level === b.level ? a.sort - b.sort : a.level === "critical" ? -1 : 1));
 }
 
-/** Inside one business: its website renewals, its tools and the shared tools. */
-export function recordAttention(record: BusinessRecord, shared: Subscription[], today: Date): Attention[] {
-  const money = businessHref(record.slug, "money");
-  return sortAttention([
-    ...renewalAttention(record, today, ""),
-    ...subscriptionAttention(record.subscriptions, today, money),
-    ...subscriptionAttention(shared, today, money),
-  ]);
-}
-
 /** Across all active businesses; shared tools are listed once. */
 export function bookAttention(book: BusinessBook, today: Date): Attention[] {
   const items: Attention[] = [];
   for (const b of book.businesses) {
     if (b.status !== "active") continue;
     items.push(...renewalAttention(b, today, `${b.name}: `));
-    items.push(...subscriptionAttention(b.subscriptions, today, businessHref(b.slug, "money")).map((a) => ({ ...a, title: `${b.name}: ${a.title}` })));
+    items.push(...subscriptionAttention(b.subscriptions, today, editHref(b.slug, "subscriptions")).map((a) => ({ ...a, title: `${b.name}: ${a.title}` })));
   }
   items.push(...subscriptionAttention(book.shared, today, "/businesses#shared-tools"));
   return sortAttention(items);
-}
-
-/* ─── Links ───────────────────────────────────────────────────────── */
-
-export type LinkRow = { label: string; url: string; note?: string | null };
-export type LinkGroup = { id: "pages" | "social" | "logins" | "tools" | "admin"; title: string; links: LinkRow[] };
-
-function linkKey(url: string) {
-  try {
-    const u = new URL(url);
-    return `${u.host.replace(/^www\./, "")}${u.pathname.replace(/\/$/, "")}${u.search}`.toLowerCase();
-  } catch {
-    return url.toLowerCase();
-  }
-}
-
-function dedupe(rows: LinkRow[]): LinkRow[] {
-  const seen = new Set<string>();
-  return rows.filter((r) => {
-    const key = linkKey(r.url);
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
-}
-
-const ADMIN_PAGES: [key: string, label: string][] = [
-  ["dashboard", "Dashboard"],
-  ["leads", "Leads"],
-  ["campaigns", "Campaigns"],
-  ["content", "Content"],
-  ["publisher", "Social Publisher"],
-  ["social", "Social stats"],
-  ["sites", "Sites"],
-  ["spending", "Spending"],
-  ["tasks", "Tasks"],
-];
-
-/**
- * Every link for a business, grouped: website pages, social profiles,
- * login pages (saved links, websites and tools), other tools, and, when
- * OS Analytics is connected, its admin pages. Empty groups are left out.
- */
-export function linkGroups(record: BusinessRecord, shared: Subscription[], adminLinks: Record<string, string> = {}): LinkGroup[] {
-  const by = (kind: BusinessLink["kind"]) => record.links.filter((l) => l.kind === kind).map((l) => ({ label: l.label, url: l.url, note: l.note }));
-
-  const pages: LinkRow[] = [];
-  if (record.websiteUrl) pages.push({ label: "Website", url: record.websiteUrl });
-  for (const s of record.sites) if (s.url) pages.push({ label: s.domain, url: s.url });
-  if (record.ctaUrl) pages.push({ label: record.ctaLabel ?? "Main call to action", url: record.ctaUrl, note: "Main call to action" });
-  pages.push(...by("page"));
-  for (const f of record.faqs) if (f.linkUrl) pages.push({ label: f.linkLabel ?? f.question, url: f.linkUrl });
-
-  const logins: LinkRow[] = [...by("login")];
-  for (const s of record.sites) {
-    if (s.editUrl) logins.push({ label: `Edit ${s.domain}`, url: s.editUrl, note: "Where you edit the website" });
-    if (s.registrarLoginUrl) logins.push({ label: `Domain · ${s.registrar ?? s.domain}`, url: s.registrarLoginUrl, note: s.registrarAccount });
-    if (s.hostingLoginUrl) logins.push({ label: `Hosting · ${s.hostingProvider ?? s.domain}`, url: s.hostingLoginUrl, note: s.hostingAccount });
-  }
-  for (const t of toolsFor(record, shared)) {
-    if (t.loginUrl) logins.push({ label: t.name, url: t.loginUrl, note: [t.account, t.businessId ? null : "shared"].filter(Boolean).join(" · ") || null });
-  }
-
-  const groups: LinkGroup[] = [
-    { id: "pages", title: "Website and pages", links: dedupe(pages) },
-    { id: "social", title: "Social media", links: dedupe(by("social")) },
-    { id: "logins", title: "Logins", links: dedupe(logins) },
-    { id: "tools", title: "Tools and other links", links: dedupe([...by("tool"), ...by("other")]) },
-    { id: "admin", title: "Open in OS Analytics", links: ADMIN_PAGES.flatMap(([k, label]) => (adminLinks[k] ? [{ label, url: adminLinks[k] }] : [])) },
-  ];
-  return groups.filter((g) => g.links.length);
-}
-
-/* ─── Coming up ───────────────────────────────────────────────────── */
-
-export type DueDate = { what: string; date: string; daysLeft: number; href: string };
-
-/** Every dated thing for a business in the next 90 days (or overdue): renewals and tool payments. */
-export function upcomingDates(record: BusinessRecord, shared: Subscription[], today: Date, horizon = 90): DueDate[] {
-  const out: DueDate[] = [];
-  for (const site of record.sites) {
-    for (const r of siteRenewals(site, today)) {
-      if (r.daysLeft <= horizon) out.push({ what: `${r.label} · ${r.domain}`, date: r.date, daysLeft: r.daysLeft, href: businessHref(record.slug, "website") });
-    }
-  }
-  for (const s of toolsFor(record, shared)) {
-    if (!s.nextRenewal) continue;
-    const d = daysFrom(today, s.nextRenewal);
-    if (d !== null && d <= horizon) out.push({ what: `${s.name} · ${formatMoney(s.amount, s.currency)}`, date: s.nextRenewal, daysLeft: d, href: businessHref(record.slug, "money") });
-  }
-  return out.sort((a, b) => a.daysLeft - b.daysLeft);
 }

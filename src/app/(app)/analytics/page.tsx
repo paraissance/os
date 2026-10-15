@@ -1,10 +1,8 @@
 import type { Metadata } from "next";
-import { headers } from "next/headers";
 import Link from "next/link";
 import { Suspense } from "react";
 import { modelInfo } from "@/lib/ai/models";
 import { requireUser } from "@/lib/auth/current-user";
-import { businessHref } from "@/lib/business-sections";
 import { loadBook } from "@/lib/businesses";
 import { listConversations } from "@/lib/chat";
 import { requestNow } from "@/lib/clock";
@@ -12,6 +10,7 @@ import { envStatus } from "@/lib/env";
 import { formatRelative } from "@/lib/format";
 import { getModule } from "@/lib/modules";
 import { listBusinesses, percentChange, settle } from "@/lib/os-analytics";
+import { requestOrigin } from "@/lib/request-origin";
 import { getSettings } from "@/lib/settings";
 import { listAgents } from "@/lib/agents";
 import { AgentView } from "@/components/agents/agent-view";
@@ -130,10 +129,7 @@ async function Agents({ searchParams }: { searchParams: PageProps<"/analytics">[
     );
   }
   const current = agents.find((a) => a.business.slug === wanted) ?? agents[0];
-  // Where this JodyOS is reached: the websites load the widget from here.
-  const h = await headers();
-  const host = h.get("x-forwarded-host") ?? h.get("host") ?? "jodyos.vercel.app";
-  const origin = `${h.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https")}://${host}`;
+  const origin = await requestOrigin();
   return (
     <section id="agents" className="scroll-mt-24 space-y-8">
       <div>
@@ -214,13 +210,6 @@ async function Numbers() {
       <div className="rounded-2xl bg-wash p-5">
         <Bars rows={rows.map((r) => ({ label: r.name, value: r.leads }))} empty="No leads recorded in the last 30 days." />
       </div>
-      <p className="flex flex-wrap gap-x-4 gap-y-2 text-sm">
-        {rows.map((r) => (
-          <Link key={r.slug} href={businessHref(r.slug, "leads")} className="font-semibold underline decoration-1 underline-offset-4">
-            {r.name} leads
-          </Link>
-        ))}
-      </p>
     </section>
   );
 }

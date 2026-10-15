@@ -4,12 +4,16 @@
  * JodyOS: black on white, soft and calm. Space and type do the work: soft
  * grey surfaces and rounded corners instead of boxes, hairlines only where
  * rows need separating. Greys used for text stay at or above 4.5:1 on white.
- * Status is carried by words and shape, not colour. Motion is short and
- * quiet, and switches off for anyone who asks for reduced motion.
+ * Status is carried by words and shape; the one place colour joins in is a
+ * website's live check (green live, red a problem), always with words too.
+ * Motion is short and quiet, and switches off for anyone who asks for
+ * reduced motion.
  */
 @theme {
   --color-ink: #000000;
   --color-paper: #ffffff;
+  --color-live: #15803d; /* 5.0:1 on white */
+  --color-down: #b91c1c; /* 6.5:1 on white */
   --color-muted: #545454; /* 7.6:1 on white */
   --color-subtle: #6b6b6b; /* 5.3:1 on white */
   --color-line: #8c8c8c; /* 3.3:1: input and control outlines */

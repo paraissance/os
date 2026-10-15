@@ -3,6 +3,8 @@
  *   <script src="https://YOUR-JODYOS/agent.js" data-agent="business-short-name" defer></script>
  * It adds a chat button in the corner. Everything it shows is plain text; it
  * keeps the last few messages only in this page, never stores them.
+ * It also counts the page view for the owner's dashboard: no cookies, nothing
+ * about the visitor, only "first page today in this browser, yes or no".
  */
 (function () {
   "use strict";
@@ -17,7 +19,7 @@
   window[flag] = true;
 
   var HEX = /^#[0-9a-f]{3,8}$/i;
-  var history = [];
+  var turns = [];
   var busy = false;
 
   function el(tag, cls, text) {
@@ -162,7 +164,7 @@
       fetch(base + "/api/agents/" + slug + "/ask", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: text, history: history.slice(-6) }),
+        body: JSON.stringify({ message: text, history: turns.slice(-6) }),
       })
         .then(function (r) {
           return r.json();
@@ -175,8 +177,8 @@
           var reply = d && typeof d.answer === "string" ? d.answer : "Sorry, something went wrong.";
           addMsg(reply, "bot");
           addActions(d && d.actions);
-          history.push({ role: "user", content: text }, { role: "assistant", content: reply });
-          history = history.slice(-6);
+          turns.push({ role: "user", content: text }, { role: "assistant", content: reply });
+          turns = turns.slice(-6);
           busy = false;
           send.disabled = false;
           input.focus();
@@ -216,7 +218,50 @@
     if (me.hasAttribute("data-open")) toggle(true);
   }
 
+  // One page view. The first one today in this browser also counts as a visitor
+  // (the date is kept in this site's storage; nothing identifies the visitor).
+  // JodyOS's own "Try it" page sets data-preview: nothing is counted there.
+  var preview = me.hasAttribute("data-preview");
+  var seenKey = "jodyos-seen-" + slug;
+  function countView() {
+    if (preview || document.prerendering || navigator.webdriver) return;
+    var today = new Date().toDateString();
+    var first = true;
+    try {
+      first = localStorage.getItem(seenKey) !== today;
+      localStorage.setItem(seenKey, today);
+    } catch {
+      // Storage blocked: only this page's first view counts as a visitor.
+      first = !countView.done;
+    }
+    countView.done = true;
+    fetch(base + "/api/agents/" + slug + "/visit", {
+      method: "POST",
+      keepalive: true,
+      headers: { "Content-Type": "text/plain" },
+      body: JSON.stringify({ new: first }),
+    }).catch(function () {});
+  }
+
+  // Sites that change pages without reloading (Next.js and the like) count each new page too.
+  var lastPath = location.pathname;
+  function onRoute() {
+    if (location.pathname === lastPath) return;
+    lastPath = location.pathname;
+    countView();
+  }
+  if (!preview) {
+    var pushState = window.history.pushState;
+    window.history.pushState = function () {
+      var result = pushState.apply(this, arguments);
+      onRoute();
+      return result;
+    };
+    window.addEventListener("popstate", onRoute);
+  }
+
   function boot() {
+    countView();
     fetch(base + "/api/agents/" + slug)
       .then(function (r) {
         return r.ok ? r.json() : null;

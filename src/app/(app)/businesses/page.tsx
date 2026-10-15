@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { moveBusinessAction } from "@/app/actions/businesses";
 import { requireUser } from "@/lib/auth/current-user";
-import { businessHref } from "@/lib/business-sections";
+import { businessHref } from "@/lib/business-href";
 import { loadBook } from "@/lib/businesses";
 import { mostUrgent, monthlyTotal, renewalWords, siteRenewals, toolsFor } from "@/lib/business-model";
 import { requestNow } from "@/lib/clock";

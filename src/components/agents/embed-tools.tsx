@@ -25,6 +25,7 @@ export function CopyButton({ text }: { text: string }) {
 /**
  * Loads the real website widget (/agent.js) on this page, open, and removes
  * it again when the page is left, so it doesn't follow you around JodyOS.
+ * As a preview it doesn't count page views.
  */
 export function TryAgent({ slug }: { slug: string }) {
   useEffect(() => {
@@ -33,6 +34,7 @@ export function TryAgent({ slug }: { slug: string }) {
     script.defer = true;
     script.dataset.agent = slug;
     script.dataset.open = "";
+    script.dataset.preview = "";
     document.body.appendChild(script);
     return () => {
       script.remove();

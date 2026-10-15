@@ -1,9 +1,8 @@
 "use client";
 
 import Link, { useLinkStatus } from "next/link";
-import { useSearchParams } from "next/navigation";
 import { useEffect, useRef } from "react";
-import { businessHref, isSection } from "@/lib/business-sections";
+import { businessHref } from "@/lib/business-href";
 import { cx } from "@/components/ui/primitives";
 
 /** `leads` is the 30-day count from OS Analytics, or null when it isn't connected. */
@@ -24,13 +23,10 @@ const tab =
   "relative inline-flex min-h-11 shrink-0 items-center gap-2 overflow-hidden whitespace-nowrap rounded-full px-4 text-[15px] font-bold leading-tight transition-[background-color,color,transform] duration-200 active:scale-[0.96]";
 
 /**
- * One tab per business plus "All businesses". Switching business keeps the
- * section that is open (Money stays Money), so businesses compare quickly.
- * On a phone the tabs are one row you swipe; wider screens wrap them.
+ * One tab per business plus "All businesses". On a phone the tabs are one
+ * row you swipe; wider screens wrap them.
  */
 export function BusinessTabBar({ items, current }: { items: TabItem[]; current: string | null }) {
-  const s = useSearchParams().get("s");
-  const section = isSection(s) ? s : undefined;
   const list = useRef<HTMLUListElement>(null);
   const activeTab = useRef<HTMLAnchorElement>(null);
 
@@ -62,7 +58,7 @@ export function BusinessTabBar({ items, current }: { items: TabItem[]; current: 
           return (
             <li key={b.slug} className="shrink-0">
               <Link
-                href={businessHref(b.slug, section)}
+                href={businessHref(b.slug)}
                 scroll={false}
                 ref={on ? activeTab : undefined}
                 aria-current={on ? "page" : undefined}

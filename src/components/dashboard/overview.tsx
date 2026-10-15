@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { requireUser } from "@/lib/auth/current-user";
-import { businessHref } from "@/lib/business-sections";
+import { businessHref } from "@/lib/business-href";
 import { bookAttention, monthlyTotal, mostUrgent, renewalWords, siteRenewals, sortAttention, type Attention } from "@/lib/business-model";
 import { shortUrl } from "@/lib/business-view";
 import { loadBook } from "@/lib/businesses";

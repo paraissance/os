@@ -10,6 +10,11 @@ const UNITS: [Intl.RelativeTimeFormatUnit, number][] = [
   ["minute", 60],
 ];
 
+/** "2026-10-15": the calendar day of a moment in a time zone. */
+export function dayKey(at: Date, timeZone: string): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone, year: "numeric", month: "2-digit", day: "2-digit" }).format(at);
+}
+
 export function formatRelative(date: Date, now: Date): string {
   const seconds = Math.round((date.getTime() - now.getTime()) / 1000);
   const abs = Math.abs(seconds);

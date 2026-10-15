@@ -73,35 +73,6 @@ export function Out({ href, children, className }: { href: string; children: Rea
   );
 }
 
-/** A big clickable row: label, optional note, and the address it goes to. */
-export function LinkRow({ label, url, note }: { label: string; url: string; note?: string | null }) {
-  return (
-    <li>
-      <a
-        href={url}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="group -mx-3 flex items-center justify-between gap-4 rounded-xl px-3 py-3 transition-colors duration-200 hover:bg-wash"
-      >
-        <span className="min-w-0">
-          <span className="block font-bold">{label}</span>
-          <span className="block truncate text-sm text-muted">
-            {note ? `${note} · ` : ""}
-            {shortUrl(url)}
-          </span>
-        </span>
-        <span
-          aria-hidden="true"
-          className="flex size-9 shrink-0 items-center justify-center rounded-full bg-wash text-base font-bold transition-[background-color,color,transform] duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:bg-ink group-hover:text-paper"
-        >
-          ↗
-        </span>
-        <span className="sr-only">(opens in a new tab)</span>
-      </a>
-    </li>
-  );
-}
-
 /** Prose with its URLs made clickable. */
 export function Linked({ text }: { text: string }) {
   return (

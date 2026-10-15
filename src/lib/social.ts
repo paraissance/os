@@ -2,7 +2,7 @@ import "server-only";
 import { and, asc, desc, eq, gte, lt, lte, notInArray, or, sql, type SQL } from "drizzle-orm";
 import { fetchPosts as fetchFromBlotato, type BlotatoPost, type PostWindow } from "@/lib/blotato";
 import { getDb } from "@/lib/db";
-import { businesses, settings, socialAccounts, socialPosts, type SocialPostStatus } from "@/lib/db/schema";
+import { businesses, settings, socialAccounts, socialPosts } from "@/lib/db/schema";
 import { channelKey, type Channel, type PostRow } from "@/lib/social-model";
 
 /*
@@ -237,35 +237,19 @@ const rowColumns = {
   mediaCount: socialPosts.mediaCount,
 };
 
-/** Everything the brand page sums up: what's scheduled, and the last 30 days published and failed. */
+/** The days the brand page sums up. */
+export const STATS_DAYS = 7;
+
+/** Everything the brand page sums up: what's scheduled, and the last 7 days published and failed. */
 export async function brandPosts(accounts: SocialAccount[], now: Date): Promise<{ scheduled: PostRow[]; published: PostRow[]; failed: PostRow[] }> {
   const db = await getDb();
-  const monthAgo = new Date(now.getTime() - 30 * DAY);
+  const since = new Date(now.getTime() - STATS_DAYS * DAY);
   const mine = forAccounts(accounts);
   const [scheduled, published, failed] = await Promise.all([
     db.select(rowColumns).from(socialPosts).where(and(mine, eq(socialPosts.status, "scheduled"), gte(socialPosts.postTime, now))).orderBy(asc(socialPosts.postTime)).limit(500),
-    db.select(rowColumns).from(socialPosts).where(and(mine, eq(socialPosts.status, "published"), gte(socialPosts.postTime, monthAgo))).orderBy(desc(socialPosts.postTime)),
-    db.select(rowColumns).from(socialPosts).where(and(mine, eq(socialPosts.status, "failed"), gte(socialPosts.postTime, monthAgo))).orderBy(desc(socialPosts.postTime)),
+    db.select(rowColumns).from(socialPosts).where(and(mine, eq(socialPosts.status, "published"), gte(socialPosts.postTime, since))).orderBy(desc(socialPosts.postTime)),
+    db.select(rowColumns).from(socialPosts).where(and(mine, eq(socialPosts.status, "failed"), gte(socialPosts.postTime, since))).orderBy(desc(socialPosts.postTime)),
   ]);
   return { scheduled, published, failed };
-}
-
-export const PAGE_SIZE = 30;
-
-/** One page of every post JodyOS keeps for the brand, newest first (scheduled ones soonest first). */
-export async function brandPostPage(accounts: SocialAccount[], status: SocialPostStatus | null, page: number) {
-  const db = await getDb();
-  const where = and(forAccounts(accounts), status ? eq(socialPosts.status, status) : undefined);
-  const [rows, [{ count }]] = await Promise.all([
-    db
-      .select(rowColumns)
-      .from(socialPosts)
-      .where(where)
-      .orderBy(status === "scheduled" ? asc(socialPosts.postTime) : desc(socialPosts.postTime))
-      .limit(PAGE_SIZE)
-      .offset((page - 1) * PAGE_SIZE),
-    db.select({ count: sql<number>`cast(count(*) as int)` }).from(socialPosts).where(where),
-  ]);
-  return { rows, total: Number(count) };
 }
 

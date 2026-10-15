@@ -139,7 +139,7 @@ describe("live attention (OS Analytics adds only what JodyOS can't know)", () =>
     list.businesses[0].previous30.leads = 100;
     list.businesses[0].last30.leads = 42;
     const names = new Map([["example-leads", "Example Leads"]]);
-    expect(mod.liveListAttention(list, names)).toMatchObject([{ title: "Example Leads: Leads down 58%", href: "/?b=example-leads&s=leads" }]);
+    expect(mod.liveListAttention(list, names)).toMatchObject([{ title: "Example Leads: Leads down 58%", href: "/analytics" }]);
     list.businesses[0].previous30.leads = 6;
     list.businesses[0].last30.leads = 1;
     expect(mod.liveListAttention(list)).toEqual([]);
@@ -151,18 +151,8 @@ describe("live attention (OS Analytics adds only what JodyOS can't know)", () =>
     list.businesses = list.businesses.map((b) => ({ ...b, active: false, previous30: { ...b.previous30, leads: 100 } }));
     expect(mod.liveListAttention(list)).toEqual([]);
   });
-
-  it("inside a business: overdue tasks and failed posts", () => {
-    const b = mod.businessDetailSchema.parse(structuredClone(detailFixture));
-    expect(mod.liveAttention(b).map((i) => [i.title, i.href])).toEqual([
-      ["2 overdue tasks", "/?b=example-leads&s=leads"],
-      ["2 social posts failed to publish", "/?b=example-leads&s=marketing"],
-    ]);
-    b.tasks.overdue = 1;
-    b.publisher!.failed = 0;
-    expect(mod.liveAttention(b).map((i) => i.title)).toEqual(["1 overdue task"]);
-  });
 });
+
 describe("formatting", () => {
   it("computes percent change, with no baseline as null", () => {
     expect(mod.percentChange(42, 30)).toBe(40);

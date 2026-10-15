@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense, type ReactNode } from "react";
 import { requireUser } from "@/lib/auth/current-user";
-import { businessHref } from "@/lib/business-sections";
+import { businessHref } from "@/lib/business-href";
 import { getRecord } from "@/lib/businesses";
 import { BusinessForm, DeleteBusiness, FaqsEditor, LinksEditor, SitesEditor, SubscriptionsEditor } from "@/components/businesses/editors";
 import { Title } from "@/components/dashboard/ui";
