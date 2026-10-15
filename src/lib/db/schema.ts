@@ -309,6 +309,46 @@ export const socialPosts = pgTable(
   ],
 );
 
+export type AgentLink = { label: string; url: string };
+export type AgentStarter = { question: string; answer: string; link: AgentLink | null };
+export type AgentKeyword = { words: string[]; answer: string; link: AgentLink | null };
+export type AgentCrisis = { answer: string; actions: AgentLink[] };
+
+/**
+ * A business's website AI assistant (from the OS Analytics plugin): what it
+ * says first, what it answers instantly, what it knows, the rules it
+ * follows. One per business; importing again updates it.
+ */
+export const aiAgents = pgTable(
+  "ai_agents",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    businessId: uuid("business_id")
+      .notNull()
+      .references(() => businesses.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    tagline: text("tagline"),
+    language: text("language").notNull().default("en"),
+    safetyProfile: text("safety_profile"),
+    brandColor: text("brand_color"),
+    accentColor: text("accent_color"),
+    ctaLabel: text("cta_label"),
+    ctaUrl: text("cta_url"),
+    greeting: text("greeting").notNull(),
+    note: text("note"),
+    starters: jsonb("starters").$type<AgentStarter[]>().notNull(),
+    keywords: jsonb("keywords").$type<AgentKeyword[]>().notNull(),
+    fallbackLinks: jsonb("fallback_links").$type<AgentLink[]>().notNull(),
+    knowledge: text("knowledge").notNull(),
+    instructions: text("instructions"),
+    crisis: jsonb("crisis").$type<AgentCrisis>(),
+    shortcode: text("shortcode"),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [uniqueIndex("ai_agents_business_unique").on(t.businessId)],
+);
+
 /** Where an invoice comes from: the Spendings page has a tab for each. */
 export const INVOICE_SOURCES = ["claude", "console"] as const;
 export type InvoiceSource = (typeof INVOICE_SOURCES)[number];

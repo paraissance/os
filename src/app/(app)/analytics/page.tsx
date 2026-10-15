@@ -12,9 +12,12 @@ import { formatRelative } from "@/lib/format";
 import { getModule } from "@/lib/modules";
 import { listBusinesses, percentChange, settle } from "@/lib/os-analytics";
 import { getSettings } from "@/lib/settings";
+import { listAgents } from "@/lib/agents";
+import { AgentView } from "@/components/agents/agent-view";
+import { AgentsImport } from "@/components/agents/agents-import";
 import { AskBar } from "@/components/dashboard/ask-bar";
 import { Bars, Rows, Sentence, Title } from "@/components/dashboard/ui";
-import { Alert, PageHeader, Skeleton, buttonClass } from "@/components/ui/primitives";
+import { Alert, PageHeader, Skeleton, buttonClass, cx } from "@/components/ui/primitives";
 
 export const metadata: Metadata = { title: "AI & Analytics" };
 
@@ -23,7 +26,7 @@ export const metadata: Metadata = { title: "AI & Analytics" };
  * leads per business when OS Analytics is connected. Website traffic
  * (Google Analytics) arrives in Phase 3.
  */
-export default function AiAnalyticsPage() {
+export default function AiAnalyticsPage(props: PageProps<"/analytics">) {
   const later = getModule("analytics").planned;
   return (
     <>
@@ -39,6 +42,10 @@ export default function AiAnalyticsPage() {
             <RecentChats />
           </Suspense>
         </section>
+
+        <Suspense fallback={<Skeleton className="h-96" />}>
+          <Agents searchParams={props.searchParams} />
+        </Suspense>
 
         <Suspense fallback={<Skeleton className="h-64" />}>
           <Numbers />
@@ -103,6 +110,55 @@ async function RecentChats() {
         Open AI Command →
       </Link>
     </div>
+  );
+}
+
+/** The website AI assistants, one tab per business: /analytics?agent=<slug>#agents. */
+async function Agents({ searchParams }: { searchParams: PageProps<"/analytics">["searchParams"] }) {
+  await requireUser();
+  const [{ agent: wanted }, agents] = await Promise.all([searchParams, listAgents()]);
+  if (!agents.length) {
+    return (
+      <section id="agents" className="scroll-mt-24">
+        <Title>AI agents</Title>
+        <p className="mb-4 max-w-2xl text-muted">
+          Each business&apos;s website assistant: what it says, what it knows and the rules it keeps. Drop the agents file made from the OS Analytics plugin to add them.
+        </p>
+        <AgentsImport />
+      </section>
+    );
+  }
+  const current = agents.find((a) => a.business.slug === wanted) ?? agents[0];
+  return (
+    <section id="agents" className="scroll-mt-24 space-y-8">
+      <div>
+        <Title count={agents.length} note="the website assistants">
+          AI agents
+        </Title>
+        <nav aria-label="AI agents" className="flex flex-wrap gap-2">
+          {agents.map((a) => (
+            <Link
+              key={a.id}
+              href={`/analytics?agent=${a.business.slug}#agents`}
+              aria-current={a.id === current.id ? "page" : undefined}
+              className={cx(
+                "inline-flex min-h-11 items-center rounded-full px-5 text-[15px] font-semibold transition-colors duration-200",
+                a.id === current.id ? "bg-ink text-paper" : "bg-wash hover:bg-mist",
+              )}
+            >
+              {a.business.name}
+            </Link>
+          ))}
+        </nav>
+      </div>
+      <AgentView key={current.id} agent={current} />
+      <details className="rounded-2xl bg-wash p-5">
+        <summary className="cursor-pointer font-semibold">Update the agents from a new file</summary>
+        <div className="mt-4">
+          <AgentsImport />
+        </div>
+      </details>
+    </section>
   );
 }
 

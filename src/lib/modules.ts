@@ -96,7 +96,7 @@ export const MODULES: ModuleDef[] = [
     href: "/analytics",
     group: "Core",
     phase: 1,
-    summary: "Jody Core and your numbers: ask anything, pick up recent conversations, and see leads per business when OS Analytics is connected.",
+    summary: "Jody Core, each business's website AI agent (what it says, knows and won't do), and leads per business when OS Analytics is connected.",
     planned: [
       "Website traffic from Google Analytics 4: users, sessions, sources, top pages, conversions (Phase 3)",
       "Trends and period comparisons (Phase 3)",
