@@ -43,6 +43,39 @@ export function toProviderError(err: unknown): AiProviderError {
   return new AiProviderError("unknown", "The AI request failed unexpectedly.");
 }
 
+/**
+ * One short answer, not streamed: the website agents. Low effort (chat
+ * doesn't need deep thinking), a hard output cap for a public endpoint, and
+ * the server-side fallback on. Null when the model declines or says nothing,
+ * so the caller can fall back to its own answers.
+ */
+export async function answerOnce(request: { model: string; system: string; turns: { role: "user" | "assistant"; content: string }[]; signal?: AbortSignal }) {
+  const anthropic = getClient();
+  const fallback = modelInfo(request.model)?.serverFallback ?? false;
+  try {
+    const response = await anthropic.beta.messages.create(
+      {
+        model: request.model,
+        max_tokens: 4000,
+        output_config: { effort: "low" },
+        cache_control: { type: "ephemeral" },
+        system: request.system,
+        messages: request.turns.map((t) => ({ role: t.role, content: t.content })),
+        ...(fallback ? { betas: [FALLBACK_BETA], fallbacks: "default" as const } : {}),
+      },
+      { signal: request.signal, timeout: 30_000, maxRetries: 1 },
+    );
+    if (response.stop_reason === "refusal") return null;
+    const text = response.content
+      .flatMap((b) => (b.type === "text" ? [b.text] : []))
+      .join("")
+      .trim();
+    return text || null;
+  } catch (err) {
+    throw toProviderError(err);
+  }
+}
+
 export const anthropicProvider: ChatProvider = {
   id: "anthropic",
   label: "Anthropic Claude",

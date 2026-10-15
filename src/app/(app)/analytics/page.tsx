@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import Link from "next/link";
 import { Suspense } from "react";
 import { modelInfo } from "@/lib/ai/models";
@@ -129,6 +130,10 @@ async function Agents({ searchParams }: { searchParams: PageProps<"/analytics">[
     );
   }
   const current = agents.find((a) => a.business.slug === wanted) ?? agents[0];
+  // Where this JodyOS is reached: the websites load the widget from here.
+  const h = await headers();
+  const host = h.get("x-forwarded-host") ?? h.get("host") ?? "jodyos.vercel.app";
+  const origin = `${h.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https")}://${host}`;
   return (
     <section id="agents" className="scroll-mt-24 space-y-8">
       <div>
@@ -151,7 +156,7 @@ async function Agents({ searchParams }: { searchParams: PageProps<"/analytics">[
           ))}
         </nav>
       </div>
-      <AgentView key={current.id} agent={current} />
+      <AgentView key={current.id} agent={current} origin={origin} aiReady={envStatus().anthropic} />
       <details className="rounded-2xl bg-wash p-5">
         <summary className="cursor-pointer font-semibold">Update the agents from a new file</summary>
         <div className="mt-4">

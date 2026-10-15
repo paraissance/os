@@ -22,6 +22,7 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  // Everything except API routes (they answer 401 themselves), Next internals and public files.
-  matcher: ["/((?!api/|_next/static|_next/image|icon.svg|robots.txt|favicon.ico).*)"],
+  // Everything except API routes (they answer 401 themselves), Next internals and public files
+  // (agent.js is the website chat widget, loaded by the businesses' own sites).
+  matcher: ["/((?!api/|_next/static|_next/image|icon.svg|robots.txt|favicon.ico|agent.js).*)"],
 };

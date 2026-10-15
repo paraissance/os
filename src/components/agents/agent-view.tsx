@@ -3,7 +3,8 @@ import { languageName, profileName } from "@/lib/agent-input";
 import type { Agent } from "@/lib/agents";
 import type { AgentLink } from "@/lib/db/schema";
 import { Linked, Rows } from "@/components/dashboard/ui";
-import { Badge, cx } from "@/components/ui/primitives";
+import { Badge, buttonClass, cx } from "@/components/ui/primitives";
+import { CopyButton } from "./embed-tools";
 
 /*
  * One business's website AI assistant, read top to bottom: what visitors
@@ -49,7 +50,12 @@ const STEPS = [
   "If the AI can't answer, a keyword answer is used; failing that, the links it offers when unsure.",
 ];
 
-export function AgentView({ agent }: { agent: Agent }) {
+/** The one line a website needs: JodyOS serves the widget and the answers. */
+export function embedCode(origin: string, slug: string) {
+  return `<script src="${origin}/agent.js" data-agent="${slug}" defer></script>`;
+}
+
+export function AgentView({ agent, origin, aiReady }: { agent: Agent; origin: string; aiReady: boolean }) {
   const words = agent.knowledge.split(/\s+/).filter(Boolean).length;
   return (
     <article aria-label={agent.name} className="animate-rise space-y-10">
@@ -192,19 +198,34 @@ export function AgentView({ agent }: { agent: Agent }) {
             </details>
           </Part>
 
-          {agent.shortcode ? (
-            <Part title="Put it on a website">
-              <div className="space-y-2 rounded-2xl bg-wash p-5 text-[15px]">
-                <p>On a WordPress page, add this shortcode:</p>
-                <code className="block select-all rounded-xl bg-paper px-3 py-2 font-mono text-sm">{agent.shortcode}</code>
-                <p className="text-sm text-muted">For Kajabi and other sites, the embed code is in OS Analytics → AI Assistant, with this brand selected.</p>
+          <Part title="Put it on a website">
+            <div className="space-y-3 rounded-2xl bg-wash p-5 text-[15px]">
+              <p>Paste this one line on {agent.business.name}&apos;s website, just before the end of the page:</p>
+              <code className="block select-all break-all rounded-xl bg-paper px-3 py-2 font-mono text-sm">{embedCode(origin, agent.business.slug)}</code>
+              <div className="flex flex-wrap gap-2">
+                <CopyButton text={embedCode(origin, agent.business.slug)} />
+                <a href={`/analytics/try?agent=${agent.business.slug}`} className={buttonClass("light", "min-h-9 px-4")}>
+                  Try it here
+                </a>
               </div>
-            </Part>
-          ) : null}
+              <ul className="list-disc space-y-1 pl-5 text-sm text-muted">
+                <li>Kajabi: Settings → Site → Custom code → Footer.</li>
+                <li>WordPress: the theme footer, or a Custom HTML block.</li>
+                <li>Sites built with Claude Code (Next.js): ask for it to go in the root layout.</li>
+              </ul>
+              {aiReady ? null : (
+                <p className="text-sm">
+                  The AI isn&apos;t switched on yet (ANTHROPIC_API_KEY in Vercel): until it is, the agent answers with its starter and keyword answers and links.
+                </p>
+              )}
+            </div>
+          </Part>
         </div>
       </div>
 
-      <p className="text-sm text-muted">From the OS Analytics plugin. Updated {agent.updatedAt.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}.</p>
+      <p className="text-sm text-muted">
+        Imported from the OS Analytics plugin, served by JodyOS. Updated {agent.updatedAt.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}.
+      </p>
     </article>
   );
 }

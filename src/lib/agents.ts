@@ -19,6 +19,19 @@ export async function listAgents(): Promise<Agent[]> {
   return rows.map((r) => ({ ...r.agent, business: r.business }));
 }
 
+/** One business's agent, by the business's short name, or null. */
+export async function getAgentBySlug(slug: string): Promise<Agent | null> {
+  if (!/^[a-z0-9][a-z0-9-]{0,59}$/.test(slug)) return null;
+  const db = await getDb();
+  const [row] = await db
+    .select({ agent: aiAgents, business: { slug: businesses.slug, name: businesses.name } })
+    .from(aiAgents)
+    .innerJoin(businesses, eq(aiAgents.businessId, businesses.id))
+    .where(eq(businesses.slug, slug))
+    .limit(1);
+  return row ? { ...row.agent, business: row.business } : null;
+}
+
 /**
  * Saves each agent on its business (matched by short name), replacing the
  * one it had. Agents for businesses JodyOS doesn't have are skipped and
