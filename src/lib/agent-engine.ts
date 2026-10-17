@@ -5,13 +5,15 @@ import type { AgentCrisis, AgentKeyword, AgentLink, AgentStarter } from "@/lib/d
  *   1. a message about a crisis gets the agent's crisis answer (no AI);
  *   2. one of its starter questions gets the saved answer at once;
  *   3. anything else goes to the AI, with the agent's instructions and knowledge;
- *   4. if the AI can't answer, a keyword answer; failing that, its links.
+ *   4. if the AI can't answer: a hello back, a keyword answer, the best
+ *      matching lines of its knowledge; failing all that, its links.
  * The AI call is passed in, so this file has no network or database code.
  */
 
 export type AgentBrain = {
   name: string;
   language: string;
+  greeting: string;
   instructions: string | null;
   knowledge: string;
   ctaLabel: string | null;
@@ -23,7 +25,7 @@ export type AgentBrain = {
 };
 
 export type AgentTurn = { role: "user" | "assistant"; content: string };
-export type AgentReply = { answer: string; actions: AgentLink[]; source: "safety" | "starter" | "ai" | "keyword" | "links" };
+export type AgentReply = { answer: string; actions: AgentLink[]; source: "safety" | "starter" | "ai" | "greeting" | "keyword" | "knowledge" | "links" };
 
 const CRISIS_TERMS = [
   "suicide",
@@ -73,6 +75,34 @@ function words(message: string) {
   return new Set(normalize(message).split(" "));
 }
 
+const HELLO = /^(hi+|hello|hey|hiya|howdy|yo|hola|buenas|buenos dias|buenas tardes|good (morning|afternoon|evening|day))( there)?$/;
+const THANKS = /^(thanks?( you)?( so much)?|thank u|thx|ty|gracias|ok(ay)? thanks?|great thanks?)$/;
+
+// Small words that don't say what the question is about.
+const FILLER = new Set(
+  "the and you your for are was were what whats how who does did can could with about this that have has from they them will would there their tell any get want need know please more like just some much many when where which why also into than then its it's i'm".split(" "),
+);
+
+/**
+ * The knowledge lines that share the most words with the question (up to two).
+ * shortcut: plain word overlap, not meaning; the AI is the real answer once ANTHROPIC_API_KEY is set.
+ */
+export function searchKnowledge(knowledge: string, message: string): string[] {
+  const asked = [...words(message)].filter((w) => w.length > 2 && !FILLER.has(w));
+  if (!asked.length) return [];
+  const scored = knowledge
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line && !line.startsWith("#"))
+    .map((line) => {
+      const has = words(line);
+      return { line, score: asked.filter((w) => has.has(w) || has.has(w.replace(/s$/, "")) || has.has(`${w}s`)).length };
+    })
+    .filter((s) => s.score > 0)
+    .sort((a, b) => b.score - a.score);
+  return scored.filter((s) => s.score === scored[0]?.score).slice(0, 2).map((s) => s.line);
+}
+
 /** What the AI is told: the agent's own instructions, then its knowledge as the only source of truth. */
 export function systemPrompt(agent: AgentBrain) {
   const instructions =
@@ -119,11 +149,20 @@ export async function answer(
     }
   }
 
+  const spanish = agent.language.startsWith("es");
+  const cta = agent.ctaUrl && agent.ctaLabel ? [{ label: agent.ctaLabel, url: agent.ctaUrl }] : [];
+  if (HELLO.test(asked)) return { answer: agent.greeting, actions: [], source: "greeting" };
+  if (THANKS.test(asked)) {
+    return { answer: spanish ? "¡Con gusto! ¿Algo más en lo que te pueda ayudar?" : "You're welcome! Anything else I can help with?", actions: [], source: "greeting" };
+  }
+
   const said = words(message);
   const keyword = agent.keywords.find((k) => k.words.some((w) => normalize(w).split(" ").every((part) => said.has(part))));
   if (keyword) return { answer: keyword.answer, actions: keyword.link ? [keyword.link] : [], source: "keyword" };
 
-  const spanish = agent.language.startsWith("es");
+  const found = searchKnowledge(agent.knowledge, message);
+  if (found.length) return { answer: found.join("\n\n"), actions: cta, source: "knowledge" };
+
   return {
     answer: spanish ? "No estoy seguro de tener esa respuesta. Esto es en lo que sí te puedo ayudar:" : "I'm not sure I have that one to hand. Here's where I can point you:",
     actions: agent.fallbackLinks,

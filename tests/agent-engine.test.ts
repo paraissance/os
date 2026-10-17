@@ -4,6 +4,7 @@ import { answer, cleanTurns, isCrisis, normalize, systemPrompt, type AgentBrain 
 const agent: AgentBrain = {
   name: "Example Leads Assistant",
   language: "en",
+  greeting: "Hi! Ask me anything about Example Leads.",
   instructions: "You are the Example Leads Assistant. Keep it short.",
   knowledge: "# EXAMPLE\nWe find buyer and seller leads.",
   ctaLabel: "Book a call",
@@ -53,6 +54,19 @@ describe("website agent answers", () => {
     expect(await answer(agent, "Tell me about leads", [], async () => Promise.reject(new Error("down")))).toMatchObject({ source: "keyword" });
     expect(await answer(agent, "Is there a price list?", [], noAi)).toMatchObject({ source: "keyword" });
     expect(await answer(agent, "He pleads for help", [], noAi)).toMatchObject({ source: "links", actions: [{ label: "Home", url: "https://example.com" }] });
+  });
+
+  it("without the AI, says hello back, and answers from the best matching lines of its knowledge", async () => {
+    expect(await answer(agent, "Hi!", [], noAi)).toEqual({ answer: "Hi! Ask me anything about Example Leads.", actions: [], source: "greeting" });
+    expect(await answer(agent, "good morning", [], noAi)).toMatchObject({ source: "greeting" });
+    expect(await answer(agent, "thank you", [], noAi)).toMatchObject({ answer: "You're welcome! Anything else I can help with?" });
+    expect(await answer(agent, "Do you work with sellers?", [], noAi)).toEqual({
+      answer: "We find buyer and seller leads.",
+      actions: [{ label: "Book a call", url: "https://example.com/book" }],
+      source: "knowledge",
+    });
+    // With the AI on, a hello goes to the AI like anything else.
+    expect(await answer(agent, "hello", [], aiSays("Hello there!"))).toMatchObject({ source: "ai" });
   });
 
   it("writes its own instructions when the agent has none, still with the knowledge", () => {
