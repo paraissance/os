@@ -3,8 +3,10 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { requireUser } from "@/lib/auth/current-user";
 import { loadBook } from "@/lib/businesses";
+import { envStatus } from "@/lib/env";
 import { getModule } from "@/lib/modules";
 import { WebsiteLinkForm } from "@/components/businesses/editors";
+import { AskClaude } from "@/components/websites/ask-claude";
 import { Title } from "@/components/dashboard/ui";
 import { PageHeader, Skeleton, buttonClass } from "@/components/ui/primitives";
 
@@ -48,6 +50,7 @@ async function WebsitesBody() {
   const book = await loadBook();
   const all = book.businesses.flatMap((b) => b.sites.map((site) => ({ site, business: b })));
   const listed = all.filter((x) => x.site.editUrl);
+  const routine = envStatus().siteRoutine;
 
   if (!all.length) {
     return (
@@ -79,6 +82,7 @@ async function WebsitesBody() {
                   Edit website
                 </OutButton>
               </div>
+              {routine ? <AskClaude siteId={site.id} domain={site.domain} /> : null}
             </li>
           ))}
         </ul>

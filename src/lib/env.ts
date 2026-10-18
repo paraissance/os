@@ -54,6 +54,19 @@ const schema = z.object({
     .trim()
     .optional()
     .transform((v) => (v ? v : undefined)),
+  // Claude Code routine that edits the websites (claude.ai/code → the routine → API trigger):
+  // its id (trig_…) and the token made there. Runs on the Claude plan, not API tokens.
+  SITE_ROUTINE_ID: z
+    .string()
+    .trim()
+    .optional()
+    .transform((v) => (v ? v : undefined))
+    .refine((v) => v === undefined || /^trig_[A-Za-z0-9_-]+$/.test(v), { message: "SITE_ROUTINE_ID must be the routine's id, starting with trig_" }),
+  SITE_ROUTINE_TOKEN: z
+    .string()
+    .trim()
+    .optional()
+    .transform((v) => (v ? v : undefined)),
   // Email (Resend): sends the 6-digit sign-in codes. EMAIL_FROM is a sender
   // on a domain verified in Resend, like "JodyOS <login@example.com>".
   RESEND_API_KEY: z
@@ -123,5 +136,6 @@ export function envStatus() {
     osAnalytics: Boolean(e.OS_ANALYTICS_URL && e.OS_ANALYTICS_KEY),
     email: Boolean(e.RESEND_API_KEY && e.EMAIL_FROM),
     blotato: Boolean(e.BLOTATO_API_KEY),
+    siteRoutine: Boolean(e.SITE_ROUTINE_ID && e.SITE_ROUTINE_TOKEN),
   };
 }

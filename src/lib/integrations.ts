@@ -96,6 +96,17 @@ export function listIntegrations(): Integration[] {
       setup: "In Blotato: Settings → API → copy the key. In Vercel add it as BLOTATO_API_KEY and redeploy.",
     },
     {
+      id: "site-routine",
+      name: "Claude Code (website edits)",
+      category: "Websites",
+      phase: 1,
+      description: "Websites page: type a change, and a Claude Code routine makes it in that site's code on your Claude plan, then opens a pull request with a preview.",
+      status: env.siteRoutine ? "connected" : "not_configured",
+      envVars: ["SITE_ROUTINE_ID", "SITE_ROUTINE_TOKEN"],
+      setup:
+        "On claude.ai/code create a routine with the website repositories, add an API trigger and generate its token. In Vercel add the routine's id (trig_…) as SITE_ROUTINE_ID and the token as SITE_ROUTINE_TOKEN, and redeploy.",
+    },
+    {
       id: "ga4",
       name: "Google Analytics 4",
       category: "Analytics",
