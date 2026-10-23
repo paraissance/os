@@ -164,6 +164,49 @@ function subscriptionAttention(subs: Subscription[], today: Date, href: string):
   });
 }
 
+/* ─── Magic links ─────────────────────────────────────────────────── */
+
+export type QuickLink = { label: string; url: string };
+
+function linkKey(url: string) {
+  try {
+    const u = new URL(url);
+    return `${u.host.replace(/^www\./, "")}${u.pathname.replace(/\/$/, "")}${u.search}`.toLowerCase();
+  } catch {
+    return url.toLowerCase();
+  }
+}
+
+/**
+ * Every place to go for a business, each address once, most used first:
+ * its site and where it's edited, logins (domain, hosting, saved), tools,
+ * social profiles, then other pages.
+ */
+export function quickLinks(record: BusinessRecord): QuickLink[] {
+  const by = (...kinds: BusinessLink["kind"][]) => record.links.filter((l) => kinds.includes(l.kind)).map((l) => ({ label: l.label, url: l.url }));
+  const many = record.sites.length > 1;
+  const all: (QuickLink | null)[] = [
+    record.websiteUrl ? { label: record.sites[0]?.domain ?? "Website", url: record.websiteUrl } : null,
+    ...record.sites.flatMap((s) => [
+      { label: s.domain, url: s.url ?? `https://${s.domain}` },
+      s.editUrl ? { label: many ? `Edit ${s.domain}` : "Edit site", url: s.editUrl } : null,
+      s.registrarLoginUrl ? { label: `Domain · ${s.registrar ?? s.domain}`, url: s.registrarLoginUrl } : null,
+      s.hostingLoginUrl ? { label: `Hosting · ${s.hostingProvider ?? s.domain}`, url: s.hostingLoginUrl } : null,
+    ]),
+    ...by("login"),
+    ...by("tool"),
+    ...record.subscriptions.filter((t) => t.active && t.loginUrl).map((t) => ({ label: t.name, url: t.loginUrl! })),
+    ...by("social"),
+    ...by("page", "other"),
+  ];
+  const seen = new Set<string>();
+  return all.filter((l): l is QuickLink => {
+    if (!l || !/^https?:\/\//i.test(l.url) || seen.has(linkKey(l.url))) return false;
+    seen.add(linkKey(l.url));
+    return true;
+  });
+}
+
 export function sortAttention<T extends Attention>(items: T[]): T[] {
   return items.sort((a, b) => (a.level === b.level ? a.sort - b.sort : a.level === "critical" ? -1 : 1));
 }

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { requireUser } from "@/lib/auth/current-user";
 import { businessHref } from "@/lib/business-href";
-import { bookAttention, monthlyTotal, mostUrgent, renewalWords, siteRenewals, sortAttention, type Attention } from "@/lib/business-model";
+import { bookAttention, monthlyTotal, mostUrgent, quickLinks, renewalWords, siteRenewals, sortAttention, type Attention, type QuickLink } from "@/lib/business-model";
 import { shortUrl } from "@/lib/business-view";
 import { loadBook } from "@/lib/businesses";
 import { requestNow } from "@/lib/clock";
@@ -12,11 +12,12 @@ import { ImportForm } from "@/components/businesses/editors";
 import { Delta } from "@/components/business-bits";
 import { CountUp } from "@/components/motion/count-up";
 import { EmptyState, Skeleton, StatusDot, buttonClass } from "@/components/ui/primitives";
-import { AttentionList, Sentence, Title } from "./ui";
+import { AttentionList, Rows, Sentence, Title } from "./ui";
 
 /**
- * The "All businesses" tab: the businesses and what needs doing, nothing
- * else. Money has its own page (/spending); Ask Jody Core sits under the greeting.
+ * The "All businesses" tab: what needs doing, magic links to everything,
+ * and the businesses. Money has its own page (/spending); Ask Jody Core sits
+ * under the greeting.
  */
 export function Overview() {
   return (
@@ -28,10 +29,70 @@ export function Overview() {
       <Suspense fallback={null}>
         <Attention />
       </Suspense>
+      <Suspense fallback={<Skeleton className="h-64" />}>
+        <MagicLinks />
+      </Suspense>
       <Suspense fallback={<Skeleton className="h-96" />}>
         <BusinessCards />
       </Suspense>
     </div>
+  );
+}
+
+/** Where the work happens, for every business at once. */
+const TOOLS: QuickLink[] = [
+  { label: "Claude Code", url: "https://claude.ai/code" },
+  { label: "Claude Console", url: "https://console.anthropic.com" },
+  { label: "GitHub", url: "https://github.com" },
+  { label: "Vercel", url: "https://vercel.com/dashboard" },
+];
+
+function Pill({ link }: { link: QuickLink }) {
+  return (
+    <li>
+      <a
+        href={link.url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="inline-flex items-center gap-1 rounded-full bg-paper px-3.5 py-1.5 text-sm font-semibold transition-colors duration-200 hover:bg-ink hover:text-paper"
+      >
+        {link.label} <span aria-hidden="true">↗</span>
+        <span className="sr-only">(opens in a new tab)</span>
+      </a>
+    </li>
+  );
+}
+
+/** One tap to anything: the tools, then each active business's site, edit link, logins, tools and profiles. */
+async function MagicLinks() {
+  await requireUser();
+  const book = await loadBook();
+  const tools = [
+    ...TOOLS,
+    ...(envStatus().blotato ? [{ label: "Blotato", url: "https://my.blotato.com/calendar" }] : []),
+    ...book.shared.filter((t) => t.active && t.loginUrl).map((t) => ({ label: t.name, url: t.loginUrl! })),
+  ];
+  const rows = [
+    { name: "Tools", links: tools },
+    ...book.businesses.filter((b) => b.status === "active").map((b) => ({ name: b.name, links: quickLinks(b) })),
+  ].filter((r) => r.links.length);
+
+  return (
+    <section className="reveal">
+      <Title note="one tap opens it">Magic links</Title>
+      <Rows>
+        {rows.map((r) => (
+          <li key={r.name} className="grid gap-x-6 gap-y-2 sm:grid-cols-[11rem_minmax(0,1fr)] sm:items-baseline">
+            <p className="font-bold">{r.name}</p>
+            <ul className="flex flex-wrap gap-2">
+              {r.links.map((l) => (
+                <Pill key={`${l.label} ${l.url}`} link={l} />
+              ))}
+            </ul>
+          </li>
+        ))}
+      </Rows>
+    </section>
   );
 }
 /** Live numbers from OS Analytics, when it is connected; null otherwise. */

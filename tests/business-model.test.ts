@@ -5,6 +5,7 @@ import {
   monthlyCost,
   monthlyTotal,
   mostUrgent,
+  quickLinks,
   renewalWords,
   siteRenewals,
   type BusinessRecord,
@@ -152,6 +153,23 @@ describe("attention", () => {
       ["warning", "Scheduler renews in 5 days", "/businesses#shared-tools"],
       ["warning", "Example Leads: Domain renews in 10 days", "/businesses/example-leads/edit#websites"],
     ]);
+  });
+
+  it("gathers every place to go for a business, site first, each address once", () => {
+    const link = (label: string, url: string, kind: BusinessRecord["links"][number]["kind"]) => ({ id: label, businessId: "b1", label, url, kind, note: null, sortOrder: 0, createdAt: at });
+    const r2 = record({
+      websiteUrl: "https://www.leads.example.com/",
+      sites: [site({ url: "https://leads.example.com", editUrl: "https://claude.ai/code/session_x", registrar: "GoDaddy", registrarLoginUrl: "https://sso.godaddy.com" })],
+      links: [
+        link("Instagram", "https://instagram.com/example", "social"),
+        link("Home again", "https://leads.example.com/", "page"),
+        link("CRM", "https://crm.example/login", "login"),
+        link("Bad", "javascript:alert(1)", "other"),
+      ],
+      subscriptions: [sub({ name: "Canva", loginUrl: "https://canva.com/login" }), sub({ name: "Old", loginUrl: "https://old.example", active: false })],
+    });
+    expect(quickLinks(r2).map((l) => l.label)).toEqual(["leads.example.com", "Edit site", "Domain · GoDaddy", "CRM", "Canva", "Instagram"]);
+    expect(quickLinks(record())).toEqual([]);
   });
 
   it("names the website when a business has more than one", () => {
