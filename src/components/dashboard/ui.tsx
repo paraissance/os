@@ -73,6 +73,27 @@ export function Out({ href, children, className }: { href: string; children: Rea
   );
 }
 
+/** Links as white pills that wrap; each opens in a new tab. */
+export function LinkPills({ links, className }: { links: { label: string; url: string }[]; className?: string }) {
+  return (
+    <ul className={cx("flex flex-wrap gap-2", className)}>
+      {links.map((l) => (
+        <li key={`${l.label} ${l.url}`}>
+          <a
+            href={l.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 rounded-full bg-paper px-3.5 py-1.5 text-sm font-semibold transition-colors duration-200 hover:bg-ink hover:text-paper"
+          >
+            {l.label} <span aria-hidden="true">↗</span>
+            <span className="sr-only">(opens in a new tab)</span>
+          </a>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 /** Prose with its URLs made clickable. */
 export function Linked({ text }: { text: string }) {
   return (

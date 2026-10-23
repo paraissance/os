@@ -15,7 +15,7 @@ import { checkSite } from "@/lib/site-check";
 import { loadTraffic } from "@/lib/traffic";
 import { embedCode } from "@/components/agents/agent-view";
 import { AskBar } from "@/components/dashboard/ask-bar";
-import { BusinessAbout, SiteSide, TrafficPanel, mainSite } from "@/components/dashboard/business-page";
+import { BusinessAbout, BusinessMagicLinks, SiteSide, TrafficPanel, mainSite } from "@/components/dashboard/business-page";
 import { BusinessTabBar } from "@/components/dashboard/business-tab-bar";
 import { Overview } from "@/components/dashboard/overview";
 import { Badge, Skeleton, buttonClass } from "@/components/ui/primitives";
@@ -143,6 +143,8 @@ async function BusinessTab({ slug }: { slug: string }) {
           </Link>
         </div>
       </header>
+
+      <BusinessMagicLinks record={record} />
 
       <div className="grid grid-cols-[minmax(0,1fr)] gap-10 lg:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)] lg:gap-12">
         <BusinessAbout record={record} />

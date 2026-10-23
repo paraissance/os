@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { BusinessRecord, BusinessSite } from "@/lib/business-model";
 import { editHref } from "@/lib/business-href";
-import { dayLabel } from "@/lib/business-model";
+import { dayLabel, quickLinks } from "@/lib/business-model";
 import { knowledgeSections } from "@/lib/business-view";
 import { formatRelative } from "@/lib/format";
 import type { SiteHealth } from "@/lib/site-health";
@@ -10,11 +10,12 @@ import { CopyButton } from "@/components/agents/embed-tools";
 import { BarChart, Delta } from "@/components/business-bits";
 import { CountUp } from "@/components/motion/count-up";
 import { buttonClass, cx } from "@/components/ui/primitives";
-import { Facts, Linked, Muted, Out, Tile, Tiles, Title } from "./ui";
+import { Facts, LinkPills, Linked, Muted, Out, Tile, Tiles, Title } from "./ui";
 
 /*
- * One business on the dashboard: what it is (left), its website at a glance
- * with a live check (right), and the website's traffic below. Nothing else.
+ * One business on the dashboard: its magic links, what it is (left), its
+ * website at a glance with a live check (right), and the website's traffic
+ * below. Nothing else.
  */
 
 /** The website a business is mainly known by: the one its address points to, else the first. */
@@ -28,6 +29,28 @@ export function mainSite(record: BusinessRecord): BusinessSite | null {
   };
   const main = host(record.websiteUrl);
   return record.sites.find((s) => s.domain.replace(/^www\./, "") === main || host(s.url) === main) ?? record.sites[0] ?? null;
+}
+
+/* ─── Magic links ─────────────────────────────────────────────────── */
+
+/** One tap to the business's site, where it's edited, its logins, tools and profiles; adjusted on its edit page. */
+export function BusinessMagicLinks({ record }: { record: BusinessRecord }) {
+  const links = quickLinks(record);
+  return (
+    <section className="animate-rise">
+      <Title
+        level={3}
+        note={
+          <Link href={editHref(record.slug, "links")} className="font-semibold text-ink underline decoration-1 underline-offset-4">
+            Adjust links
+          </Link>
+        }
+      >
+        Magic links
+      </Title>
+      {links.length ? <LinkPills links={links} className="rounded-2xl bg-wash p-5" /> : <Muted>No links saved for {record.name} yet.</Muted>}
+    </section>
+  );
 }
 
 /* ─── About ───────────────────────────────────────────────────────── */
