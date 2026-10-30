@@ -8,11 +8,36 @@ import { logActivity } from "@/lib/activity";
 import { requireUser } from "@/lib/auth/current-user";
 import { BlotatoError, listChannels } from "@/lib/blotato";
 import { getRecordById } from "@/lib/businesses";
+import { env } from "@/lib/env";
+import { CAMPAIGNS, RoutineError, fireRoutine } from "@/lib/routines";
 import { getSyncState, setBrandAccounts, syncBlotato } from "@/lib/social";
 import { channelKey } from "@/lib/social-model";
 import type { FormState } from "./form-state";
 
 const uuid = z.uuid();
+
+/** Starts the campaign routine for one brand: the program schedules `days` days of posts and videos into Blotato. */
+export async function runCampaignAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const user = await requireUser();
+  const { CAMPAIGN_ROUTINE_ID, CAMPAIGN_ROUTINE_TOKEN } = env();
+  if (!CAMPAIGN_ROUTINE_ID || !CAMPAIGN_ROUTINE_TOKEN) return { error: "The campaign routine isn't connected yet: see Integrations." };
+  const slug = String(formData.get("brand") ?? "");
+  const key = Object.hasOwn(CAMPAIGNS, slug) ? CAMPAIGNS[slug] : null;
+  const days = z.coerce.number().int().min(1).max(14).safeParse(formData.get("days"));
+  if (!key) return { error: "This brand has no campaign program." };
+  if (!days.success) return { error: "Choose 1 to 14 days.", values: { days: String(formData.get("days") ?? "") } };
+
+  const text = [`Brand: ${key} (in config.py)`, `Days: ${days.data}`, `Asked by: ${user.name}, from the JodyOS Social Media page`].join("\n");
+  try {
+    const link = await fireRoutine({ id: CAMPAIGN_ROUTINE_ID, token: CAMPAIGN_ROUTINE_TOKEN, envName: "CAMPAIGN_ROUTINE" }, text);
+    await logActivity({ action: "social.campaign_started", status: "success", userId: user.id, request: text, result: link });
+    return { message: `Started: ${days.data} day${days.data === 1 ? "" : "s"} of posts and videos. It takes about ${Math.max(5, days.data * 4)} minutes; the posts show here as Blotato schedules them.`, link };
+  } catch (e) {
+    if (!(e instanceof RoutineError)) throw e;
+    await logActivity({ action: "social.campaign_started", status: "failure", userId: user.id, request: text, result: e.message });
+    return { error: e.message };
+  }
+}
 
 /** Saves which Blotato accounts belong to a business. The list is checked against Blotato, never taken from the form. */
 export async function saveBrandAccountsAction(_prev: FormState, formData: FormData): Promise<FormState> {

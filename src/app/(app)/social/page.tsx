@@ -12,7 +12,9 @@ import { getModule } from "@/lib/modules";
 import { getSettings } from "@/lib/settings";
 import { STATS_DAYS, brandPosts, getSyncState, isRunning, isStale, linkedChannelOwners, listBrands, syncBlotato, type Brand } from "@/lib/social";
 import { byPlatform, channelKey, groupByDay, platformLabel, profileUrl, suggestChannels, topPosts, totals, type PostRow } from "@/lib/social-model";
+import { CAMPAIGNS } from "@/lib/routines";
 import { BrandAccountsForm, RemoveBrandButton } from "@/components/social/brand-accounts-form";
+import { RunCampaign } from "@/components/social/run-campaign";
 import { AutoRefresh, RefreshButton } from "@/components/social/refresh";
 import { Rows, Sentence, Title } from "@/components/dashboard/ui";
 import { Alert, Badge, PageHeader, Skeleton, buttonClass, cx } from "@/components/ui/primitives";
@@ -269,6 +271,8 @@ async function BrandView({ brand, now, timeZone, waiting }: { brand: Brand; now:
         <Stat label={`Comments · ${STATS_DAYS} days`} value={t.comments} />
         <Stat label={`Failed · ${STATS_DAYS} days`} value={failed.length} dark={failed.length > 0} />
       </div>
+
+      {envStatus().campaignRoutine && Object.hasOwn(CAMPAIGNS, slug) ? <RunCampaign brand={slug} name={brand.business.name} /> : null}
 
       <div className="grid grid-cols-[minmax(0,1fr)] gap-12 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
         <section className="reveal">

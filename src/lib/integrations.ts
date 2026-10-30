@@ -107,6 +107,18 @@ export function listIntegrations(): Integration[] {
         "On claude.ai/code create a routine with the website repositories, add an API trigger and generate its token. In Vercel add the routine's id (trig_…) as SITE_ROUTINE_ID and the token as SITE_ROUTINE_TOKEN, and redeploy.",
     },
     {
+      id: "campaign-routine",
+      name: "Claude Code (Blotato campaigns)",
+      category: "Social",
+      phase: 1,
+      description:
+        "Social Media page: \"Run a campaign week\" starts a Claude Code routine that runs the weekly campaign program (paraissance/Blotato-Compain): fresh posts, photo cards and videos, scheduled into Blotato.",
+      status: env.campaignRoutine ? "connected" : "not_configured",
+      envVars: ["CAMPAIGN_ROUTINE_ID", "CAMPAIGN_ROUTINE_TOKEN"],
+      setup:
+        "On claude.ai/code create a routine on paraissance/Blotato-Compain, with BLOTATO_API_KEY, PEXELS_API_KEY and ANTHROPIC_API_KEY in its environment. Add an API trigger and generate its token. In Vercel add the routine's id (trig_…) as CAMPAIGN_ROUTINE_ID and the token as CAMPAIGN_ROUTINE_TOKEN, and redeploy.",
+    },
+    {
       id: "ga4",
       name: "Google Analytics 4",
       category: "Analytics",

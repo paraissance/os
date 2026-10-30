@@ -10,6 +10,9 @@ import { z } from "zod";
  * https://code.claude.com/docs/en/routines#trigger-a-routine
  */
 
+/** Businesses whose weekly Blotato campaign the campaign routine can run: JodyOS short name → its key in the program's config.py. */
+export const CAMPAIGNS: Record<string, string> = { "agent-coach": "agent_broker_coach" };
+
 export class RoutineError extends Error {
   constructor(message: string) {
     super(message);
