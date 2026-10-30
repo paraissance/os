@@ -2,7 +2,8 @@ import "server-only";
 import { asc, eq, inArray } from "drizzle-orm";
 import type { AgentsFile } from "@/lib/agent-input";
 import { getDb } from "@/lib/db";
-import { aiAgents, businesses } from "@/lib/db/schema";
+import { aiAgents, businessSites, businesses } from "@/lib/db/schema";
+import { readSite, siteKnowledgeText } from "@/lib/site-reader";
 
 /* The businesses' website AI assistants, as imported from the OS Analytics plugin. */
 
@@ -30,6 +31,34 @@ export async function getAgentBySlug(slug: string): Promise<Agent | null> {
     .where(eq(businesses.slug, slug))
     .limit(1);
   return row ? { ...row.agent, business: row.business } : null;
+}
+
+export type SiteLearning = { name: string; pages: number; problem: string | null };
+
+/**
+ * Reads every agent's business website (all at once) and saves what it says
+ * on the agent. When a site can't be read, what the agent learned before stays.
+ */
+export async function learnFromWebsites(now: Date): Promise<SiteLearning[]> {
+  const db = await getDb();
+  const agents = await db
+    .select({ id: aiAgents.id, businessId: businesses.id, name: businesses.name, websiteUrl: businesses.websiteUrl })
+    .from(aiAgents)
+    .innerJoin(businesses, eq(aiAgents.businessId, businesses.id))
+    .orderBy(asc(businesses.sortOrder), asc(businesses.name));
+  const sites = agents.length
+    ? await db.select({ businessId: businessSites.businessId, url: businessSites.url, domain: businessSites.domain }).from(businessSites).where(inArray(businessSites.businessId, agents.map((a) => a.businessId)))
+    : [];
+  return Promise.all(
+    agents.map(async (a): Promise<SiteLearning> => {
+      const site = sites.find((s) => s.businessId === a.businessId);
+      const address = a.websiteUrl ?? site?.url ?? (site ? `https://${site.domain}` : null);
+      if (!address) return { name: a.name, pages: 0, problem: "No website saved for this business." };
+      const { pages, problem } = await readSite(address);
+      if (pages.length) await db.update(aiAgents).set({ siteKnowledge: siteKnowledgeText(pages), siteLearnedAt: now }).where(eq(aiAgents.id, a.id));
+      return { name: a.name, pages: pages.length, problem };
+    }),
+  );
 }
 
 /**

@@ -186,7 +186,7 @@ export function quickLinks(record: BusinessRecord): QuickLink[] {
   const by = (...kinds: BusinessLink["kind"][]) => record.links.filter((l) => kinds.includes(l.kind)).map((l) => ({ label: l.label, url: l.url }));
   const many = record.sites.length > 1;
   const all: (QuickLink | null)[] = [
-    record.websiteUrl ? { label: record.sites[0]?.domain ?? "Website", url: record.websiteUrl } : null,
+    record.websiteUrl ? { label: linkKey(record.websiteUrl).split("/")[0] || "Website", url: record.websiteUrl } : null,
     ...record.sites.flatMap((s) => [
       { label: s.domain, url: s.url ?? `https://${s.domain}` },
       s.editUrl ? { label: many ? `Edit ${s.domain}` : "Edit site", url: s.editUrl } : null,

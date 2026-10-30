@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { allKnowledge } from "@/lib/agent-engine";
 import { languageName, profileName } from "@/lib/agent-input";
 import type { Agent } from "@/lib/agents";
 import type { AgentLink } from "@/lib/db/schema";
@@ -46,7 +47,7 @@ function Part({ title, note, children }: { title: string; note?: ReactNode; chil
 const STEPS = [
   "Safety first: a message about a crisis gets the crisis answer below, with no AI involved.",
   "A starter question gets its saved answer instantly.",
-  "Anything else goes to the AI, which may only use the knowledge and must keep the rules.",
+  "Anything else goes to the AI, which may only use the knowledge (and what its website says) and must keep the rules.",
   "If the AI can't answer, a keyword answer is used; failing that, the links it offers when unsure.",
 ];
 
@@ -56,7 +57,8 @@ export function embedCode(origin: string, slug: string) {
 }
 
 export function AgentView({ agent, origin, aiReady }: { agent: Agent; origin: string; aiReady: boolean }) {
-  const words = agent.knowledge.split(/\s+/).filter(Boolean).length;
+  const words = allKnowledge(agent).split(/\s+/).filter(Boolean).length;
+  const sitePages = agent.siteKnowledge?.match(/^# PAGE: /gm)?.length ?? 0;
   return (
     <article aria-label={agent.name} className="animate-rise space-y-10">
       <header className="flex flex-wrap items-start justify-between gap-4">
@@ -196,6 +198,19 @@ export function AgentView({ agent, origin, aiReady }: { agent: Agent; origin: st
                 <Linked text={agent.knowledge || "(empty)"} />
               </p>
             </details>
+            {agent.siteKnowledge && agent.siteLearnedAt ? (
+              <details className="group rounded-2xl bg-wash p-5">
+                <summary className="cursor-pointer list-none font-semibold">
+                  From its website: {sitePages} page{sitePages === 1 ? "" : "s"}, read{" "}
+                  {agent.siteLearnedAt.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+                </summary>
+                <p className="mt-3 whitespace-pre-line text-sm leading-relaxed">
+                  <Linked text={agent.siteKnowledge} />
+                </p>
+              </details>
+            ) : (
+              <p className="text-sm text-muted">Nothing read from its website yet: use “Learn from the websites” above.</p>
+            )}
           </Part>
 
           <Part title="Put it on a website">

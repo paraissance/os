@@ -69,6 +69,12 @@ describe("website agent answers", () => {
     expect(await answer(agent, "hello", [], aiSays("Hello there!"))).toMatchObject({ source: "ai" });
   });
 
+  it("also knows what its website says, for the AI and without it", async () => {
+    const withSite = { ...agent, siteKnowledge: "# PAGE: Pricing (https://example.com/pricing)\nPlans start at $99 a month." };
+    expect(systemPrompt(withSite)).toContain("Plans start at $99 a month.");
+    expect(await answer(withSite, "What are your plans?", [], noAi)).toMatchObject({ answer: "Plans start at $99 a month.", source: "knowledge" });
+  });
+
   it("writes its own instructions when the agent has none, still with the knowledge", () => {
     const prompt = systemPrompt({ ...agent, instructions: null });
     expect(prompt).toContain("You are the Example Leads Assistant");

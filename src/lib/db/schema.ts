@@ -364,6 +364,9 @@ export const aiAgents = pgTable(
     instructions: text("instructions"),
     crisis: jsonb("crisis").$type<AgentCrisis>(),
     shortcode: text("shortcode"),
+    // What its business's own website says, read by JodyOS (src/lib/site-reader.ts); kept when the agents file is imported again.
+    siteKnowledge: text("site_knowledge"),
+    siteLearnedAt: timestamp("site_learned_at", { withTimezone: true }),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },

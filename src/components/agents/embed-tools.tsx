@@ -1,7 +1,22 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { buttonClass } from "@/components/ui/primitives";
+import { useActionState, useEffect, useState } from "react";
+import { learnFromWebsitesAction } from "@/app/actions/agents";
+import { Alert, Button, buttonClass } from "@/components/ui/primitives";
+
+/** Reads every agent's website again; takes up to a minute. */
+export function LearnWebsites() {
+  const [state, action, pending] = useActionState(learnFromWebsitesAction, undefined);
+  return (
+    <form action={action} className="space-y-3">
+      <Button type="submit" disabled={pending}>
+        {pending ? "Reading the websites… (up to a minute)" : "Learn from the websites"}
+      </Button>
+      {state?.error ? <Alert tone="bad">{state.error}</Alert> : null}
+      {state?.message ? <Alert tone="ok"><span className="whitespace-pre-line">{state.message}</span></Alert> : null}
+    </form>
+  );
+}
 
 /** Copies a snippet; says so for two seconds. */
 export function CopyButton({ text }: { text: string }) {

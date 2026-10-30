@@ -16,6 +16,8 @@ export type AgentBrain = {
   greeting: string;
   instructions: string | null;
   knowledge: string;
+  /** What its own website says, when JodyOS has read it. */
+  siteKnowledge?: string | null;
   ctaLabel: string | null;
   ctaUrl: string | null;
   starters: AgentStarter[];
@@ -103,6 +105,11 @@ export function searchKnowledge(knowledge: string, message: string): string[] {
   return scored.filter((s) => s.score === scored[0]?.score).slice(0, 2).map((s) => s.line);
 }
 
+/** Its knowledge, then what its website says. */
+export function allKnowledge(agent: Pick<AgentBrain, "knowledge" | "siteKnowledge">) {
+  return agent.siteKnowledge ? `${agent.knowledge}\n\n# FROM ITS OWN WEBSITE\n${agent.siteKnowledge}` : agent.knowledge;
+}
+
 /** What the AI is told: the agent's own instructions, then its knowledge as the only source of truth. */
 export function systemPrompt(agent: AgentBrain) {
   const instructions =
@@ -115,7 +122,7 @@ export function systemPrompt(agent: AgentBrain) {
     ]
       .filter(Boolean)
       .join("\n\n");
-  return `${instructions}\n\nKNOWLEDGE BASE - your ONLY source of truth:\n${agent.knowledge}`;
+  return `${instructions}\n\nKNOWLEDGE BASE - your ONLY source of truth:\n${allKnowledge(agent)}`;
 }
 
 /**
@@ -160,7 +167,7 @@ export async function answer(
   const keyword = agent.keywords.find((k) => k.words.some((w) => normalize(w).split(" ").every((part) => said.has(part))));
   if (keyword) return { answer: keyword.answer, actions: keyword.link ? [keyword.link] : [], source: "keyword" };
 
-  const found = searchKnowledge(agent.knowledge, message);
+  const found = searchKnowledge(allKnowledge(agent), message);
   if (found.length) return { answer: found.join("\n\n"), actions: cta, source: "knowledge" };
 
   return {

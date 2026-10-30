@@ -15,11 +15,15 @@ import { getSettings } from "@/lib/settings";
 import { listAgents } from "@/lib/agents";
 import { AgentView } from "@/components/agents/agent-view";
 import { AgentsImport } from "@/components/agents/agents-import";
+import { LearnWebsites } from "@/components/agents/embed-tools";
 import { AskBar } from "@/components/dashboard/ask-bar";
 import { Bars, Rows, Sentence, Title } from "@/components/dashboard/ui";
 import { Alert, PageHeader, Skeleton, buttonClass, cx } from "@/components/ui/primitives";
 
 export const metadata: Metadata = { title: "AI & Analytics" };
+
+// "Learn from the websites" reads every agent's site from here and can take a minute.
+export const maxDuration = 300;
 
 /**
  * Jody Core (ask, and pick up recent conversations) and the numbers:
@@ -136,6 +140,12 @@ async function Agents({ searchParams }: { searchParams: PageProps<"/analytics">[
         <Title count={agents.length} note="the website assistants">
           AI agents
         </Title>
+        <div className="mb-5 flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-wash p-5">
+          <p className="max-w-xl text-[15px] text-muted">
+            Each agent also knows what its business&apos;s own website says. Read the websites again after you change them.
+          </p>
+          <LearnWebsites />
+        </div>
         <nav aria-label="AI agents" className="flex flex-wrap gap-2">
           {agents.map((a) => (
             <Link

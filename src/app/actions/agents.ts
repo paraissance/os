@@ -3,7 +3,7 @@
 import { refresh } from "next/cache";
 import { logActivity } from "@/lib/activity";
 import { agentsFileSchema } from "@/lib/agent-input";
-import { importAgents } from "@/lib/agents";
+import { importAgents, learnFromWebsites } from "@/lib/agents";
 import { requireUser } from "@/lib/auth/current-user";
 import { ZipError, isZip, readZip } from "@/lib/zip";
 import type { FormState } from "./form-state";
@@ -26,6 +26,18 @@ function agentsText(bytes: Buffer): { text: string } | { error: string } {
     return { error: "That's the OS Analytics plugin itself. Upload jodyos-agents.zip, the agents file made from it." };
   }
   return { error: "There's no agents file (jodyos-agents.json) in that zip." };
+}
+
+/** Reads every agent's website so it knows what the site says; one line per agent comes back. */
+export async function learnFromWebsitesAction(): Promise<FormState> {
+  const user = await requireUser();
+  const results = await learnFromWebsites(new Date());
+  if (!results.length) return { error: "There are no AI agents yet: import them first." };
+  const lines = results.map((r) => (r.pages ? `${r.name}: read ${r.pages} page${r.pages === 1 ? "" : "s"}.` : `${r.name}: ${r.problem ?? "nothing to read."}`));
+  const read = results.filter((r) => r.pages).length;
+  await logActivity({ action: "ai.agents_learned_websites", status: read ? "success" : "failure", userId: user.id, result: `Websites read for ${read} of ${results.length} agents`, metadata: { results } });
+  refresh();
+  return { message: lines.join("\n") };
 }
 
 /** Drop the agents file (.zip or .json): each agent lands on its business; nothing else changes. */
