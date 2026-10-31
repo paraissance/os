@@ -79,6 +79,9 @@
   --font-script: var(--font-cookie), "Brush Script MT", cursive;
 }
 
+/* The desktop sidebar folded to its icon rail (its arrow sets data-nav on <html>). */
+@custom-variant rail (&:where([data-nav="closed"] *));
+
 /* Small uppercase label used for section titles and table headings. */
 @utility label {
   font-size: 0.6875rem;

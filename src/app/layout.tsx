@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Archivo, Cookie, IBM_Plex_Mono } from "next/font/google";
+import { NAV_SCRIPT } from "@/components/shell/nav-state";
 import "./globals.css";
 
 const archivo = Archivo({
@@ -33,7 +34,11 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${archivo.variable} ${plexMono.variable} ${cookie.variable}`}>
+    // The head script may add data-nav before React hydrates.
+    <html lang="en" className={`${archivo.variable} ${plexMono.variable} ${cookie.variable}`} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: NAV_SCRIPT }} />
+      </head>
       <body>{children}</body>
     </html>
   );
