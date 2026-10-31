@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { requireUser } from "@/lib/auth/current-user";
 import { businessHref } from "@/lib/business-href";
-import { bookAttention, monthlyTotal, mostUrgent, renewalWords, siteRenewals, sortAttention, type Attention, type QuickLink } from "@/lib/business-model";
+import { bookAttention, monthlyTotal, mostUrgent, renewalWords, siteRenewals, sortAttention, type Attention } from "@/lib/business-model";
 import { shortUrl } from "@/lib/business-view";
 import { loadBook } from "@/lib/businesses";
 import { requestNow } from "@/lib/clock";
@@ -12,12 +12,12 @@ import { ImportForm } from "@/components/businesses/editors";
 import { Delta } from "@/components/business-bits";
 import { CountUp } from "@/components/motion/count-up";
 import { EmptyState, Skeleton, StatusDot, buttonClass } from "@/components/ui/primitives";
-import { AttentionList, LinkPills, Sentence, Title } from "./ui";
+import { AttentionList, Sentence, Title } from "./ui";
 
 /**
- * The "All businesses" tab: what needs doing, magic links to everything,
- * and the businesses. Money has its own page (/spending); Ask Jody Core sits
- * under the greeting.
+ * The "All businesses" tab: the businesses and what needs doing, nothing
+ * else. Money has its own page (/spending); Ask Jody Core sits under the
+ * greeting; each business's magic links are on its own tab.
  */
 export function Overview() {
   return (
@@ -29,38 +29,10 @@ export function Overview() {
       <Suspense fallback={null}>
         <Attention />
       </Suspense>
-      <Suspense fallback={<Skeleton className="h-64" />}>
-        <MagicLinks />
-      </Suspense>
       <Suspense fallback={<Skeleton className="h-96" />}>
         <BusinessCards />
       </Suspense>
     </div>
-  );
-}
-
-/** Where the work happens, for every business at once. */
-const TOOLS: QuickLink[] = [
-  { label: "Claude Code", url: "https://claude.ai/code" },
-  { label: "Claude Console", url: "https://console.anthropic.com" },
-  { label: "GitHub", url: "https://github.com" },
-  { label: "Vercel", url: "https://vercel.com/dashboard" },
-];
-
-/** One tap to the tools every business uses; each business's own links are on its tab. */
-async function MagicLinks() {
-  await requireUser();
-  const book = await loadBook();
-  const tools = [
-    ...TOOLS,
-    ...(envStatus().blotato ? [{ label: "Blotato", url: "https://my.blotato.com/calendar" }] : []),
-    ...book.shared.filter((t) => t.active && t.loginUrl).map((t) => ({ label: t.name, url: t.loginUrl! })),
-  ];
-  return (
-    <section className="reveal">
-      <Title note="each business's own are on its tab">Magic links</Title>
-      <LinkPills links={tools} className="rounded-2xl bg-wash p-5" />
-    </section>
   );
 }
 /** Live numbers from OS Analytics, when it is connected; null otherwise. */
