@@ -6,9 +6,7 @@ import { requireUser } from "@/lib/auth/current-user";
 import type { BusinessRecord, BusinessSite } from "@/lib/business-model";
 import { loadBook } from "@/lib/businesses";
 import { requestNow } from "@/lib/clock";
-import { envStatus } from "@/lib/env";
 import { greeting } from "@/lib/format";
-import { listBusinesses, settle } from "@/lib/os-analytics";
 import { requestOrigin } from "@/lib/request-origin";
 import { getSettings } from "@/lib/settings";
 import { checkSite } from "@/lib/site-check";
@@ -16,15 +14,15 @@ import { loadTraffic } from "@/lib/traffic";
 import { embedCode } from "@/components/agents/agent-view";
 import { AskBar } from "@/components/dashboard/ask-bar";
 import { BusinessAbout, BusinessMagicLinks, SiteSide, TrafficPanel, mainSite } from "@/components/dashboard/business-page";
-import { BusinessTabBar } from "@/components/dashboard/business-tab-bar";
 import { Overview } from "@/components/dashboard/overview";
 import { Badge, Skeleton, buttonClass } from "@/components/ui/primitives";
 
 export const metadata: Metadata = { title: "Dashboard" };
 
 /**
- * The dashboard: "All businesses" plus one tab per business (`/?b=<slug>`):
- * what it is, its website checked live, and the website's traffic.
+ * The dashboard: all businesses, and one page per business (`/?b=<slug>`,
+ * opened from its card): what it is, its website checked live, and the
+ * website's traffic.
  */
 export default function DashboardPage(props: PageProps<"/">) {
   return (
@@ -33,19 +31,10 @@ export default function DashboardPage(props: PageProps<"/">) {
         <Greeting />
       </Suspense>
       <AskBar />
-      <Suspense fallback={<TabBarSkeleton />}>
+      <Suspense fallback={<Skeleton className="h-96" />}>
         <Body searchParams={props.searchParams} />
       </Suspense>
     </>
-  );
-}
-function TabBarSkeleton() {
-  return (
-    <div className="mb-10 flex gap-2" aria-hidden="true">
-      {[8, 10, 9, 11].map((w, i) => (
-        <Skeleton key={i} className="h-11 rounded-full" style={{ width: `${w}rem` }} />
-      ))}
-    </div>
   );
 }
 
@@ -72,30 +61,13 @@ async function Body({ searchParams }: { searchParams: PageProps<"/">["searchPara
   const { b } = await searchParams;
   const slug = typeof b === "string" && b ? b : null;
 
-  return (
-    <>
-      <Suspense fallback={<TabBarSkeleton />}>
-        <TabBar current={slug} />
-      </Suspense>
-      {slug ? (
-        <Suspense key={slug} fallback={<Skeleton className="h-[40rem]" />}>
-          <BusinessTab slug={slug} />
-        </Suspense>
-      ) : (
-        <Overview />
-      )}
-    </>
+  return slug ? (
+    <Suspense key={slug} fallback={<Skeleton className="h-[40rem]" />}>
+      <BusinessTab slug={slug} />
+    </Suspense>
+  ) : (
+    <Overview />
   );
-}
-
-async function TabBar({ current }: { current: string | null }) {
-  await requireUser();
-  const [book, live] = await Promise.all([loadBook(), envStatus().osAnalytics ? settle(listBusinesses) : Promise.resolve(null)]);
-  if (!book.businesses.length) return null;
-  const leads = new Map(live?.ok ? live.data.businesses.map((x) => [x.slug, x.last30.leads]) : []);
-  const ordered = [...book.businesses.filter((x) => x.status === "active"), ...book.businesses.filter((x) => x.status !== "active")];
-  const items = ordered.map((x) => ({ slug: x.slug, name: x.name, leads: leads.get(x.slug) ?? null, active: x.status === "active" }));
-  return <BusinessTabBar items={items} current={current} />;
 }
 
 function NotFoundCard({ slug }: { slug: string }) {
