@@ -191,9 +191,10 @@ function ActiveNav(props: NavProps) {
 function SidebarContent({ userSlot, rail, onNavigate }: NavProps & { userSlot: ReactNode }) {
   return (
     <div className="flex h-full flex-col">
-      <div className="flex h-16 shrink-0 items-center px-6 transition-[padding] duration-500 ease-out-soft lg:rail:px-3">
+      <div className="flex h-16 shrink-0 items-center px-6 transition-[padding] duration-500 ease-out-soft lg:rail:justify-center lg:rail:px-0">
         <Link href="/" onClick={onNavigate} aria-label="JodyOS dashboard">
-          <Wordmark className="transition-[font-size] duration-500 ease-out-soft lg:rail:text-[23px]" />
+          {/* Folded: "Jody" on top, "OS" underneath. */}
+          <Wordmark className="transition-[font-size] duration-500 ease-out-soft lg:rail:inline-block lg:rail:text-center lg:rail:text-[28px] lg:rail:leading-[0.9] lg:rail:[&>span]:block" />
         </Link>
       </div>
 
