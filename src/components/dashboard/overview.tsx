@@ -7,12 +7,12 @@ import { shortUrl } from "@/lib/business-view";
 import { loadBook } from "@/lib/businesses";
 import { requestNow } from "@/lib/clock";
 import { envStatus } from "@/lib/env";
-import { formatMoney, listBusinesses, liveListAttention, percentChange, settle } from "@/lib/os-analytics";
+import { formatMoney, listBusinesses, liveListAttention, settle } from "@/lib/os-analytics";
 import { ImportForm } from "@/components/businesses/editors";
 import { Delta } from "@/components/business-bits";
 import { CountUp } from "@/components/motion/count-up";
 import { EmptyState, Skeleton, StatusDot, buttonClass } from "@/components/ui/primitives";
-import { AttentionList, Sentence, Title } from "./ui";
+import { AttentionList, Title } from "./ui";
 
 /**
  * The "All businesses" tab: the businesses and what needs doing, nothing
@@ -22,8 +22,9 @@ import { AttentionList, Sentence, Title } from "./ui";
 export function Overview() {
   return (
     <div className="space-y-12">
-      <Suspense fallback={<Skeleton className="h-28" />}>
-        <Headline />
+      {/* Only shows before any business is added. */}
+      <Suspense fallback={null}>
+        <Welcome />
       </Suspense>
       {/* Usually empty, so no placeholder that would only flash and vanish. */}
       <Suspense fallback={null}>
@@ -40,55 +41,27 @@ async function liveList() {
   return envStatus().osAnalytics ? settle(listBusinesses) : null;
 }
 
-async function Headline() {
+/** Before any business is added: how to add them. Nothing once there are some. */
+async function Welcome() {
   await requireUser();
-  const [book, live] = await Promise.all([loadBook(), liveList()]);
-
-  if (!book.businesses.length) {
-    return (
-      <div className="grid animate-rise gap-8 rounded-3xl bg-wash p-8 sm:p-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-center">
-        <div>
-          <p className="text-3xl font-extrabold tracking-[-0.02em]">Let&apos;s add your businesses.</p>
-          <p className="mt-2 max-w-xl text-lg text-muted">
-            Each one gets its own tab here, with its websites, links, what it&apos;s about and what you pay for.
-          </p>
-          <p className="mt-4 max-w-xl text-[15px] text-muted">
-            Have a businesses file? Drop it in the box to add them all at once. Or add them one by one.
-          </p>
-          <Link href="/businesses/new" className={buttonClass("light", "mt-6")}>
-            + Add one business
-          </Link>
-        </div>
-        <ImportForm submitOnPick />
-      </div>
-    );
-  }
-
-  const active = book.businesses.filter((b) => b.status === "active");
-  const paused = book.businesses.length - active.length;
-  const sites = book.businesses.reduce((n, b) => n + b.sites.length, 0);
-  const monthly = monthlyTotal([...book.businesses.flatMap((b) => b.subscriptions), ...book.shared]);
-
-  const liveActive = live?.ok ? live.data.businesses.filter((b) => b.active) : [];
-  const leads = liveActive.reduce((s, b) => s + b.last30.leads, 0);
-  const change = percentChange(leads, liveActive.reduce((s, b) => s + b.previous30.leads, 0));
-
+  const book = await loadBook();
+  if (book.businesses.length) return null;
   return (
-    <Sentence>
-      You have <b>{active.length} active business{active.length === 1 ? "" : "es"}</b>
-      {paused ? ` (and ${paused} paused)` : ""} with <b>{sites} site{sites === 1 ? "" : "s"}</b>.{" "}
-      {monthly > 0 ? (
-        <>
-          Tools and services cost <b>{formatMoney(monthly, "USD")} a month</b>.{" "}
-        </>
-      ) : null}
-      {liveActive.length ? (
-        <>
-          <b>{leads.toLocaleString("en-US")} leads</b> came in over the last 30 days
-          {change === null ? "" : change === 0 ? ", the same as before" : `, ${change > 0 ? "up" : "down"} ${Math.abs(change)}%`}.
-        </>
-      ) : null}
-    </Sentence>
+    <div className="grid animate-rise gap-8 rounded-3xl bg-wash p-8 sm:p-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-center">
+      <div>
+        <p className="text-3xl font-extrabold tracking-[-0.02em]">Let&apos;s add your businesses.</p>
+        <p className="mt-2 max-w-xl text-lg text-muted">
+          Each one gets its own tab here, with its websites, links, what it&apos;s about and what you pay for.
+        </p>
+        <p className="mt-4 max-w-xl text-[15px] text-muted">
+          Have a businesses file? Drop it in the box to add them all at once. Or add them one by one.
+        </p>
+        <Link href="/businesses/new" className={buttonClass("light", "mt-6")}>
+          + Add one business
+        </Link>
+      </div>
+      <ImportForm submitOnPick />
+    </div>
   );
 }
 
@@ -122,9 +95,14 @@ async function BusinessCards() {
   const active = book.businesses.filter((b) => b.status === "active");
   const paused = book.businesses.filter((b) => b.status !== "active");
 
+  const sites = book.businesses.reduce((n, b) => n + b.sites.length, 0);
+
   return (
     <section className="reveal">
       <Title>Your businesses</Title>
+      <p className="-mt-2 mb-4 text-sm text-muted">
+        {active.length} active business{active.length === 1 ? "" : "es"} with {sites} site{sites === 1 ? "" : "s"}
+      </p>
       {active.length ? (
         <ul className="stagger grid grid-cols-[minmax(0,1fr)] gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {active.map((b) => {
