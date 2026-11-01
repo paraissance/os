@@ -16,7 +16,7 @@ import { CAMPAIGNS } from "@/lib/routines";
 import { BrandAccountsForm, RemoveBrandButton } from "@/components/social/brand-accounts-form";
 import { RunCampaign } from "@/components/social/run-campaign";
 import { AutoRefresh, RefreshButton } from "@/components/social/refresh";
-import { Rows, Sentence, Title } from "@/components/dashboard/ui";
+import { Rows, Title } from "@/components/dashboard/ui";
 import { Alert, Badge, PageHeader, Skeleton, buttonClass, cx } from "@/components/ui/primitives";
 
 export const metadata: Metadata = { title: "Social Media" };
@@ -71,10 +71,10 @@ async function SocialBody({ searchParams }: { searchParams: PageProps<"/social">
   const current = brands.find((b) => b.business.slug === first(sp.b)) ?? brands[0];
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-3">
       <AutoRefresh active={working} />
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <nav aria-label="Brands" className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <nav aria-label="Brands" className="no-scrollbar flex max-w-full gap-1 overflow-x-auto rounded-full bg-wash p-1">
           {brands.map((b) => (
             <Pill key={b.business.id} href={`/social?b=${b.business.slug}`} active={!adding && b.business.id === current?.business.id}>
               {b.business.name}
@@ -108,8 +108,8 @@ function Pill({ href, active, children }: { href: string; active: boolean; child
       href={href}
       aria-current={active ? "page" : undefined}
       className={cx(
-        "inline-flex min-h-11 items-center rounded-full px-5 text-[15px] font-semibold transition-colors duration-200",
-        active ? "bg-ink text-paper" : "bg-wash hover:bg-mist",
+        "flex min-h-9 shrink-0 items-center whitespace-nowrap rounded-full px-4 text-sm font-semibold transition-colors duration-200",
+        active ? "bg-ink text-paper" : "text-muted hover:text-ink",
       )}
     >
       {children}
@@ -214,68 +214,36 @@ async function BrandView({ brand, now, timeZone, waiting }: { brand: Brand; now:
   const week = `last ${STATS_DAYS} days`;
 
   return (
-    <article aria-label={brand.business.name} className="space-y-14">
-      <header className="animate-rise space-y-4">
-        <div className="flex flex-wrap items-end justify-between gap-4">
-          <h2 className="text-4xl font-extrabold leading-[0.95] tracking-[-0.04em] sm:text-5xl">{brand.business.name}</h2>
-          <Link href={`/social?add=${slug}`} className={buttonClass("secondary", "min-h-9 px-4")}>
-            Change accounts
-          </Link>
-        </div>
-        <ul className="flex flex-wrap gap-2">
-          {brand.accounts.map((a) => {
-            const url = profileUrl(a);
-            const inner = (
-              <>
-                <span className="text-muted">{platformLabel(a.platform)}</span> <span className="font-semibold">{a.name}</span>
-              </>
-            );
-            return (
-              <li key={a.id}>
-                {url ? (
-                  <a href={url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 rounded-full bg-wash px-3.5 py-1.5 text-sm transition-colors hover:bg-mist">
-                    {inner} <span aria-hidden="true">↗</span>
-                    <span className="sr-only">(opens in a new tab)</span>
-                  </a>
-                ) : (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-wash px-3.5 py-1.5 text-sm">{inner}</span>
-                )}
-              </li>
-            );
-          })}
-        </ul>
+    <article aria-label={brand.business.name} className="space-y-3">
+      <header className="hero flex animate-rise flex-wrap items-center justify-between gap-4 rounded-3xl p-6 sm:p-8">
+        <h2 className="min-w-0 text-4xl font-extrabold leading-[0.95] tracking-[-0.04em] sm:text-5xl">{brand.business.name}</h2>
+        <Link href={`/social?add=${slug}`} className={buttonClass("hero")}>
+          Change accounts
+        </Link>
       </header>
 
-      {waiting ? (
-        <Alert>Getting the posts from Blotato. The first time takes about a minute; this page fills in by itself.</Alert>
-      ) : (
-        <Sentence>
-          <b>
-            {n(todayCount)} post{todayCount === 1 ? "" : "s"}
-          </b>{" "}
-          {todayCount === 1 ? "is" : "are"} scheduled today. <b>{n(t.posts)}</b> went out in the {week} and were seen <b>{n(t.views)} times</b>
-          {failed.length ? (
-            <>
-              ; <b>{n(failed.length)} failed</b>
-            </>
-          ) : null}
-          .
-        </Sentence>
-      )}
+      {/* The accounts, the numbers and the sections below share one six-column grid, so their edges line up. */}
+      <ul aria-label="Accounts" className={cx("stagger", SIX_COLUMNS)}>
+        {brand.accounts.map((a) => (
+          <AccountCell key={a.id} account={a} />
+        ))}
+      </ul>
 
-      <div className="stagger grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-        <Stat label="Scheduled today" value={todayCount} />
-        <Stat label={`Published · ${STATS_DAYS} days`} value={t.posts} />
-        <Stat label={`Views · ${STATS_DAYS} days`} value={t.views} />
-        <Stat label={`Likes · ${STATS_DAYS} days`} value={t.likes} />
-        <Stat label={`Comments · ${STATS_DAYS} days`} value={t.comments} />
-        <Stat label={`Failed · ${STATS_DAYS} days`} value={failed.length} dark={failed.length > 0} />
+      {waiting ? <Alert>Getting the posts from Blotato. The first time takes about a minute; this page fills in by itself.</Alert> : null}
+
+      <div className={cx("stagger", SIX_COLUMNS)}>
+        <Stat label="Scheduled" period="today" value={todayCount} />
+        <Stat label="Published" period={week} value={t.posts} />
+        <Stat label="Views" period={week} value={t.views} />
+        <Stat label="Likes" period={week} value={t.likes} />
+        <Stat label="Comments" period={week} value={t.comments} />
+        <Stat label="Failed" period={week} value={failed.length} dark={failed.length > 0} />
       </div>
 
       {envStatus().campaignRoutine && Object.hasOwn(CAMPAIGNS, slug) ? <RunCampaign brand={slug} name={brand.business.name} /> : null}
 
-      <div className="grid grid-cols-[minmax(0,1fr)] gap-12 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
-        <section className="reveal">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-x-3 gap-y-10 pt-7 xl:grid-cols-6">
+        <section className="reveal xl:col-span-4">
           <Title count={next?.posts.length} note={next && next.key !== today ? "nothing more today" : undefined}>
             {!next || next.key === today ? "Scheduled today" : `Next up: ${dayTitle(next.key)}`}
           </Title>
@@ -293,7 +261,7 @@ async function BrandView({ brand, now, timeZone, waiting }: { brand: Brand; now:
           </div>
         </section>
 
-        <div className="space-y-12">
+        <div className="space-y-10 xl:col-span-2">
           <section className="reveal">
             <Title note={week}>By platform</Title>
             {platforms.length ? (
@@ -318,7 +286,7 @@ async function BrandView({ brand, now, timeZone, waiting }: { brand: Brand; now:
           </section>
 
           <section className="reveal">
-            <Title note={`most seen, ${week}`}>Top posts</Title>
+            <Title note={week}>Top posts</Title>
             {top.length ? (
               <Rows>
                 {top.map((p) => (
@@ -333,7 +301,7 @@ async function BrandView({ brand, now, timeZone, waiting }: { brand: Brand; now:
       </div>
 
       {failed.length ? (
-        <section className="reveal">
+        <section className="reveal pt-7">
           <Title count={failed.length} note={week}>
             Failed
           </Title>
@@ -348,11 +316,42 @@ async function BrandView({ brand, now, timeZone, waiting }: { brand: Brand; now:
   );
 }
 
-function Stat({ label, value, dark = false }: { label: string; value: number; dark?: boolean }) {
+const SIX_COLUMNS = "grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6";
+
+/** One account in a cell the same size as the rest: the platform on top, the name under it. */
+function AccountCell({ account }: { account: Brand["accounts"][number] }) {
+  const url = profileUrl(account);
+  const body = (
+    <>
+      <span className="flex items-center justify-between gap-2 text-sm font-semibold text-muted">
+        {platformLabel(account.platform)}
+        {url ? <span aria-hidden="true">↗</span> : null}
+      </span>
+      <span className="mt-1 block truncate text-[13px] font-semibold" title={account.name}>
+        {account.name}
+      </span>
+    </>
+  );
   return (
-    <div className={cx("min-w-0 rounded-2xl p-5", dark ? "bg-ink text-paper" : "bg-wash")}>
+    <li>
+      {url ? (
+        <a href={url} target="_blank" rel="noopener noreferrer" className="block h-full rounded-2xl bg-wash p-4 transition-colors duration-200 hover:bg-mist">
+          {body}
+          <span className="sr-only">(opens in a new tab)</span>
+        </a>
+      ) : (
+        <div className="h-full rounded-2xl bg-wash p-4">{body}</div>
+      )}
+    </li>
+  );
+}
+
+function Stat({ label, period, value, dark = false }: { label: string; period: string; value: number; dark?: boolean }) {
+  return (
+    <div className={cx("min-w-0 rounded-2xl p-4", dark ? "bg-ink text-paper" : "bg-wash")}>
       <p className={cx("text-sm font-semibold", dark ? "text-paper/80" : "text-muted")}>{label}</p>
       <p className="mt-2 text-3xl font-extrabold tabular-nums tracking-[-0.03em]">{n(value)}</p>
+      <p className={cx("mt-1 text-xs", dark ? "text-paper/80" : "text-muted")}>{period}</p>
     </div>
   );
 }
