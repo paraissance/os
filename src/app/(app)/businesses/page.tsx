@@ -9,8 +9,7 @@ import { bookTotals, monthlyTotal, toolsFor, type BusinessBook, type BusinessRec
 import { requestNow } from "@/lib/clock";
 import { formatMoney } from "@/lib/money";
 import { SubscriptionsEditor } from "@/components/businesses/editors";
-import { Part } from "@/components/businesses/part";
-import { RenewalLine } from "@/components/dashboard/ui";
+import { HeroStats, Part, RenewalLine } from "@/components/dashboard/ui";
 import { CountUp } from "@/components/motion/count-up";
 import { Badge, PageHeader, Skeleton, buttonClass } from "@/components/ui/primitives";
 
@@ -50,34 +49,27 @@ export default function BusinessesPage() {
 
 function Totals({ book, today }: { book: BusinessBook; today: Date }) {
   const t = bookTotals(book, today);
-  const stats = [
-    { label: t.active === 1 ? "Active business" : "Active businesses", value: <CountUp value={t.active} />, note: t.paused ? `${t.paused} paused` : null },
-    { label: t.sites === 1 ? "Website" : "Websites", value: <CountUp value={t.sites} />, note: null },
-    { label: "A month in tools", value: t.monthly ? formatMoney(t.monthly, "USD") : "—", note: t.monthly ? null : "No prices saved yet" },
-    {
-      label: "Due soon",
-      value: <CountUp value={t.due} />,
-      note: t.due ? (
-        <Link href="/" className="underline decoration-1 underline-offset-4 transition-colors hover:text-white">
-          See them on the dashboard
-        </Link>
-      ) : t.datesSaved ? (
-        "All clear"
-      ) : (
-        "No dates saved yet"
-      ),
-    },
-  ];
   return (
-    <dl className="hero animate-rise grid grid-cols-2 gap-x-6 gap-y-8 rounded-3xl p-6 sm:p-8 lg:grid-cols-4">
-      {stats.map((s) => (
-        <div key={s.label} className="min-w-0 lg:border-l lg:border-white/15 lg:pl-6 lg:first:border-l-0 lg:first:pl-0">
-          <dt className="text-sm font-semibold text-white/70">{s.label}</dt>
-          <dd className="mt-2 whitespace-nowrap text-4xl font-extrabold tabular-nums tracking-[-0.03em] sm:text-5xl">{s.value}</dd>
-          {s.note ? <dd className="mt-1 text-sm text-white/70">{s.note}</dd> : null}
-        </div>
-      ))}
-    </dl>
+    <HeroStats
+      stats={[
+        { label: t.active === 1 ? "Active business" : "Active businesses", value: <CountUp value={t.active} />, note: t.paused ? `${t.paused} paused` : null },
+        { label: t.sites === 1 ? "Website" : "Websites", value: <CountUp value={t.sites} /> },
+        { label: "A month in tools", value: t.monthly ? formatMoney(t.monthly, "USD") : "—", note: t.monthly ? null : "No prices saved yet" },
+        {
+          label: "Due soon",
+          value: <CountUp value={t.due} />,
+          note: t.due ? (
+            <Link href="/" className="underline decoration-1 underline-offset-4 transition-colors hover:text-white">
+              See them on the dashboard
+            </Link>
+          ) : t.datesSaved ? (
+            "All clear"
+          ) : (
+            "No dates saved yet"
+          ),
+        },
+      ]}
+    />
   );
 }
 

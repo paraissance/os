@@ -7,6 +7,7 @@ import { deleteConversationAction } from "@/app/actions/chat";
 import { modelInfo } from "@/lib/ai/models";
 import { parseChatEvents } from "@/lib/chat-events";
 import { Markdown } from "@/components/markdown";
+import { SparkIcon } from "@/components/ui/icon";
 import { Alert, buttonClass, cx } from "@/components/ui/primitives";
 
 type Msg = {
@@ -251,13 +252,13 @@ export function ChatClient({
 
       {/* Chat */}
       <section
-        className="flex min-h-[75dvh] min-w-0 animate-rise flex-col overflow-hidden rounded-3xl border border-hair lg:min-h-0"
+        className="flex min-h-[75dvh] min-w-0 animate-rise flex-col overflow-hidden rounded-3xl bg-wash lg:min-h-0"
         aria-label="Chat with Jody Core"
       >
-        <header className="flex h-14 shrink-0 items-center justify-between gap-3 border-b border-hair px-4 sm:px-6">
+        <header className="flex h-14 shrink-0 items-center justify-between gap-3 border-b border-paper px-4 sm:px-6">
           <div className="flex min-w-0 items-center gap-2.5">
-            <span aria-hidden="true" className="flex size-8 items-center justify-center rounded-full bg-ink text-sm font-bold text-paper">
-              J
+            <span aria-hidden="true" className="flex size-8 items-center justify-center rounded-full bg-ink text-paper">
+              <SparkIcon className="size-4" />
             </span>
             <h1 className="font-extrabold tracking-[-0.02em]">Jody Core</h1>
           </div>
@@ -265,10 +266,10 @@ export function ChatClient({
             {aiOnline ? `${modelLabel(model)} · chat only, no tools yet` : "offline"}
           </p>
           <div className="flex items-center gap-2 lg:hidden">
-            <button type="button" onClick={() => setShowHistory((v) => !v)} className={cx(pillButton, "bg-wash")} aria-expanded={showHistory}>
+            <button type="button" onClick={() => setShowHistory((v) => !v)} className={pillButton} aria-expanded={showHistory}>
               History
             </button>
-            <button type="button" onClick={newChat} className={cx(pillButton, "bg-wash")}>
+            <button type="button" onClick={newChat} className={pillButton}>
               New
             </button>
           </div>
@@ -299,7 +300,7 @@ export function ChatClient({
                       <button
                         type="button"
                         onClick={() => void send(s)}
-                        className="group flex w-full items-center justify-between gap-4 rounded-2xl bg-wash px-5 py-3.5 text-left text-[15px] font-medium transition-[background-color,transform] duration-200 hover:-translate-y-0.5 hover:bg-mist"
+                        className="group flex w-full items-center justify-between gap-4 rounded-2xl bg-paper px-5 py-3.5 text-left text-[15px] font-medium transition-[background-color,transform] duration-200 hover:-translate-y-0.5 hover:bg-mist"
                       >
                         {s}
                         <span aria-hidden="true" className="transition-transform duration-200 group-hover:translate-x-1">
@@ -322,8 +323,8 @@ export function ChatClient({
                   </li>
                 ) : (
                   <li key={m.id} className="flex animate-rise gap-3">
-                    <span aria-hidden="true" className="flex size-8 shrink-0 items-center justify-center rounded-full bg-ink text-sm font-bold text-paper">
-                      J
+                    <span aria-hidden="true" className="flex size-8 shrink-0 items-center justify-center rounded-full bg-ink text-paper">
+                      <SparkIcon className="size-4" />
                     </span>
                     <div className="min-w-0 flex-1 break-words pt-1">
                     <p className="sr-only">Jody Core:</p>

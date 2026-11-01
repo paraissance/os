@@ -157,13 +157,10 @@
     --color-hero-glow: #3d3d3d;
   }
 
-  /* The bold words in summary sentences read as titles: "7 Active Businesses". */
-  b {
-    text-transform: capitalize;
-  }
-
   html {
     background: var(--color-paper);
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-line) transparent;
   }
 
   body {

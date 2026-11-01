@@ -4,7 +4,8 @@ import { listAdmins } from "@/lib/auth/admins";
 import { requireSession } from "@/lib/auth/current-user";
 import { getSettings } from "@/lib/settings";
 import { AI_EFFORTS, AI_MODELS } from "@/lib/ai/models";
-import { Badge, PageHeader, Panel, PanelHeader, Skeleton } from "@/components/ui/primitives";
+import { Part } from "@/components/dashboard/ui";
+import { Badge, PageHeader, Panel, Skeleton } from "@/components/ui/primitives";
 import { AddAdminForm, PasswordForm, RemoveAdminButton, SettingsForm } from "./forms";
 
 export const metadata: Metadata = { title: "Settings" };
@@ -13,7 +14,7 @@ export default function SettingsPage() {
   return (
     <>
       <PageHeader eyebrow="System" title="Settings" description="Your profile, how Jody Core works, your password and who has access." />
-      <Suspense fallback={<Skeleton className="h-[36rem]" />}>
+      <Suspense fallback={<Skeleton className="h-[36rem] rounded-3xl" />}>
         <SettingsView />
       </Suspense>
     </>
@@ -30,29 +31,30 @@ async function SettingsView() {
   const [settings, admins] = await Promise.all([getSettings(), listAdmins()]);
 
   return (
-    <div className="grid grid-cols-[minmax(0,1fr)] gap-10 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
-      <Panel>
-        <PanelHeader title="Profile and AI" description="How Jody Core addresses you and how it thinks." />
-        <SettingsForm
-          initial={{ name: user.name, ...settings }}
-          email={user.email}
-          timeZones={timeZones()}
-          models={AI_MODELS.map((m) => ({ id: m.id, label: `${m.label}: ${m.note}` }))}
-          efforts={[...AI_EFFORTS]}
-        />
-      </Panel>
-
-      <div className="space-y-10">
+    <div className="space-y-10">
+      <Part title="Profile and AI" intro="How Jody Core addresses you and how it thinks.">
         <Panel>
-          <PanelHeader title="Password" description="Changing it signs out every other device." />
+          <SettingsForm
+            initial={{ name: user.name, ...settings }}
+            email={user.email}
+            timeZones={timeZones()}
+            models={AI_MODELS.map((m) => ({ id: m.id, label: `${m.label}: ${m.note}` }))}
+            efforts={[...AI_EFFORTS]}
+          />
+        </Panel>
+      </Part>
+
+      <Part title="Password" intro="Changing it signs out every other device.">
+        <Panel>
           <PasswordForm />
         </Panel>
+      </Part>
 
+      <Part title="Super admins" intro="Everyone here can sign in and use all of JodyOS." count={admins.length}>
         <Panel>
-          <PanelHeader title="Super admin access" description="Everyone here can sign in and use all of JodyOS." />
           <ul>
             {admins.map((a) => (
-              <li key={a.id} className="flex items-center justify-between gap-3 border-b border-hair px-5 py-3">
+              <li key={a.id} className="flex items-center justify-between gap-3 border-b border-paper px-6 py-4">
                 <div className="min-w-0">
                   <p className="flex flex-wrap items-center gap-2 font-semibold">
                     {a.name}
@@ -72,12 +74,12 @@ async function SettingsView() {
               </li>
             ))}
           </ul>
-          <div className="p-5">
-            <h3 className="mb-4 font-bold">Add a super admin</h3>
+          <div className="p-6">
+            <h3 className="mb-4 font-extrabold">Add a super admin</h3>
             <AddAdminForm />
           </div>
         </Panel>
-      </div>
+      </Part>
     </div>
   );
 }

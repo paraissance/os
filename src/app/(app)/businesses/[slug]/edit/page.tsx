@@ -9,9 +9,9 @@ import { getRecord } from "@/lib/businesses";
 import { requestNow } from "@/lib/clock";
 import { formatMoney } from "@/lib/money";
 import { BusinessForm, DeleteBusiness, FaqsEditor, LinksEditor, SitesEditor, SubscriptionsEditor } from "@/components/businesses/editors";
-import { Part } from "@/components/businesses/part";
 import { SectionNav } from "@/components/businesses/section-nav";
 import { mainAddress } from "@/components/dashboard/business-page";
+import { Part } from "@/components/dashboard/ui";
 import { Alert, Badge, Skeleton, buttonClass } from "@/components/ui/primitives";
 
 export const metadata: Metadata = { title: "Edit business" };

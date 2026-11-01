@@ -3,8 +3,9 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Suspense, useEffect, useRef, useState, useSyncExternalStore, type CSSProperties, type ReactNode } from "react";
+import { Icon, SparkIcon } from "@/components/ui/icon";
 import { Wordmark } from "@/components/ui/logo";
-import { cx } from "@/components/ui/primitives";
+import { cx, pillClass, pillTrack } from "@/components/ui/primitives";
 import { NAV_KEY, THEME_KEY } from "./shell-state";
 
 /**
@@ -94,23 +95,6 @@ const NAV: { href: string; label: string; icon: ReactNode; also?: string[] }[] =
   },
 ];
 
-function Icon({ children, className }: { children: ReactNode; className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={1.8}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-      className={cx("size-5 shrink-0", className)}
-    >
-      {children}
-    </svg>
-  );
-}
-
 /* The folded rail and the theme live on <html> (data-nav, data-theme), so the head script can apply them before the first paint. */
 const SHELL_EVENT = "jodyos-shell";
 const railClosed = () => document.documentElement.dataset.nav === "closed";
@@ -140,17 +124,22 @@ function toggleTheme() {
   remember(THEME_KEY, html.dataset.theme ?? "light");
 }
 
+const ROUND_BUTTON = "flex size-10 shrink-0 items-center justify-center rounded-full bg-wash transition-colors duration-200 hover:bg-mist";
+
+/** Jody Core from any page (Ctrl+K does the same). */
+function AskButton() {
+  return (
+    <Link href="/command" aria-label="Ask Jody Core" title="Ask Jody Core (Ctrl+K)" className={ROUND_BUTTON}>
+      <SparkIcon />
+    </Link>
+  );
+}
+
 function ThemeToggle() {
   const dark = useSyncExternalStore(onShellChange, isDark, () => false);
   const label = dark ? "Switch to light mode" : "Switch to dark mode";
   return (
-    <button
-      type="button"
-      onClick={toggleTheme}
-      aria-label={label}
-      title={label}
-      className="flex size-10 shrink-0 items-center justify-center rounded-full bg-wash transition-colors duration-200 hover:bg-mist"
-    >
+    <button type="button" onClick={toggleTheme} aria-label={label} title={label} className={ROUND_BUTTON}>
       <Icon>
         {dark ? (
           <>
@@ -229,19 +218,11 @@ function ActiveNav(props: NavProps) {
  */
 function TopNav({ activePath }: { activePath: string | null }) {
   return (
-    <nav aria-label="Top" className="col-start-2 hidden items-center gap-1 rounded-full bg-wash p-1 lg:rail:flex">
+    <nav aria-label="Top" className={cx(pillTrack, "col-start-2 hidden lg:rail:flex")}>
       {NAV.slice(0, 6).map((item) => {
         const active = activePath !== null && isActive(activePath, item.href);
         return (
-          <Link
-            key={item.href}
-            href={item.href}
-            aria-current={active ? "page" : undefined}
-            className={cx(
-              "flex min-h-9 items-center whitespace-nowrap rounded-full px-4 text-sm font-semibold transition-colors duration-200",
-              active ? "bg-ink text-paper" : "text-muted hover:text-ink",
-            )}
-          >
+          <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined} className={pillClass(active)}>
             {item.label}
           </Link>
         );
@@ -338,6 +319,7 @@ export function AppShell({ children, userSlot }: { children: ReactNode; userSlot
           <Wordmark />
         </Link>
         <div className="flex items-center gap-2">
+          <AskButton />
           <ThemeToggle />
           <button
             ref={menuButtonRef}
@@ -380,6 +362,7 @@ export function AppShell({ children, userSlot }: { children: ReactNode; userSlot
             <ActiveTopNav />
           </Suspense>
           <div className="col-start-3 flex items-center justify-end gap-2">
+            <AskButton />
             <ThemeToggle />
             <div className="rounded-full bg-wash">{userSlot}</div>
           </div>

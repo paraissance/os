@@ -39,7 +39,7 @@ export function SettingsForm({
   };
   const err = state?.fieldErrors ?? {};
   return (
-    <form onSubmit={onSubmit} className="space-y-5 p-5">
+    <form onSubmit={onSubmit} className="space-y-5 p-6">
       {state?.error ? <Alert tone="bad">{state.error}</Alert> : null}
       {state?.message ? <Alert tone="ok">{state.message}</Alert> : null}
       <div className="grid gap-5 sm:grid-cols-2">
@@ -100,7 +100,7 @@ export function PasswordForm() {
   const [state, action, pending] = useActionState(changePasswordAction, undefined);
   const err = state?.fieldErrors ?? {};
   return (
-    <form action={action} className="space-y-4 p-5">
+    <form action={action} className="space-y-4 p-6">
       {state?.error ? <Alert tone="bad">{state.error}</Alert> : null}
       {state?.message ? <Alert tone="ok">{state.message}</Alert> : null}
       <Field label="Current password" htmlFor="current" error={err.current}>
@@ -112,9 +112,11 @@ export function PasswordForm() {
       <Field label="Confirm new password" htmlFor="confirm" error={err.confirm}>
         <Input id="confirm" name="confirm" type="password" autoComplete="new-password" required />
       </Field>
-      <Button type="submit" variant="secondary" disabled={pending}>
-        {pending ? "Changing…" : "Change password"}
-      </Button>
+      <div className="flex justify-end">
+        <Button type="submit" disabled={pending}>
+          {pending ? "Changing…" : "Change password"}
+        </Button>
+      </div>
     </form>
   );
 }
@@ -139,9 +141,11 @@ export function AddAdminForm() {
       <Field label="Confirm password" htmlFor="admin-confirm" error={err.confirm}>
         <PasswordInput id="admin-confirm" name="confirm" autoComplete="new-password" required />
       </Field>
-      <Button type="submit" disabled={pending}>
-        {pending ? "Adding…" : "Add super admin"}
-      </Button>
+      <div className="flex justify-end">
+        <Button type="submit" disabled={pending}>
+          {pending ? "Adding…" : "Add super admin"}
+        </Button>
+      </div>
     </form>
   );
 }

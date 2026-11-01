@@ -7,7 +7,7 @@ import { listActivity } from "@/lib/activity";
 import { ACTIVITY_STATUSES, type ActivityStatus } from "@/lib/db/schema";
 import { getSettings } from "@/lib/settings";
 import { ActivityList } from "@/components/activity-list";
-import { EmptyState, PageHeader, Panel, Skeleton, buttonClass, cx } from "@/components/ui/primitives";
+import { EmptyState, PageHeader, Panel, Skeleton, buttonClass, pillClass, pillTrack } from "@/components/ui/primitives";
 
 export const metadata: Metadata = { title: "Activity" };
 
@@ -26,9 +26,9 @@ export default function ActivityPage(props: PageProps<"/activity">) {
       <PageHeader
         eyebrow="System"
         title="Activity"
-        description="The audit trail: every request, decision, tool call, result and error. Secrets are redacted before anything is written."
+        description="Everything that happened in JodyOS, newest first. Secrets are removed before anything is written."
       />
-      <Suspense fallback={<Skeleton className="h-96" />}>
+      <Suspense fallback={<Skeleton className="h-96 rounded-3xl" />}>
         <ActivityView searchParams={props.searchParams} />
       </Suspense>
     </>
@@ -67,58 +67,52 @@ async function ActivityView({ searchParams }: { searchParams: PageProps<"/activi
     return qs ? `/activity?${qs}` : "/activity";
   };
 
-  const tab = (active: boolean) =>
-    cx(
-      "inline-flex min-h-9 items-center rounded-full px-3.5 text-sm transition-colors duration-200",
-      active ? "bg-ink font-semibold text-paper" : "bg-paper hover:bg-mist",
-    );
-
   return (
-    <Panel>
-      <div className="flex flex-wrap items-center gap-x-8 gap-y-3 border-b border-paper px-5 py-4">
-        <div className="flex flex-wrap items-center gap-1" role="group" aria-label="Filter by type">
-          <span className="label mr-2 text-subtle">Type</span>
+    <div className="space-y-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className={pillTrack} role="group" aria-label="Filter by type">
           {ACTION_FILTERS.map((f) => (
-            <Link key={f.label} href={href({ action: f.value, before: undefined })} className={tab(action === f.value)}>
+            <Link key={f.label} href={href({ action: f.value, before: undefined })} aria-current={action === f.value ? "true" : undefined} className={pillClass(action === f.value)}>
               {f.label}
             </Link>
           ))}
         </div>
-        <div className="flex flex-wrap items-center gap-1" role="group" aria-label="Filter by status">
-          <span className="label mr-2 text-subtle">Status</span>
-          <Link href={href({ status: undefined, before: undefined })} className={tab(!status)}>
-            Any
+        <div className={pillTrack} role="group" aria-label="Filter by status">
+          <Link href={href({ status: undefined, before: undefined })} aria-current={!status ? "true" : undefined} className={pillClass(!status)}>
+            Any status
           </Link>
           {ACTIVITY_STATUSES.map((s) => (
-            <Link key={s} href={href({ status: s, before: undefined })} className={tab(status === s)}>
+            <Link key={s} href={href({ status: s, before: undefined })} aria-current={status === s ? "true" : undefined} className={pillClass(status === s)}>
               {s[0].toUpperCase() + s.slice(1)}
             </Link>
           ))}
         </div>
       </div>
 
-      {page.length ? (
-        <ActivityList rows={page} now={requestNow()} timeZone={settings.timezone} detailed />
-      ) : (
-        <EmptyState title="Nothing matches.">No activity for this filter yet.</EmptyState>
-      )}
+      <Panel>
+        {page.length ? (
+          <ActivityList rows={page} now={requestNow()} timeZone={settings.timezone} detailed />
+        ) : (
+          <EmptyState title="Nothing matches.">No activity for this filter yet.</EmptyState>
+        )}
 
-      {hasMore || before ? (
-        <div className="flex justify-between gap-3 border-t border-paper px-5 py-3">
-          {before ? (
-            <Link href={href({})} className={buttonClass("ghost")}>
-              ← Newest
-            </Link>
-          ) : (
-            <span />
-          )}
-          {hasMore ? (
-            <Link href={href({ before: page[page.length - 1].createdAt.toISOString() })} className={buttonClass("secondary")}>
-              Older →
-            </Link>
-          ) : null}
-        </div>
-      ) : null}
-    </Panel>
+        {hasMore || before ? (
+          <div className="flex justify-between gap-3 border-t border-paper px-6 py-3">
+            {before ? (
+              <Link href={href({})} className={buttonClass("ghost")}>
+                ← Newest
+              </Link>
+            ) : (
+              <span />
+            )}
+            {hasMore ? (
+              <Link href={href({ before: page[page.length - 1].createdAt.toISOString() })} className={buttonClass("light")}>
+                Older →
+              </Link>
+            ) : null}
+          </div>
+        ) : null}
+      </Panel>
+    </div>
   );
 }

@@ -8,9 +8,9 @@ import { Alert, Button, Input } from "@/components/ui/primitives";
 export function RunCampaign({ brand, name }: { brand: string; name: string }) {
   const [state, action, pending] = useActionState(runCampaignAction, undefined);
   return (
-    <form action={action} className="space-y-3 rounded-2xl bg-wash p-5">
+    <form action={action} className="space-y-3 rounded-3xl bg-wash p-6">
       <input type="hidden" name="brand" value={brand} />
-      <div className="flex flex-wrap items-end justify-between gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="max-w-xl">
           <p className="text-lg font-extrabold">Run a campaign week</p>
           <p className="text-[15px] text-muted">

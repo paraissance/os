@@ -18,7 +18,7 @@ export default function WebsitesPage() {
   return (
     <>
       <PageHeader eyebrow="Business" title="Websites" description="The websites you work on. Visit one, or open the place where you edit it." />
-      <Suspense fallback={<Skeleton className="h-96" />}>
+      <Suspense fallback={<Skeleton className="h-96 rounded-3xl" />}>
         <WebsitesBody />
       </Suspense>
     </>
@@ -27,7 +27,7 @@ export default function WebsitesPage() {
 
 function OutButton({ href, children, variant }: { href: string; children: string; variant: "light" | "primary" }) {
   return (
-    <a href={href} target="_blank" rel="noopener noreferrer" className={buttonClass(variant, "min-h-10 px-5")}>
+    <a href={href} target="_blank" rel="noopener noreferrer" className={buttonClass(variant, "min-h-9 px-4")}>
       {children} <span aria-hidden="true">↗</span>
       <span className="sr-only">(opens in a new tab)</span>
     </a>
@@ -53,9 +53,9 @@ async function WebsitesBody() {
   }
 
   return (
-    <ul className="stagger grid grid-cols-[minmax(0,1fr)] gap-3 sm:grid-cols-2">
+    <ul className="stagger grid grid-cols-[minmax(0,1fr)] gap-3 md:grid-cols-2">
       {listed.map(({ site, business }) => (
-        <li key={site.id} className="flex flex-col gap-5 rounded-2xl bg-wash p-6">
+        <li key={site.id} className="flex flex-col gap-5 rounded-3xl bg-wash p-6">
           <div className="min-w-0">
             <p className="truncate text-2xl font-extrabold tracking-[-0.02em]">{site.domain}</p>
             <p className="truncate text-sm text-muted">{[business.name, site.platform].filter(Boolean).join(" · ")}</p>

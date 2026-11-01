@@ -3,7 +3,7 @@ import { allKnowledge } from "@/lib/agent-engine";
 import { languageName, profileName } from "@/lib/agent-input";
 import type { Agent } from "@/lib/agents";
 import type { AgentLink } from "@/lib/db/schema";
-import { Linked, Rows } from "@/components/dashboard/ui";
+import { Linked, Rows, Tile } from "@/components/dashboard/ui";
 import { Badge, buttonClass, cx } from "@/components/ui/primitives";
 import { CopyButton } from "./embed-tools";
 
@@ -60,14 +60,14 @@ export function AgentView({ agent, origin, aiReady }: { agent: Agent; origin: st
   const words = allKnowledge(agent).split(/\s+/).filter(Boolean).length;
   const sitePages = agent.siteKnowledge?.match(/^# PAGE: /gm)?.length ?? 0;
   return (
-    <article aria-label={agent.name} className="animate-rise space-y-10">
-      <header className="flex flex-wrap items-start justify-between gap-4">
+    <article aria-label={agent.name} className="animate-rise space-y-3">
+      <header className="flex flex-wrap items-center justify-between gap-4 rounded-3xl bg-wash p-6">
         <div className="min-w-0">
-          <h3 className="flex flex-wrap items-center gap-3 text-3xl font-extrabold leading-tight tracking-[-0.03em] sm:text-4xl">
+          <h3 className="flex flex-wrap items-center gap-3 text-3xl font-extrabold leading-tight tracking-[-0.03em]">
             {agent.brandColor || agent.accentColor ? (
               <span aria-hidden="true" className="flex shrink-0 -space-x-1.5">
                 {[agent.brandColor, agent.accentColor].filter(Boolean).map((c) => (
-                  <span key={c} className="size-5 rounded-full ring-2 ring-paper" style={{ backgroundColor: c ?? undefined }} />
+                  <span key={c} className="size-5 rounded-full ring-2 ring-wash" style={{ backgroundColor: c ?? undefined }} />
                 ))}
               </span>
             ) : null}
@@ -77,7 +77,6 @@ export function AgentView({ agent, origin, aiReady }: { agent: Agent; origin: st
           <div className="mt-3 flex flex-wrap gap-2">
             <Badge>{languageName(agent.language)}</Badge>
             <Badge>{profileName(agent.safetyProfile)}</Badge>
-            <Badge>{agent.starters.length} starter questions</Badge>
           </div>
         </div>
         {agent.ctaUrl && agent.ctaLabel ? (
@@ -88,10 +87,17 @@ export function AgentView({ agent, origin, aiReady }: { agent: Agent; origin: st
         ) : null}
       </header>
 
-      <div className="grid grid-cols-[minmax(0,1fr)] gap-10 lg:grid-cols-2">
-        <div className="space-y-10">
+      <div className="stagger grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <Tile label="Starter questions" value={agent.starters.length} />
+        <Tile label="Keyword answers" value={agent.keywords.length} />
+        <Tile label="Words it knows" value={words.toLocaleString("en-US")} />
+        <Tile label="Website pages read" value={sitePages} />
+      </div>
+
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-x-3 gap-y-8 pt-5 lg:grid-cols-2">
+        <div className="min-w-0 space-y-8">
           <Part title="What visitors see first">
-            <div className="space-y-3 rounded-3xl bg-wash p-5">
+            <div className="space-y-3 rounded-3xl bg-wash p-6">
               <p className="max-w-md rounded-2xl rounded-tl-md bg-paper px-4 py-3 text-[15px] leading-relaxed">{agent.greeting || "(no greeting)"}</p>
               {agent.note ? <p className="text-xs text-muted">{agent.note}</p> : null}
               {agent.starters.length ? (
@@ -145,15 +151,15 @@ export function AgentView({ agent, origin, aiReady }: { agent: Agent; origin: st
           </Part>
 
           <Part title="When it isn't sure, it offers">
-            <div className="flex flex-wrap gap-2 rounded-2xl bg-wash p-4">
+            <div className="flex flex-wrap gap-2 rounded-3xl bg-wash p-6">
               {agent.fallbackLinks.length ? agent.fallbackLinks.map((l) => <Out key={l.url + l.label} link={l} />) : <span className="text-muted">No links.</span>}
             </div>
           </Part>
         </div>
 
-        <div className="space-y-10">
+        <div className="min-w-0 space-y-8">
           <Part title="How it answers">
-            <ol className="space-y-2 rounded-2xl bg-wash p-5 text-[15px] leading-relaxed">
+            <ol className="space-y-3 rounded-3xl bg-wash p-6 text-[15px] leading-relaxed">
               {STEPS.map((s, i) => (
                 <li key={s} className="flex gap-3">
                   <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-ink text-xs font-bold text-paper">{i + 1}</span>
@@ -165,7 +171,7 @@ export function AgentView({ agent, origin, aiReady }: { agent: Agent; origin: st
 
           {agent.crisis ? (
             <Part title="In a crisis it says">
-              <div className="space-y-3 rounded-2xl bg-ink p-5 text-paper">
+              <div className="space-y-3 rounded-3xl bg-ink p-6 text-paper">
                 <p className="whitespace-pre-line text-[15px] leading-relaxed">{agent.crisis.answer}</p>
                 <div className="flex flex-wrap gap-2">
                   {agent.crisis.actions.map((a) => (
@@ -178,7 +184,7 @@ export function AgentView({ agent, origin, aiReady }: { agent: Agent; origin: st
 
           {agent.instructions ? (
             <Part title="Its instructions" note="what the AI is told, word for word">
-              <details className="group rounded-2xl bg-wash p-5">
+              <details className="group rounded-3xl bg-wash p-6">
                 <summary className="cursor-pointer list-none font-semibold">
                   <span className="group-open:hidden">Show the instructions</span>
                   <span className="hidden group-open:inline">Hide the instructions</span>
@@ -188,8 +194,8 @@ export function AgentView({ agent, origin, aiReady }: { agent: Agent; origin: st
             </Part>
           ) : null}
 
-          <Part title="What it knows" note={`${words.toLocaleString("en-US")} words`}>
-            <details className="group rounded-2xl bg-wash p-5">
+          <Part title="What it knows">
+            <details className="group rounded-3xl bg-wash p-6">
               <summary className="cursor-pointer list-none font-semibold">
                 <span className="group-open:hidden">Show the knowledge</span>
                 <span className="hidden group-open:inline">Hide the knowledge</span>
@@ -199,7 +205,7 @@ export function AgentView({ agent, origin, aiReady }: { agent: Agent; origin: st
               </p>
             </details>
             {agent.siteKnowledge && agent.siteLearnedAt ? (
-              <details className="group rounded-2xl bg-wash p-5">
+              <details className="group rounded-3xl bg-wash p-6">
                 <summary className="cursor-pointer list-none font-semibold">
                   From its website: {sitePages} page{sitePages === 1 ? "" : "s"}, read{" "}
                   {agent.siteLearnedAt.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
@@ -214,7 +220,7 @@ export function AgentView({ agent, origin, aiReady }: { agent: Agent; origin: st
           </Part>
 
           <Part title="Put it on a website">
-            <div className="space-y-3 rounded-2xl bg-wash p-5 text-[15px]">
+            <div className="space-y-3 rounded-3xl bg-wash p-6 text-[15px]">
               <p>Paste this one line on {agent.business.name}&apos;s website, just before the end of the page:</p>
               <code className="block select-all break-all rounded-xl bg-paper px-3 py-2 font-mono text-sm">{embedCode(origin, agent.business.slug)}</code>
               <div className="flex flex-wrap gap-2">

@@ -24,7 +24,7 @@ export function ActivityList({
         return (
           <li
             key={row.id}
-            className="grid gap-x-4 gap-y-1 border-b border-paper px-5 py-3.5 last:border-b-0 sm:grid-cols-[6.5rem_1fr]"
+            className="grid gap-x-4 gap-y-1 border-b border-paper px-6 py-4 last:border-b-0 sm:grid-cols-[6.5rem_1fr]"
           >
             <time
               dateTime={row.createdAt.toISOString()}

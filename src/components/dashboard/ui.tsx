@@ -40,9 +40,36 @@ export function Title({
   );
 }
 
-/** A plain-language summary. Wrap the numbers in <b>. */
-export function Sentence({ children }: { children: ReactNode }) {
-  return <p className="max-w-4xl animate-rise text-xl leading-snug sm:text-[1.75rem] sm:leading-[1.3] [&_b]:font-extrabold">{children}</p>;
+/** A titled part of a long page: the title stays beside the content on wide screens, above it otherwise. */
+export function Part({ id, title, intro, count, total, children }: { id?: string; title: string; intro: string; count?: number; total?: string; children: ReactNode }) {
+  return (
+    <section id={id} className="reveal grid scroll-mt-32 grid-cols-[minmax(0,1fr)] gap-4 xl:grid-cols-[15rem_minmax(0,1fr)] xl:gap-8">
+      <div className="xl:sticky xl:top-36 xl:self-start">
+        <Title count={count}>{title}</Title>
+        <p className="-mt-2 text-sm leading-relaxed text-muted">{intro}</p>
+        {total ? <p className="mt-3 text-sm font-semibold">{total}</p> : null}
+      </div>
+      <div className="min-w-0">{children}</div>
+    </section>
+  );
+}
+
+/** The dark card of big numbers at the top of a page. */
+export function HeroStats({ title, stats }: { title?: ReactNode; stats: { label: string; value: ReactNode; note?: ReactNode }[] }) {
+  return (
+    <section className="hero animate-rise rounded-3xl p-6 sm:p-8">
+      {title ? <h2 className="label mb-6 text-white/70">{title}</h2> : null}
+      <dl className={cx("grid grid-cols-2 gap-x-6 gap-y-8", stats.length === 3 ? "sm:grid-cols-3" : "lg:grid-cols-4")}>
+        {stats.map((s) => (
+          <div key={s.label} className="min-w-0 lg:border-l lg:border-white/15 lg:pl-6 lg:first:border-l-0 lg:first:pl-0">
+            <dt className="text-sm font-semibold text-white/70">{s.label}</dt>
+            <dd className="mt-2 whitespace-nowrap text-4xl font-extrabold tabular-nums tracking-[-0.03em] sm:text-5xl">{s.value}</dd>
+            {s.note ? <dd className="mt-1 text-sm text-white/70">{s.note}</dd> : null}
+          </div>
+        ))}
+      </dl>
+    </section>
+  );
 }
 
 export function Tiles({ children, className }: { children: ReactNode; className?: string }) {
@@ -126,7 +153,7 @@ export function Linked({ text }: { text: string }) {
 /** A list on one soft card, rows split by thin white lines; rows rise in one after another. */
 export function Rows({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <ul className={cx("stagger rounded-2xl bg-wash px-5 [&>li]:border-b [&>li]:border-paper [&>li]:py-3.5 [&>li:last-child]:border-b-0", className)}>
+    <ul className={cx("stagger rounded-3xl bg-wash px-6 py-1 [&>li]:border-b [&>li]:border-paper [&>li]:py-4 [&>li:last-child]:border-b-0", className)}>
       {children}
     </ul>
   );
@@ -174,7 +201,7 @@ export function Bars({ rows, empty }: { rows: { label: string; value: number; di
 export function AttentionList({ items, empty }: { items: AttentionItem[]; empty: string }) {
   if (!items.length) {
     return (
-      <p className="flex animate-rise items-center gap-3 rounded-2xl bg-wash px-5 py-4 text-lg font-semibold">
+      <p className="flex animate-rise items-center gap-3 rounded-3xl bg-wash px-6 py-5 text-lg font-semibold">
         <StatusDot tone="ok" /> {empty}
       </p>
     );
@@ -188,7 +215,7 @@ export function AttentionList({ items, empty }: { items: AttentionItem[]; empty:
             <Link
               href={item.href}
               className={cx(
-                "group flex items-center gap-4 rounded-2xl px-5 py-4 transition-[background-color,transform] duration-200 hover:-translate-y-0.5",
+                "group flex items-center gap-4 rounded-3xl px-6 py-4 transition-[background-color,transform] duration-200 hover:-translate-y-0.5",
                 urgent ? "bg-ink text-paper hover:bg-ink/85" : "bg-wash hover:bg-mist",
               )}
             >

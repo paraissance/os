@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { cx } from "@/components/ui/primitives";
+import { cx, pillClass, pillTrack } from "@/components/ui/primitives";
 
 /** Jump pills for a long page: they stay in view, and the section being read is the filled one. */
 export function SectionNav({ label, parts }: { label: string; parts: { id: string; label: string; count?: number }[] }) {
@@ -24,20 +24,9 @@ export function SectionNav({ label, parts }: { label: string; parts: { id: strin
   }, [ids]);
 
   return (
-    <nav
-      aria-label={label}
-      className="no-scrollbar sticky top-[3.75rem] z-10 flex w-fit max-w-full gap-1 overflow-x-auto rounded-full border border-hair bg-wash p-1 lg:top-[4.25rem]"
-    >
+    <nav aria-label={label} className={cx(pillTrack, "sticky top-[3.75rem] z-10 border border-hair lg:top-[4.25rem]")}>
       {parts.map((part) => (
-        <a
-          key={part.id}
-          href={`#${part.id}`}
-          aria-current={current === part.id ? "location" : undefined}
-          className={cx(
-            "flex min-h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-4 text-sm font-semibold transition-colors duration-200",
-            current === part.id ? "bg-ink text-paper" : "text-muted hover:text-ink",
-          )}
-        >
+        <a key={part.id} href={`#${part.id}`} aria-current={current === part.id ? "location" : undefined} className={pillClass(current === part.id)}>
           {part.label}
           {part.count ? <span className="text-xs tabular-nums opacity-70">{part.count}</span> : null}
         </a>

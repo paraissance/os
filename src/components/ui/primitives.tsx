@@ -33,6 +33,16 @@ export function Button({
   return <button className={buttonClass(variant, className)} {...props} />;
 }
 
+/** A row of pills on one soft track: the same control for top bar, tabs and filters. */
+export const pillTrack = "no-scrollbar flex w-fit max-w-full gap-1 overflow-x-auto rounded-full bg-wash p-1";
+
+export function pillClass(active: boolean) {
+  return cx(
+    "flex min-h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-4 text-sm font-semibold transition-colors duration-200",
+    active ? "bg-ink text-paper" : "text-muted hover:text-ink",
+  );
+}
+
 const fieldBase =
   "w-full rounded-xl border border-line bg-paper px-3.5 py-2.5 text-[15px] text-ink transition-colors placeholder:text-subtle hover:border-ink focus:border-ink focus:outline-2 focus:-outline-offset-2 focus:outline-ink disabled:border-hair disabled:text-muted";
 
@@ -80,27 +90,7 @@ export function Field({
 
 /** A card on the page. No outline: space separates panels. */
 export function Panel({ className, ...props }: ComponentProps<"section">) {
-  return <section className={cx("animate-rise overflow-hidden rounded-2xl bg-wash", className)} {...props} />;
-}
-
-export function PanelHeader({
-  title,
-  description,
-  action,
-}: {
-  title: string;
-  description?: ReactNode;
-  action?: ReactNode;
-}) {
-  return (
-    <div className="flex flex-wrap items-start justify-between gap-3 px-5 pb-2 pt-5">
-      <div className="min-w-0">
-        <h2 className="text-lg font-extrabold tracking-[-0.02em]">{title}</h2>
-        {description ? <p className="mt-1 text-sm text-muted">{description}</p> : null}
-      </div>
-      {action}
-    </div>
-  );
+  return <section className={cx("animate-rise overflow-hidden rounded-3xl bg-wash", className)} {...props} />;
 }
 
 export function PageHeader({

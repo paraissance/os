@@ -8,7 +8,6 @@ import { loadBook } from "@/lib/businesses";
 import { requestNow } from "@/lib/clock";
 import { envStatus } from "@/lib/env";
 import { dayKey, formatRelative } from "@/lib/format";
-import { getModule } from "@/lib/modules";
 import { getSettings } from "@/lib/settings";
 import { STATS_DAYS, brandPosts, getSyncState, isRunning, isStale, linkedChannelOwners, listBrands, syncBlotato, type Brand } from "@/lib/social";
 import { byPlatform, channelKey, groupByDay, platformLabel, profileUrl, suggestChannels, topPosts, totals, type PostRow } from "@/lib/social-model";
@@ -17,7 +16,7 @@ import { BrandAccountsForm, RemoveBrandButton } from "@/components/social/brand-
 import { RunCampaign } from "@/components/social/run-campaign";
 import { AutoRefresh, RefreshButton } from "@/components/social/refresh";
 import { Rows, Title } from "@/components/dashboard/ui";
-import { Alert, Badge, PageHeader, Skeleton, buttonClass, cx } from "@/components/ui/primitives";
+import { Alert, Badge, PageHeader, Skeleton, buttonClass, cx, pillClass, pillTrack } from "@/components/ui/primitives";
 
 export const metadata: Metadata = { title: "Social Media" };
 
@@ -31,21 +30,12 @@ export const maxDuration = 300;
  * /social?b=<slug>; /social?add[=<slug>] links accounts.
  */
 export default function SocialPage(props: PageProps<"/social">) {
-  const later = getModule("social").planned;
   return (
     <>
       <PageHeader eyebrow="Business" title="Social Media" description="Each brand's accounts, today's schedule and the last 7 days, from Blotato." />
-      <Suspense fallback={<Skeleton className="h-[40rem]" />}>
+      <Suspense fallback={<Skeleton className="h-[40rem] rounded-3xl" />}>
         <SocialBody searchParams={props.searchParams} />
       </Suspense>
-      <section className="reveal mt-16 rounded-2xl bg-wash p-5 sm:p-6">
-        <h2 className="font-bold">Coming later</h2>
-        <ul className="mt-2 list-disc space-y-1 pl-5 text-[15px] text-muted">
-          {later.map((item) => (
-            <li key={item}>{item}</li>
-          ))}
-        </ul>
-      </section>
     </>
   );
 }
@@ -74,7 +64,7 @@ async function SocialBody({ searchParams }: { searchParams: PageProps<"/social">
     <div className="space-y-3">
       <AutoRefresh active={working} />
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <nav aria-label="Brands" className="no-scrollbar flex max-w-full gap-1 overflow-x-auto rounded-full bg-wash p-1">
+        <nav aria-label="Brands" className={pillTrack}>
           {brands.map((b) => (
             <Pill key={b.business.id} href={`/social?b=${b.business.slug}`} active={!adding && b.business.id === current?.business.id}>
               {b.business.name}
@@ -104,14 +94,7 @@ async function SocialBody({ searchParams }: { searchParams: PageProps<"/social">
 
 function Pill({ href, active, children }: { href: string; active: boolean; children: ReactNode }) {
   return (
-    <Link
-      href={href}
-      aria-current={active ? "page" : undefined}
-      className={cx(
-        "flex min-h-9 shrink-0 items-center whitespace-nowrap rounded-full px-4 text-sm font-semibold transition-colors duration-200",
-        active ? "bg-ink text-paper" : "text-muted hover:text-ink",
-      )}
-    >
+    <Link href={href} aria-current={active ? "page" : undefined} className={pillClass(active)}>
       {children}
     </Link>
   );
@@ -254,7 +237,7 @@ async function BrandView({ brand, now, timeZone, waiting }: { brand: Brand; now:
               ))}
             </Rows>
           ) : (
-            <p className="rounded-2xl bg-wash px-5 py-4 text-muted">Nothing scheduled.</p>
+            <p className="rounded-3xl bg-wash px-6 py-5 text-muted">Nothing scheduled.</p>
           )}
           <div className="mt-4">
             <BlotatoLink />
@@ -281,7 +264,7 @@ async function BrandView({ brand, now, timeZone, waiting }: { brand: Brand; now:
                 ))}
               </Rows>
             ) : (
-              <p className="rounded-2xl bg-wash px-5 py-4 text-muted">Nothing published in the {week}.</p>
+              <p className="rounded-3xl bg-wash px-6 py-5 text-muted">Nothing published in the {week}.</p>
             )}
           </section>
 
@@ -294,7 +277,7 @@ async function BrandView({ brand, now, timeZone, waiting }: { brand: Brand; now:
                 ))}
               </Rows>
             ) : (
-              <p className="rounded-2xl bg-wash px-5 py-4 text-muted">No views or likes recorded yet.</p>
+              <p className="rounded-3xl bg-wash px-6 py-5 text-muted">No views or likes recorded yet.</p>
             )}
           </section>
         </div>

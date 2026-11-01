@@ -23,7 +23,6 @@ export function AskClaude({ siteId, domain }: { siteId: string; domain: string }
         maxLength={4000}
         placeholder="Change the homepage headline to “Honest guidance for your home”"
         defaultValue={state?.values?.change}
-        className="bg-paper"
       />
       {state?.error ? <Alert tone="bad">{state.error}</Alert> : null}
       {state?.message && state.link ? (

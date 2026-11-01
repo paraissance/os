@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { MODULES } from "@/lib/modules";
+import { Title } from "@/components/dashboard/ui";
 import { Badge, PageHeader } from "@/components/ui/primitives";
 
 export const metadata: Metadata = { title: "Others" };
@@ -21,14 +22,14 @@ export default function OthersPage() {
     <>
       <PageHeader eyebrow="More" title="Others" description="Tools that work today, and what's coming next." />
 
-      <section className="mb-14">
-        <h2 className="mb-4 text-xl font-extrabold tracking-[-0.02em] sm:text-2xl">Ready to use</h2>
-        <ul className="stagger grid grid-cols-[minmax(0,1fr)] gap-3 sm:grid-cols-3">
+      <section className="mb-10">
+        <Title>Ready to use</Title>
+        <ul className="stagger grid grid-cols-[minmax(0,1fr)] gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {READY.map((m) => (
             <li key={m.id}>
               <Link
                 href={m.href}
-                className="group flex h-full flex-col rounded-2xl bg-wash p-6 transition-[background-color,transform] duration-200 hover:-translate-y-1 hover:bg-mist"
+                className="group flex h-full flex-col rounded-3xl bg-wash p-6 transition-[background-color,transform] duration-200 hover:-translate-y-1 hover:bg-mist"
               >
                 <span className="flex items-start justify-between gap-3 text-xl font-extrabold tracking-[-0.02em]">
                   {m.label}
@@ -47,12 +48,11 @@ export default function OthersPage() {
       </section>
 
       <section className="reveal">
-        <h2 className="mb-1 text-xl font-extrabold tracking-[-0.02em] sm:text-2xl">Coming later</h2>
-        <p className="mb-4 text-muted">Planned, not built yet. Open one to see what it will do.</p>
+        <Title note="Planned, not built yet">Coming later</Title>
         <ul className="stagger grid grid-cols-[minmax(0,1fr)] gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {LATER.map((m) => (
             <li key={m.id}>
-              <Link href={m.href} className="group flex h-full flex-col rounded-2xl border border-hair p-5 transition-colors duration-200 hover:bg-wash">
+              <Link href={m.href} className="group flex h-full flex-col rounded-3xl bg-wash/50 p-6 transition-colors duration-200 hover:bg-wash">
                 <span className="flex items-center justify-between gap-3 font-bold">
                   {m.label}
                   <Badge>Phase {m.phase}</Badge>
