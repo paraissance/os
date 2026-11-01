@@ -15,8 +15,11 @@ export async function UserMenu() {
   return (
     <div className="flex items-center justify-between gap-3 px-4 py-3.5">
       <span className="flex min-w-0 items-center gap-3">
-        <span aria-hidden="true" className="flex size-9 shrink-0 items-center justify-center rounded-full bg-ink text-sm font-bold text-paper">
-          {user.name.trim().charAt(0).toUpperCase() || "J"}
+        <span aria-hidden="true" className="flex size-9 shrink-0 items-center justify-center rounded-full bg-ink text-paper">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="size-5">
+            <circle cx="12" cy="8" r="4" />
+            <path d="M4 21a8 8 0 0 1 16 0" />
+          </svg>
         </span>
         <span className="min-w-0">
           <span className="block truncate text-sm font-semibold">{user.name}</span>

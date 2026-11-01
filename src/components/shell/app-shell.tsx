@@ -147,7 +147,7 @@ type NavProps = { rail?: boolean; onNavigate?: () => void };
 
 function NavGroups({ activePath, rail, onNavigate }: NavProps & { activePath: string | null }) {
   return (
-    <ul className="space-y-1 px-3">
+    <ul className="space-y-1 px-3 lg:my-auto">
       {NAV.map((item, i) => {
         const active = activePath !== null && isActive(activePath, item.href);
         return (
@@ -198,7 +198,8 @@ function SidebarContent({ userSlot, rail, onNavigate }: NavProps & { userSlot: R
         </Link>
       </div>
 
-      <nav className="no-scrollbar flex-1 overflow-y-auto py-4" aria-label="Main">
+      {/* Desktop: the list sits mid-height, level with the arrow. pt-10 makes up for the user box being 24px taller than the header. */}
+      <nav className="no-scrollbar flex-1 overflow-y-auto py-4 lg:flex lg:flex-col lg:pt-10" aria-label="Main">
         <Suspense fallback={<NavGroups activePath={null} rail={rail} onNavigate={onNavigate} />}>
           <ActiveNav rail={rail} onNavigate={onNavigate} />
         </Suspense>
