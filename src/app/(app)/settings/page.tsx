@@ -13,7 +13,7 @@ export const metadata: Metadata = { title: "Settings" };
 export default function SettingsPage() {
   return (
     <>
-      <PageHeader eyebrow="System" title="Settings" description="Your profile, how Jody Core works, your password and who has access." />
+      <PageHeader title="Settings" />
       <Suspense fallback={<Skeleton className="h-[36rem] rounded-3xl" />}>
         <SettingsView />
       </Suspense>
@@ -32,25 +32,25 @@ async function SettingsView() {
 
   return (
     <div className="space-y-10">
-      <Part title="Profile and AI" intro="How Jody Core addresses you and how it thinks.">
+      <Part title="Profile and AI">
         <Panel>
           <SettingsForm
             initial={{ name: user.name, ...settings }}
             email={user.email}
             timeZones={timeZones()}
-            models={AI_MODELS.map((m) => ({ id: m.id, label: `${m.label}: ${m.note}` }))}
+            models={AI_MODELS.map((m) => ({ id: m.id, label: m.label }))}
             efforts={[...AI_EFFORTS]}
           />
         </Panel>
       </Part>
 
-      <Part title="Password" intro="Changing it signs out every other device.">
+      <Part title="Password">
         <Panel>
           <PasswordForm />
         </Panel>
       </Part>
 
-      <Part title="Super admins" intro="Everyone here can sign in and use all of JodyOS." count={admins.length}>
+      <Part title="Super admins" count={admins.length}>
         <Panel>
           <ul>
             {admins.map((a) => (
@@ -61,23 +61,18 @@ async function SettingsView() {
                     {a.role === "owner" ? <Badge tone="accent">Default</Badge> : null}
                     {a.id === user.id ? <Badge>You</Badge> : null}
                   </p>
-                  <p className="truncate text-sm text-muted">
-                    {a.username ? (
-                      <>
-                        Signs in as <span className="font-semibold text-ink">{a.username}</span> ·{" "}
-                      </>
-                    ) : null}
-                    {a.email}
-                  </p>
+                  <p className="truncate text-sm text-muted">{a.email}</p>
                 </div>
                 {a.role !== "owner" && a.id !== user.id ? <RemoveAdminButton id={a.id} name={a.name} /> : null}
               </li>
             ))}
           </ul>
-          <div className="p-6">
-            <h3 className="mb-4 font-extrabold">Add a super admin</h3>
-            <AddAdminForm />
-          </div>
+          <details className="p-6">
+            <summary className="cursor-pointer font-semibold">Add a super admin</summary>
+            <div className="mt-4">
+              <AddAdminForm />
+            </div>
+          </details>
         </Panel>
       </Part>
     </div>

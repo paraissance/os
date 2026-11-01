@@ -10,7 +10,7 @@ export function LearnWebsites() {
   return (
     <form action={action} className="space-y-3">
       <Button type="submit" disabled={pending}>
-        {pending ? "Reading the websites… (up to a minute)" : "Learn from the websites"}
+        {pending ? "Reading… (up to a minute)" : "Learn from the websites"}
       </Button>
       {state?.error ? <Alert tone="bad">{state.error}</Alert> : null}
       {state?.message ? <Alert tone="ok"><span className="whitespace-pre-line">{state.message}</span></Alert> : null}
@@ -19,7 +19,7 @@ export function LearnWebsites() {
 }
 
 /** Copies a snippet; says so for two seconds. */
-export function CopyButton({ text }: { text: string }) {
+export function CopyButton({ text, label = "Copy" }: { text: string; label?: string }) {
   const [copied, setCopied] = useState(false);
   return (
     <button
@@ -32,7 +32,7 @@ export function CopyButton({ text }: { text: string }) {
       }}
       className={buttonClass("primary", "min-h-9! px-4!")}
     >
-      {copied ? "Copied" : "Copy"}
+      {copied ? "Copied" : label}
     </button>
   );
 }

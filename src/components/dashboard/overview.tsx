@@ -2,12 +2,12 @@ import Link from "next/link";
 import { Suspense, type ReactNode } from "react";
 import { requireUser } from "@/lib/auth/current-user";
 import { businessHref } from "@/lib/business-href";
-import { bookAttention, monthlyTotal, sortAttention, type Attention } from "@/lib/business-model";
+import { bookAttention, sortAttention, type Attention } from "@/lib/business-model";
 import { shortUrl } from "@/lib/business-view";
 import { loadBook } from "@/lib/businesses";
 import { requestNow } from "@/lib/clock";
 import { envStatus } from "@/lib/env";
-import { formatMoney, listBusinesses, liveListAttention, settle } from "@/lib/os-analytics";
+import { listBusinesses, liveListAttention, settle } from "@/lib/os-analytics";
 import { getSettings } from "@/lib/settings";
 import { checkSite } from "@/lib/site-check";
 import { loadAllTraffic } from "@/lib/traffic";
@@ -16,7 +16,7 @@ import { Delta, Sparkline } from "@/components/business-bits";
 import { CountUp } from "@/components/motion/count-up";
 import { EmptyState, Skeleton, buttonClass, cx } from "@/components/ui/primitives";
 import { mainAddress } from "./business-page";
-import { AttentionList, RenewalLine, Title } from "./ui";
+import { AttentionList, Title } from "./ui";
 
 /**
  * The dashboard home: the businesses and what needs doing, nothing else.
@@ -54,12 +54,6 @@ async function Welcome() {
     <div className="grid animate-rise gap-8 rounded-3xl bg-wash p-8 sm:p-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-center">
       <div>
         <p className="text-3xl font-extrabold tracking-[-0.02em]">Let&apos;s add your businesses.</p>
-        <p className="mt-2 max-w-xl text-lg text-muted">
-          Each one gets its own page here, with its websites, links, what it&apos;s about and what you pay for.
-        </p>
-        <p className="mt-4 max-w-xl text-[15px] text-muted">
-          Have a businesses file? Drop it in the box to add them all at once. Or add them one by one.
-        </p>
         <Link href="/businesses/new" className={buttonClass("light", "mt-6")}>
           + Add one business
         </Link>
@@ -151,7 +145,6 @@ async function BusinessCards() {
         <ul className="stagger grid grid-cols-[minmax(0,1fr)] gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {active.map((b) => {
             const lb = liveBySlug.get(b.slug);
-            const monthly = monthlyTotal(b.subscriptions);
             const domain = b.sites[0]?.domain ?? (b.websiteUrl ? shortUrl(b.websiteUrl) : null);
             const address = mainAddress(b);
             const visits = traffic.get(b.id);
@@ -170,9 +163,7 @@ async function BusinessCards() {
                       →
                     </span>
                   </span>
-                  <span className="mt-1 truncate text-sm text-muted">{b.tagline ?? "No description yet"}</span>
-                  <span className="truncate text-sm text-muted">{[domain, monthly > 0 ? `${formatMoney(monthly, "USD")} a month in tools` : null].filter(Boolean).join(" · ")}</span>
-                  <RenewalLine record={b} today={today} urgentOnly className="mt-3" />
+                  {domain ? <span className="mt-1 truncate text-sm text-muted">{domain}</span> : null}
                   <span className="mt-auto grid grid-cols-2 gap-1.5 pt-5">
                     <CardStat label="Website">
                       {address ? (

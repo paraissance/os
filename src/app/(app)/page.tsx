@@ -51,7 +51,6 @@ async function Greeting() {
       <h1 className="text-4xl font-extrabold leading-[0.95] tracking-[-0.04em] sm:text-6xl">
         {greeting(now, timezone)}, {(owner ?? user.name).split(" ")[0]}.
       </h1>
-      <p className="mt-3 text-lg text-white/70">Here&apos;s how your businesses are doing.</p>
     </header>
   );
 }
@@ -103,7 +102,7 @@ async function BusinessTab({ slug }: { slug: string }) {
 
   const site = mainSite(record);
   const website = mainAddress(record);
-  const side = { record, site, timeZone: settings.timezone };
+  const side = { record, site };
 
   return (
     <article aria-label={record.name} className="space-y-4">
@@ -117,7 +116,6 @@ async function BusinessTab({ slug }: { slug: string }) {
               {record.name}
               {record.status === "paused" ? <Badge tone="neutral">Paused</Badge> : null}
             </h1>
-            {record.tagline ? <p className="mt-3 text-lg text-white/70">{record.tagline}</p> : null}
           </div>
           <div className="flex flex-wrap gap-2">
             {website ? (
@@ -156,9 +154,9 @@ async function BusinessTab({ slug }: { slug: string }) {
   );
 }
 
-async function LiveSite(props: { record: BusinessRecord; site: BusinessSite | null; timeZone: string; address: string }) {
+async function LiveSite({ address, ...props }: { record: BusinessRecord; site: BusinessSite | null; address: string }) {
   await requireUser();
-  const health = await checkSite(props.address, requestNow());
+  const health = await checkSite(address, requestNow());
   return <SiteSide {...props} health={health} />;
 }
 
@@ -166,5 +164,5 @@ async function Traffic({ record, domain, timeZone }: { record: BusinessRecord; d
   await requireUser();
   const now = requestNow();
   const [traffic, origin] = await Promise.all([loadTraffic(record.id, now, timeZone), requestOrigin()]);
-  return <TrafficPanel traffic={traffic} now={now} domain={domain} code={embedCode(origin, record.slug)} />;
+  return <TrafficPanel traffic={traffic} domain={domain} code={embedCode(origin, record.slug)} />;
 }

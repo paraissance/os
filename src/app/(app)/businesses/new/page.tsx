@@ -15,7 +15,6 @@ export default function NewBusinessPage() {
       </Link>
       <PageHeader
         title="Add a business"
-        description="Start with the name and website. You can add its websites, links, common questions and subscriptions on the next page."
         action={
           <Link href="/businesses/import" className={buttonClass("secondary")}>
             Import a file instead

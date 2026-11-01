@@ -38,12 +38,12 @@ export function Title({
 }
 
 /** A titled part of a long page: the title stays beside the content on wide screens, above it otherwise. */
-export function Part({ id, title, intro, count, total, children }: { id?: string; title: string; intro: string; count?: number; total?: string; children: ReactNode }) {
+export function Part({ id, title, intro, count, total, children }: { id?: string; title: string; intro?: string; count?: number; total?: string; children: ReactNode }) {
   return (
     <section id={id} className="reveal grid scroll-mt-32 grid-cols-[minmax(0,1fr)] gap-4 xl:grid-cols-[15rem_minmax(0,1fr)] xl:gap-8">
       <div className="xl:sticky xl:top-36 xl:self-start">
         <Title count={count}>{title}</Title>
-        <p className="-mt-2 text-sm leading-relaxed text-muted">{intro}</p>
+        {intro ? <p className="-mt-2 text-sm leading-relaxed text-muted">{intro}</p> : null}
         {total ? <p className="mt-3 text-sm font-semibold">{total}</p> : null}
       </div>
       <div className="min-w-0">{children}</div>
@@ -169,30 +169,6 @@ export function Facts({ rows }: { rows: [label: string, value: ReactNode][] }) {
         </div>
       ))}
     </dl>
-  );
-}
-
-/** Horizontal bars that grow in: the longest value fills the row. */
-export function Bars({ rows, empty }: { rows: { label: string; value: number; display?: string }[]; empty: string }) {
-  if (!rows.length) return <Muted>{empty}</Muted>;
-  const max = Math.max(1, ...rows.map((r) => r.value));
-  return (
-    <ul className="space-y-3.5">
-      {rows.map((r, i) => (
-        <li key={r.label}>
-          <div className="flex items-baseline justify-between gap-3 text-[15px]">
-            <span className="min-w-0 truncate font-semibold">{r.label}</span>
-            <span className="shrink-0 text-sm font-semibold tabular-nums">{r.display ?? r.value.toLocaleString("en-US")}</span>
-          </div>
-          <div className="mt-1.5 h-2.5 overflow-hidden rounded-full bg-mist" aria-hidden="true">
-            <div
-              className="h-full origin-left animate-grow-x rounded-full bg-ink"
-              style={{ width: `${Math.max(2, (r.value / max) * 100)}%`, animationDelay: `${Math.min(i, 8) * 60}ms` }}
-            />
-          </div>
-        </li>
-      ))}
-    </ul>
   );
 }
 

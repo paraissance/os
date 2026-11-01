@@ -46,11 +46,11 @@ export function SettingsForm({
         <Field label="Name" htmlFor="name" error={err.name}>
           <Input id="name" name="name" value={values.name} onChange={set("name")} autoComplete="name" required maxLength={80} />
         </Field>
-        <Field label="Email" htmlFor="email" hint="Sign-in email. Not editable yet.">
+        <Field label="Email" htmlFor="email">
           <Input id="email" value={email} readOnly disabled />
         </Field>
       </div>
-      <Field label="Time zone" htmlFor="timezone" error={err.timezone} hint="Used for dates, greetings and what Jody Core calls today.">
+      <Field label="Time zone" htmlFor="timezone" error={err.timezone}>
         <Select id="timezone" name="timezone" value={values.timezone} onChange={set("timezone")}>
           {timeZones.map((tz) => (
             <option key={tz} value={tz}>
@@ -69,7 +69,7 @@ export function SettingsForm({
             ))}
           </Select>
         </Field>
-        <Field label="Effort" htmlFor="aiEffort" error={err.aiEffort} hint="Higher effort thinks longer and costs more.">
+        <Field label="Effort" htmlFor="aiEffort" error={err.aiEffort}>
           <Select id="aiEffort" name="aiEffort" value={values.aiEffort} onChange={set("aiEffort")}>
             {efforts.map((e) => (
               <option key={e} value={e}>
@@ -79,12 +79,7 @@ export function SettingsForm({
           </Select>
         </Field>
       </div>
-      <Field
-        label="Standing instructions"
-        htmlFor="aiInstructions"
-        error={err.aiInstructions}
-        hint="Added to every conversation, e.g. how you like answers written. Up to 4,000 characters."
-      >
+      <Field label="Standing instructions" htmlFor="aiInstructions" error={err.aiInstructions}>
         <Textarea id="aiInstructions" name="aiInstructions" value={values.aiInstructions} onChange={set("aiInstructions")} maxLength={4000} rows={5} />
       </Field>
       <div className="flex justify-end">
@@ -129,10 +124,10 @@ export function AddAdminForm() {
     <form action={action} className="space-y-4" noValidate>
       {state?.error ? <Alert tone="bad">{state.error}</Alert> : null}
       {state?.message ? <Alert tone="ok">{state.message}</Alert> : null}
-      <Field label="Email" htmlFor="admin-email" error={err.email} hint="Sign-in codes are sent here.">
+      <Field label="Email" htmlFor="admin-email" error={err.email}>
         <Input id="admin-email" name="email" type="email" autoComplete="off" required maxLength={254} defaultValue={state?.values?.email} />
       </Field>
-      <Field label="User name" htmlFor="admin-username" error={err.username} hint="They sign in with this. Letters, numbers, dots, dashes or underscores.">
+      <Field label="User name" htmlFor="admin-username" error={err.username} hint="Letters, numbers, dots, dashes or underscores.">
         <Input id="admin-username" name="username" autoComplete="off" autoCapitalize="none" spellCheck={false} required maxLength={32} defaultValue={state?.values?.username} />
       </Field>
       <Field label="Password" htmlFor="admin-password" error={err.password} hint="12 characters or more.">

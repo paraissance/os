@@ -11,16 +11,10 @@ const MAIN = new Set(["dashboard", "businesses", "websites", "social", "spending
 const READY = MODULES.filter((m) => m.phase === 1 && !MAIN.has(m.id));
 const LATER = MODULES.filter((m) => m.phase > 1);
 
-const DESCRIPTIONS: Record<string, string> = {
-  command: "Talk to Jody Core: plan, draft and think things through. Shortcut: Ctrl+K.",
-  activity: "Everything that happened in JodyOS, newest first.",
-  integrations: "What JodyOS is connected to, and what each connection needs.",
-};
-
 export default function OthersPage() {
   return (
     <>
-      <PageHeader eyebrow="More" title="Others" description="Tools that work today, and what's coming next." />
+      <PageHeader title="Others" />
 
       <section className="mb-10">
         <Title>Ready to use</Title>
@@ -40,7 +34,6 @@ export default function OthersPage() {
                     →
                   </span>
                 </span>
-                <span className="mt-2 text-[15px] leading-relaxed text-muted">{DESCRIPTIONS[m.id] ?? m.summary}</span>
               </Link>
             </li>
           ))}
@@ -48,7 +41,7 @@ export default function OthersPage() {
       </section>
 
       <section className="reveal">
-        <Title note="Planned, not built yet">Coming later</Title>
+        <Title>Coming later</Title>
         <ul className="stagger grid grid-cols-[minmax(0,1fr)] gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {LATER.map((m) => (
             <li key={m.id}>
@@ -57,7 +50,6 @@ export default function OthersPage() {
                   {m.label}
                   <Badge>Phase {m.phase}</Badge>
                 </span>
-                <span className="mt-1.5 text-sm leading-relaxed text-muted">{m.summary}</span>
               </Link>
             </li>
           ))}

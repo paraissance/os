@@ -17,7 +17,7 @@ export const metadata: Metadata = { title: "Websites" };
 export default function WebsitesPage() {
   return (
     <>
-      <PageHeader eyebrow="Business" title="Websites" description="The websites you work on. Visit one, or open the place where you edit it." />
+      <PageHeader title="Websites" />
       <Suspense fallback={<Skeleton className="h-96 rounded-3xl" />}>
         <WebsitesBody />
       </Suspense>
@@ -44,7 +44,7 @@ async function WebsitesBody() {
     return (
       <div className="animate-rise rounded-3xl bg-wash p-8">
         <p className="text-2xl font-extrabold">No websites here yet.</p>
-        <p className="mt-2 text-muted">A website shows here once it has an edit link: add one in Businesses → Edit → Websites.</p>
+        <p className="mt-2 text-muted">Add an edit link to a website to see it here.</p>
         <Link href="/businesses" className={buttonClass("primary", "mt-5")}>
           Go to Businesses
         </Link>
@@ -58,7 +58,7 @@ async function WebsitesBody() {
         <li key={site.id} className="flex flex-col gap-5 rounded-3xl bg-wash p-6">
           <div className="min-w-0">
             <p className="truncate text-2xl font-extrabold tracking-[-0.02em]">{site.domain}</p>
-            <p className="truncate text-sm text-muted">{[business.name, site.platform].filter(Boolean).join(" · ")}</p>
+            <p className="truncate text-sm text-muted">{business.name}</p>
           </div>
           <div className="mt-auto flex flex-wrap gap-2">
             <OutButton href={site.url ?? `https://${site.domain}`} variant="light">
@@ -68,7 +68,14 @@ async function WebsitesBody() {
               Edit website
             </OutButton>
           </div>
-          {routine ? <AskClaude siteId={site.id} domain={site.domain} /> : null}
+          {routine ? (
+            <details>
+              <summary className="cursor-pointer text-sm font-semibold">Ask Claude to change it</summary>
+              <div className="mt-3">
+                <AskClaude siteId={site.id} domain={site.domain} />
+              </div>
+            </details>
+          ) : null}
         </li>
       ))}
     </ul>

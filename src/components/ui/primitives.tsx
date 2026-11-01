@@ -96,19 +96,16 @@ export function Panel({ className, ...props }: ComponentProps<"section">) {
 }
 
 export function PageHeader({
-  eyebrow,
   title,
   description,
   action,
 }: {
-  eyebrow?: string;
   title: string;
   description?: ReactNode;
   action?: ReactNode;
 }) {
   return (
     <header className="mb-8 animate-rise">
-      {eyebrow ? <p className="label mb-2 text-muted">{eyebrow}</p> : null}
       <div className="flex flex-wrap items-end justify-between gap-4">
         <h1 className="text-4xl font-extrabold leading-[0.95] tracking-[-0.04em] sm:text-5xl">{title}</h1>
         {action}

@@ -13,7 +13,7 @@ import {
 } from "@/app/actions/businesses";
 import type { FormState } from "@/app/actions/form-state";
 import { CATEGORIES, CYCLE_LABELS, LINK_KIND_LABELS } from "@/lib/business-input";
-import { dayLabel, renewalWords, siteRenewals, type Business, type BusinessFaq, type BusinessLink, type BusinessSite, type Subscription } from "@/lib/business-model";
+import { dayLabel, renewalSummary, type Business, type BusinessFaq, type BusinessLink, type BusinessSite, type Subscription } from "@/lib/business-model";
 import { formatMoney } from "@/lib/money";
 import { Alert, Badge, Button, Field, Input, Select, StatusDot, Textarea, buttonClass, cx } from "@/components/ui/primitives";
 
@@ -47,71 +47,68 @@ function Status({ state }: { state: FormState }) {
 
 const v = (value: string | number | null | undefined) => (value === null || value === undefined ? "" : String(value));
 
+/** The rarely needed fields, folded away; `main` names the fields outside it, so an error on any other opens it. */
+function More({ err, main, children }: { err: Record<string, string>; main: string[]; children: ReactNode }) {
+  return (
+    <details open={Object.entries(err).some(([name, error]) => error && !main.includes(name))} className="group/more">
+      <summary className="cursor-pointer list-none text-sm font-semibold underline decoration-1 underline-offset-4 [&::-webkit-details-marker]:hidden">
+        <span className="group-open/more:hidden">More details</span>
+        <span className="hidden group-open/more:inline">Fewer details</span>
+      </summary>
+      <div className="mt-5 space-y-5">{children}</div>
+    </details>
+  );
+}
+
 /* ─── Business details ────────────────────────────────────────────── */
 
 export function BusinessForm({ business }: { business?: Business }) {
   const { state, pending, onSubmit, err } = useForm(saveBusinessAction);
   const [name, setName] = useState(business?.name ?? "");
   return (
-    <form onSubmit={onSubmit} className="space-y-8">
+    <form onSubmit={onSubmit} className="space-y-5">
       {business ? (
         <>
           <input type="hidden" name="id" value={business.id} />
           <input type="hidden" name="slugBefore" value={business.slug} />
         </>
       ) : null}
-      <Group title="The basics">
-        <div className="grid gap-5 sm:grid-cols-2">
-          <Field label="Business name" htmlFor="name" error={err.name}>
-            <Input id="name" name="name" required maxLength={120} value={name} onChange={(e) => setName(e.target.value)} placeholder="Done For You Leads" />
-          </Field>
-          <Field
-            label="Short name"
-            htmlFor="slug"
-            error={err.slug}
-            hint={business ? "Used in the dashboard address. Changing it changes the link." : "Optional. Made from the name if you leave it empty."}
-          >
-            <Input id="slug" name="slug" defaultValue={business?.slug ?? ""} maxLength={60} placeholder="dfu-leads" />
-          </Field>
-        </div>
-        <Field label="One-line description" htmlFor="tagline" error={err.tagline}>
-          <Input id="tagline" name="tagline" defaultValue={v(business?.tagline)} maxLength={200} placeholder="Real estate lead generation" />
+      <Field label="Business name" htmlFor="name" error={err.name}>
+        <Input id="name" name="name" required maxLength={120} value={name} onChange={(e) => setName(e.target.value)} placeholder="Done For You Leads" />
+      </Field>
+      <Field label="One-line description" htmlFor="tagline" error={err.tagline}>
+        <Input id="tagline" name="tagline" defaultValue={v(business?.tagline)} maxLength={200} placeholder="Real estate lead generation" />
+      </Field>
+      <div className="grid gap-5 sm:grid-cols-2">
+        <Field label="Website" htmlFor="websiteUrl" error={err.websiteUrl}>
+          <Input id="websiteUrl" name="websiteUrl" defaultValue={v(business?.websiteUrl)} placeholder="example.com" inputMode="url" />
+        </Field>
+        <Field label="Status" htmlFor="status" error={err.status}>
+          <Select id="status" name="status" defaultValue={business?.status ?? "active"}>
+            <option value="active">Active</option>
+            <option value="paused">Paused</option>
+          </Select>
+        </Field>
+      </div>
+      <Field label="About the business" htmlFor="about" error={err.about} hint='Start a line with "# " for a new section.'>
+        <Textarea id="about" name="about" defaultValue={v(business?.about)} rows={10} maxLength={20000} />
+      </Field>
+      <More err={err} main={["name", "tagline", "websiteUrl", "status", "about"]}>
+        <Field label="Short name" htmlFor="slug" error={err.slug} hint={business ? "Changing it changes the link." : "Made from the name if empty."}>
+          <Input id="slug" name="slug" defaultValue={business?.slug ?? ""} maxLength={60} placeholder="dfu-leads" />
         </Field>
         <div className="grid gap-5 sm:grid-cols-2">
-          <Field label="Website" htmlFor="websiteUrl" error={err.websiteUrl}>
-            <Input id="websiteUrl" name="websiteUrl" defaultValue={v(business?.websiteUrl)} placeholder="example.com" inputMode="url" />
-          </Field>
-          <Field label="Status" htmlFor="status" error={err.status}>
-            <Select id="status" name="status" defaultValue={business?.status ?? "active"}>
-              <option value="active">Active</option>
-              <option value="paused">Paused</option>
-            </Select>
-          </Field>
-        </div>
-      </Group>
-      <Group title="Main button">
-        <div className="grid gap-5 sm:grid-cols-2">
-          <Field label="Button text" htmlFor="ctaLabel" error={err.ctaLabel} hint="What the website asks visitors to do.">
+          <Field label="Button text" htmlFor="ctaLabel" error={err.ctaLabel}>
             <Input id="ctaLabel" name="ctaLabel" defaultValue={v(business?.ctaLabel)} maxLength={80} placeholder="Book a call" />
           </Field>
           <Field label="Button link" htmlFor="ctaUrl" error={err.ctaUrl}>
             <Input id="ctaUrl" name="ctaUrl" defaultValue={v(business?.ctaUrl)} placeholder="example.com/contact" inputMode="url" />
           </Field>
         </div>
-      </Group>
-      <Group title="What it's about">
-        <Field
-          label="About the business"
-          htmlFor="about"
-          error={err.about}
-          hint='Plain text, one fact per line. Start a line with "# " to begin a new section, like "# Services".'
-        >
-          <Textarea id="about" name="about" defaultValue={v(business?.about)} rows={10} maxLength={20000} />
-        </Field>
-        <Field label="Private notes" htmlFor="notes" error={err.notes} hint="Only you see these.">
+        <Field label="Private notes" htmlFor="notes" error={err.notes}>
           <Textarea id="notes" name="notes" defaultValue={v(business?.notes)} rows={3} maxLength={5000} />
         </Field>
-      </Group>
+      </More>
       {/* Docked to the card's bottom edge (its padding is cancelled here) so Save stays in reach, with the result beside it, not off-screen at the top. */}
       <div className="sticky bottom-0 z-10 -mx-5 -mb-5 space-y-2 rounded-b-3xl border-t border-hair bg-wash/90 px-5 py-3 backdrop-blur sm:-mx-8 sm:-mb-8 sm:px-8">
         <Status state={state} />
@@ -297,7 +294,7 @@ export function LinksEditor({ businessId, links }: { businessId: string; links: 
     <ItemList
       kind="link"
       noun="link"
-      empty="No links yet. Add pages, social profiles, login pages and tools."
+      empty="No links yet."
       action={saveLinkAction}
       hidden={{ businessId }}
       rows={grouped.map((l) => ({
@@ -308,7 +305,6 @@ export function LinksEditor({ businessId, links }: { businessId: string; links: 
           <>
             <p className="font-bold">{l.label}</p>
             <p className="truncate text-sm text-muted">
-              {l.note ? `${l.note} · ` : ""}
               <a href={l.url} target="_blank" rel="noopener noreferrer" className="underline decoration-1 underline-offset-4 hover:text-ink">
                 {shortUrl(l.url)}
                 <span className="sr-only"> (opens in a new tab)</span>
@@ -340,7 +336,7 @@ export function LinksEditor({ businessId, links }: { businessId: string; links: 
           <Field label="Web address" htmlFor={fid("url")} error={err.url}>
             <Input id={fid("url")} name="url" defaultValue={values.url} required placeholder="instagram.com/yourbusiness" inputMode="url" />
           </Field>
-          <Field label="Note" htmlFor={fid("note")} error={err.note} hint="Optional, like which account it is.">
+          <Field label="Note" htmlFor={fid("note")} error={err.note}>
             <Input id={fid("note")} name="note" defaultValue={values.note} maxLength={200} />
           </Field>
         </>
@@ -357,7 +353,7 @@ export function FaqsEditor({ businessId, faqs }: { businessId: string; faqs: Bus
     <ItemList
       kind="faq"
       noun="question"
-      empty="No common questions yet."
+      empty="No questions yet."
       action={saveFaqAction}
       hidden={{ businessId }}
       rows={faqs.map((f) => ({
@@ -366,7 +362,7 @@ export function FaqsEditor({ businessId, faqs }: { businessId: string; faqs: Bus
         summary: (
           <>
             <p className="font-bold">{f.question}</p>
-            {f.answer ? <p className="line-clamp-2 text-sm text-muted">{f.answer}</p> : null}
+            {f.answer ? <p className="line-clamp-1 text-sm text-muted">{f.answer}</p> : null}
           </>
         ),
       }))}
@@ -382,14 +378,16 @@ export function FaqsEditor({ businessId, faqs }: { businessId: string; faqs: Bus
           <Field label="Answer" htmlFor="faq-answer" error={err.answer}>
             <Textarea id="faq-answer" name="answer" defaultValue={values.answer} rows={4} maxLength={5000} />
           </Field>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Link text" htmlFor="faq-link-label" error={err.linkLabel} hint="Optional.">
-              <Input id="faq-link-label" name="linkLabel" defaultValue={values.linkLabel} maxLength={80} placeholder="Learn more" />
-            </Field>
-            <Field label="Link" htmlFor="faq-link-url" error={err.linkUrl}>
-              <Input id="faq-link-url" name="linkUrl" defaultValue={values.linkUrl} inputMode="url" />
-            </Field>
-          </div>
+          <More err={err} main={["question", "answer"]}>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="Link text" htmlFor="faq-link-label" error={err.linkLabel}>
+                <Input id="faq-link-label" name="linkLabel" defaultValue={values.linkLabel} maxLength={80} placeholder="Learn more" />
+              </Field>
+              <Field label="Link" htmlFor="faq-link-url" error={err.linkUrl}>
+                <Input id="faq-link-url" name="linkUrl" defaultValue={values.linkUrl} inputMode="url" />
+              </Field>
+            </div>
+          </More>
         </>
       )}
     />
@@ -413,19 +411,13 @@ function Group({ title, children }: { title: string; children: ReactNode }) {
   );
 }
 
-/** A website's domain, hosting and SSL dates at a glance. */
-function RenewalChips({ site, today }: { site: BusinessSite; today: string }) {
-  const renewals = siteRenewals(site, new Date(today));
-  if (!renewals.length) return <p className="mt-2 text-sm text-muted">No renewal dates saved.</p>;
+function RenewalNote({ site, today }: { site: BusinessSite; today: string }) {
+  const { tone, text } = renewalSummary({ sites: [site] }, new Date(today));
   return (
-    <ul className="mt-2.5 flex flex-wrap gap-1.5">
-      {renewals.map((r) => (
-        <li key={r.item} className={cx("flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold", r.status === "expired" ? "bg-ink text-paper" : "bg-paper")}>
-          {r.status === "expired" ? null : <StatusDot tone={r.status === "ok" ? "ok" : "warn"} />}
-          {r.label}: {renewalWords(r)}
-        </li>
-      ))}
-    </ul>
+    <p className="mt-1 flex items-center gap-2 text-sm font-semibold">
+      <StatusDot tone={tone} />
+      {text}
+    </p>
   );
 }
 
@@ -435,7 +427,7 @@ export function SitesEditor({ businessId, sites, today }: { businessId: string; 
     <ItemList
       kind="site"
       noun="website"
-      empty="No websites yet. Add the domain, hosting and SSL details and where to log in."
+      empty="No websites yet."
       action={saveSiteAction}
       hidden={{ businessId }}
       rows={sites.map((s) => ({
@@ -444,11 +436,7 @@ export function SitesEditor({ businessId, sites, today }: { businessId: string; 
         summary: (
           <>
             <p className="font-bold">{s.domain}</p>
-            <p className="truncate text-sm text-muted">
-              {[s.platform, s.hostingProvider && `hosted on ${s.hostingProvider}`, s.registrar && `domain at ${s.registrar}`].filter(Boolean).join(" · ") ||
-                "No details yet"}
-            </p>
-            <RenewalChips site={s} today={today} />
+            <RenewalNote site={s} today={today} />
           </>
         ),
       }))}
@@ -472,55 +460,52 @@ export function SitesEditor({ businessId, sites, today }: { businessId: string; 
           </Field>
         );
         return (
-          <div className="space-y-8">
-            <Group title="Website">
-              <div className="grid gap-4 sm:grid-cols-3">
-                {text("domain", "Domain", { placeholder: "example.com" })}
-                {text("url", "Address", { placeholder: "example.com", url: true })}
-                {text("platform", "Built with", { placeholder: "WordPress, Kajabi…" })}
-              </div>
-              {text("editUrl", "Edit link", {
-                url: true,
-                hint: "Where you edit this website, like its Claude Code session or the WordPress admin. Websites with an edit link are listed on the Websites page.",
-              })}
-            </Group>
-            <Group title="Domain">
-              <div className="grid gap-4 sm:grid-cols-2">
-                {text("registrar", "Registrar", { placeholder: "GoDaddy" })}
-                {text("registrarAccount", "Account", { hint: "Which login, not the password." })}
+          <div className="space-y-5">
+            <div className="grid gap-4 sm:grid-cols-2">
+              {text("domain", "Domain", { placeholder: "example.com" })}
+              {text("url", "Address", { placeholder: "example.com", url: true })}
+            </div>
+            {text("editUrl", "Edit link", { url: true })}
+            <div className="grid gap-4 sm:grid-cols-3">
+              {text("domainExpiry", "Domain renews on", { type: "date" })}
+              {text("hostingExpiry", "Hosting renews on", { type: "date" })}
+              {text("sslExpiry", "SSL renews on", { type: "date" })}
+            </div>
+            <More err={err} main={["domain", "url", "editUrl", "domainExpiry", "hostingExpiry", "sslExpiry"]}>
+              <Group title="Domain">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {text("registrar", "Registrar", { placeholder: "GoDaddy" })}
+                  {text("registrarAccount", "Account", { hint: "Which login, not the password." })}
+                </div>
                 {text("registrarLoginUrl", "Login page", { url: true })}
-                {text("domainExpiry", "Renews on", { type: "date" })}
-              </div>
-              <label className="flex items-center gap-2 text-[15px]">
-                <input type="checkbox" name="domainAutoRenew" defaultChecked={values.domainAutoRenew === "on"} className="size-4 accent-ink" />
-                Auto-renew is on
-              </label>
-            </Group>
-            <Group title="Hosting">
-              <div className="grid gap-4 sm:grid-cols-2">
-                {text("hostingProvider", "Provider", { placeholder: "Bluehost" })}
-                {text("hostingPlan", "Plan")}
-                {text("hostingAccount", "Account", { hint: "Which login, not the password." })}
-                {text("hostingLoginUrl", "Login page", { url: true })}
-                {text("hostingExpiry", "Renews on", { type: "date" })}
-                {text("serverIp", "Server IP")}
-              </div>
-            </Group>
-            <Group title="Security and backups">
-              <div className="grid gap-4 sm:grid-cols-3">
-                {text("sslProvider", "SSL from", { placeholder: "Let's Encrypt" })}
-                {text("sslExpiry", "SSL renews on", { type: "date" })}
-                {text("lastBackup", "Last backup", { type: "date" })}
-              </div>
-            </Group>
-            <Group title="Other">
-              <Field label="Nameservers" htmlFor="site-nameservers" error={err.nameservers} hint="One per line.">
-                <Textarea id="site-nameservers" name="nameservers" defaultValue={values.nameservers} rows={2} />
-              </Field>
-              <Field label="Notes" htmlFor="site-notes" error={err.notes}>
-                <Textarea id="site-notes" name="notes" defaultValue={values.notes} rows={3} />
-              </Field>
-            </Group>
+                <label className="flex items-center gap-2 text-[15px]">
+                  <input type="checkbox" name="domainAutoRenew" defaultChecked={values.domainAutoRenew === "on"} className="size-4 accent-ink" />
+                  Auto-renew is on
+                </label>
+              </Group>
+              <Group title="Hosting">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {text("hostingProvider", "Provider", { placeholder: "Bluehost" })}
+                  {text("hostingPlan", "Plan")}
+                  {text("hostingAccount", "Account", { hint: "Which login, not the password." })}
+                  {text("hostingLoginUrl", "Login page", { url: true })}
+                  {text("serverIp", "Server IP")}
+                </div>
+              </Group>
+              <Group title="Other">
+                <div className="grid gap-4 sm:grid-cols-3">
+                  {text("platform", "Built with", { placeholder: "WordPress, Kajabi…" })}
+                  {text("sslProvider", "SSL from", { placeholder: "Let's Encrypt" })}
+                  {text("lastBackup", "Last backup", { type: "date" })}
+                </div>
+                <Field label="Nameservers" htmlFor="site-nameservers" error={err.nameservers}>
+                  <Textarea id="site-nameservers" name="nameservers" defaultValue={values.nameservers} rows={2} />
+                </Field>
+                <Field label="Notes" htmlFor="site-notes" error={err.notes}>
+                  <Textarea id="site-notes" name="notes" defaultValue={values.notes} rows={3} />
+                </Field>
+              </Group>
+            </More>
           </div>
         );
       }}
@@ -543,7 +528,7 @@ export function SubscriptionsEditor({ businessId, subscriptions }: { businessId:
     <ItemList
       kind="subscription"
       noun="subscription"
-      empty={businessId ? "No subscriptions for this business yet." : "No shared tools yet."}
+      empty={businessId ? "No subscriptions yet." : "No shared tools yet."}
       action={saveSubscriptionAction}
       hidden={businessId ? { businessId } : { shared: "on" }}
       rows={subscriptions.map((s) => ({
@@ -556,9 +541,7 @@ export function SubscriptionsEditor({ businessId, subscriptions }: { businessId:
                 {s.name}
                 {!s.businessId && businessId ? <Badge>Shared</Badge> : null}
               </p>
-              <p className="truncate text-sm text-muted">
-                {[CATEGORIES[s.category as keyof typeof CATEGORIES] ?? "Other", s.nextRenewal && `renews ${dayLabel(s.nextRenewal)}`].filter(Boolean).join(" · ")}
-              </p>
+              {s.nextRenewal ? <p className="truncate text-sm text-muted">Renews {dayLabel(s.nextRenewal)}</p> : null}
             </div>
             <p className="shrink-0 text-right font-extrabold tabular-nums">
               {formatMoney(s.amount, s.currency)}
@@ -584,20 +567,9 @@ export function SubscriptionsEditor({ businessId, subscriptions }: { businessId:
       }}
       fields={(values, err) => (
         <>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Tool or service" htmlFor={fid("name")} error={err.name}>
-              <Input id={fid("name")} name="name" defaultValue={values.name} required maxLength={120} placeholder="Canva" />
-            </Field>
-            <Field label="Category" htmlFor={fid("category")} error={err.category}>
-              <Select id={fid("category")} name="category" defaultValue={values.category}>
-                {Object.entries(CATEGORIES).map(([k, label]) => (
-                  <option key={k} value={k}>
-                    {label}
-                  </option>
-                ))}
-              </Select>
-            </Field>
-          </div>
+          <Field label="Tool or service" htmlFor={fid("name")} error={err.name}>
+            <Input id={fid("name")} name="name" defaultValue={values.name} required maxLength={120} placeholder="Canva" />
+          </Field>
           <div className="grid gap-4 sm:grid-cols-3">
             <Field label="Price" htmlFor={fid("amount")} error={err.amount}>
               <Input id={fid("amount")} name="amount" defaultValue={values.amount} inputMode="decimal" placeholder="29.99" />
@@ -611,30 +583,41 @@ export function SubscriptionsEditor({ businessId, subscriptions }: { businessId:
                 ))}
               </Select>
             </Field>
-            <Field label="Currency" htmlFor={fid("currency")} error={err.currency}>
-              <Input id={fid("currency")} name="currency" defaultValue={values.currency} maxLength={3} />
-            </Field>
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Next payment" htmlFor={fid("renewal")} error={err.nextRenewal}>
               <Input id={fid("renewal")} name="nextRenewal" type="date" defaultValue={values.nextRenewal} />
             </Field>
-            <Field label="Login page" htmlFor={fid("login")} error={err.loginUrl}>
-              <Input id={fid("login")} name="loginUrl" defaultValue={values.loginUrl} inputMode="url" />
-            </Field>
           </div>
-          <Field label="Account" htmlFor={fid("account")} error={err.account} hint="Which login, not the password.">
-            <Input id={fid("account")} name="account" defaultValue={values.account} maxLength={200} />
-          </Field>
-          <Field label="Notes" htmlFor={fid("notes")} error={err.notes}>
-            <Textarea id={fid("notes")} name="notes" defaultValue={values.notes} rows={2} maxLength={2000} />
-          </Field>
-          {businessId ? (
-            <label className="flex items-center gap-2 text-[15px]">
-              <input type="checkbox" name="shared" defaultChecked={values.shared === "on"} className="size-4 accent-ink" />
-              Shared by all businesses
-            </label>
-          ) : null}
+          <More err={err} main={["name", "amount", "billingCycle", "nextRenewal"]}>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="Category" htmlFor={fid("category")} error={err.category}>
+                <Select id={fid("category")} name="category" defaultValue={values.category}>
+                  {Object.entries(CATEGORIES).map(([k, label]) => (
+                    <option key={k} value={k}>
+                      {label}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+              <Field label="Currency" htmlFor={fid("currency")} error={err.currency}>
+                <Input id={fid("currency")} name="currency" defaultValue={values.currency} maxLength={3} />
+              </Field>
+              <Field label="Login page" htmlFor={fid("login")} error={err.loginUrl}>
+                <Input id={fid("login")} name="loginUrl" defaultValue={values.loginUrl} inputMode="url" />
+              </Field>
+              <Field label="Account" htmlFor={fid("account")} error={err.account} hint="Which login, not the password.">
+                <Input id={fid("account")} name="account" defaultValue={values.account} maxLength={200} />
+              </Field>
+            </div>
+            <Field label="Notes" htmlFor={fid("notes")} error={err.notes}>
+              <Textarea id={fid("notes")} name="notes" defaultValue={values.notes} rows={2} maxLength={2000} />
+            </Field>
+            {businessId ? (
+              <label className="flex items-center gap-2 text-[15px]">
+                <input type="checkbox" name="shared" defaultChecked={values.shared === "on"} className="size-4 accent-ink" />
+                Shared by all businesses
+              </label>
+            ) : null}
+          </More>
         </>
       )}
     />

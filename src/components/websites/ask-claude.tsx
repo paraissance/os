@@ -11,7 +11,7 @@ export function AskClaude({ siteId, domain }: { siteId: string; domain: string }
   return (
     <form action={action} className="space-y-3">
       <input type="hidden" name="siteId" value={siteId} />
-      <label htmlFor={id} className="block text-sm font-semibold">
+      <label htmlFor={id} className="sr-only">
         Ask Claude to change {domain}
       </label>
       <Textarea

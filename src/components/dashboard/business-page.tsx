@@ -3,7 +3,6 @@ import type { BusinessRecord, BusinessSite } from "@/lib/business-model";
 import { editHref } from "@/lib/business-href";
 import { dayLabel, quickLinks } from "@/lib/business-model";
 import { knowledgeSections } from "@/lib/business-view";
-import { formatRelative } from "@/lib/format";
 import type { SiteHealth } from "@/lib/site-health";
 import type { Traffic } from "@/lib/traffic-model";
 import { CopyButton } from "@/components/agents/embed-tools";
@@ -39,9 +38,12 @@ export function mainAddress(record: BusinessRecord): string | null {
 
 /* ─── Magic links ─────────────────────────────────────────────────── */
 
+const MAGIC_LINKS_SHOWN = 8;
+
 /** One tap to the business's site, where it's edited, its logins, tools and profiles; adjusted on its edit page. */
 export function BusinessMagicLinks({ record }: { record: BusinessRecord }) {
   const links = quickLinks(record);
+  const more = links.slice(MAGIC_LINKS_SHOWN);
   return (
     <section className="animate-rise rounded-3xl bg-wash p-6">
       <Title
@@ -53,7 +55,13 @@ export function BusinessMagicLinks({ record }: { record: BusinessRecord }) {
       >
         Magic links
       </Title>
-      {links.length ? <LinkPills links={links} /> : <Muted>No links saved for {record.name} yet.</Muted>}
+      {links.length ? <LinkPills links={links.slice(0, MAGIC_LINKS_SHOWN)} /> : <Muted>No links saved yet.</Muted>}
+      {more.length ? (
+        <details className="mt-3">
+          <summary className="cursor-pointer text-sm font-semibold text-muted">{more.length} more</summary>
+          <LinkPills links={more} className="mt-3" />
+        </details>
+      ) : null}
     </section>
   );
 }
@@ -99,7 +107,7 @@ export function BusinessAbout({ record }: { record: BusinessRecord }) {
         </>
       ) : (
         <div className="flex flex-wrap items-center justify-between gap-4">
-          <Muted>Nothing written about {record.name} yet.</Muted>
+          <Muted>Nothing written yet.</Muted>
           <Link href={editHref(record.slug, "details")} className={buttonClass("primary", "min-h-9! px-4!")}>
             Write about it
           </Link>
@@ -121,12 +129,8 @@ function Light({ state }: { state: "live" | "down" | "checking" }) {
   );
 }
 
-function seconds(ms: number) {
-  return `${(ms / 1000).toFixed(ms < 10_000 ? 1 : 0)} s`;
-}
-
 /** `health` is null while the check runs, "none" when no website is saved. */
-function Status({ health, timeZone }: { health: SiteHealth | null | "none"; timeZone: string }) {
+function Status({ health }: { health: SiteHealth | null | "none" }) {
   if (health === "none") {
     return (
       <div className="flex items-center gap-3 rounded-3xl bg-wash p-6">
@@ -136,12 +140,8 @@ function Status({ health, timeZone }: { health: SiteHealth | null | "none"; time
     );
   }
   const state = health === null ? "checking" : health.live ? "live" : "down";
-  const time = health ? new Intl.DateTimeFormat("en-GB", { timeZone, hour: "2-digit", minute: "2-digit" }).format(new Date(health.checkedAt)) : null;
-  const facts = health
-    ? [health.live && health.ms !== null ? `Answered in ${seconds(health.ms)}` : null, health.sslUntil ? `SSL until ${dayLabel(health.sslUntil)}` : null, `checked at ${time}`]
-    : [];
   return (
-    <section aria-label="Website status" aria-live="polite" className="rounded-3xl bg-wash p-6">
+    <section aria-label="Website status" aria-live="polite" title={health?.note ?? undefined} className="rounded-3xl bg-wash p-6">
       <div className="flex items-center gap-3">
         <Light state={state} />
         <p className={cx("text-2xl font-extrabold tracking-[-0.02em]", state === "live" ? "text-live" : state === "down" ? "text-down" : "text-muted")}>
@@ -149,8 +149,7 @@ function Status({ health, timeZone }: { health: SiteHealth | null | "none"; time
         </p>
       </div>
       {health && !health.live ? <p className="mt-3 text-[17px] font-semibold text-down">{health.problem}</p> : null}
-      {facts.length ? <p className="mt-2 text-sm text-muted">{facts.filter(Boolean).join(" · ")}</p> : null}
-      {health?.note ? <p className="mt-2 text-sm text-muted">{health.note}</p> : null}
+      {health?.sslUntil ? <p className="mt-2 text-sm text-muted">SSL until {dayLabel(health.sslUntil)}</p> : null}
     </section>
   );
 }
@@ -160,7 +159,7 @@ function Status({ health, timeZone }: { health: SiteHealth | null | "none"; time
  * domain and where it's hosted. While the check runs, `health` is null and
  * the host isn't known yet.
  */
-export function SiteSide({ record, site, health, timeZone }: { record: BusinessRecord; site: BusinessSite | null; health: SiteHealth | null | "none"; timeZone: string }) {
+export function SiteSide({ record, site, health }: { record: BusinessRecord; site: BusinessSite | null; health: SiteHealth | null | "none" }) {
   const address = mainAddress(record);
   let domain = site?.domain ?? null;
   if (!domain && address) {
@@ -174,18 +173,13 @@ export function SiteSide({ record, site, health, timeZone }: { record: BusinessR
 
   return (
     <div className="stagger space-y-3">
-      <Status health={health} timeZone={timeZone} />
+      <Status health={health} />
       <Facts
         rows={[
           ["What it's for", record.tagline],
           [
             "Domain",
-            domain ? (
-              <>
-                {address ? <Out href={address}>{domain}</Out> : domain}
-                {site?.registrar ? <span className="block text-sm font-normal text-muted">Registered at {site.registrar}</span> : null}
-              </>
-            ) : null,
+            domain ? address ? <Out href={address}>{domain}</Out> : domain : null,
           ],
           [
             "Hosted on",
@@ -206,15 +200,13 @@ export function SiteSide({ record, site, health, timeZone }: { record: BusinessR
 
 /* ─── Traffic ─────────────────────────────────────────────────────── */
 
-export function TrafficPanel({ traffic, now, domain, code }: { traffic: Traffic; now: Date; domain: string | null; code: string }) {
+export function TrafficPanel({ traffic, domain, code }: { traffic: Traffic; domain: string | null; code: string }) {
   if (!traffic.lastVisitAt) {
     return (
       <section className="reveal">
         <Title>Website traffic</Title>
         <div className="space-y-4 rounded-3xl bg-wash p-6">
-          <p className="max-w-2xl text-[15px] leading-relaxed">
-            No visits counted yet. JodyOS counts them with the agent line: once it&apos;s on {domain ?? "the website"}, every page view shows here within a minute.
-          </p>
+          <p className="text-[15px]">No visits yet. Put this line on {domain ?? "the website"} to start counting:</p>
           <div className="flex flex-wrap items-center gap-3">
             <code className="min-w-0 flex-1 break-all rounded-xl bg-paper px-4 py-3 font-mono text-sm">{code}</code>
             <CopyButton text={code} />
@@ -226,7 +218,7 @@ export function TrafficPanel({ traffic, now, domain, code }: { traffic: Traffic;
   const { last30, previous30, today } = traffic;
   return (
     <section className="reveal space-y-4">
-      <Title note={`last 30 days · last visit ${formatRelative(traffic.lastVisitAt, now)}`}>
+      <Title note="last 30 days">
         Website traffic
       </Title>
       <Tiles className="sm:grid-cols-3">
@@ -236,9 +228,7 @@ export function TrafficPanel({ traffic, now, domain, code }: { traffic: Traffic;
         <Tile label="Page views" value={<CountUp value={last30.views} />}>
           <Delta current={last30.views} previous={previous30.views} />
         </Tile>
-        <Tile label="Today" value={<CountUp value={today.visitors} />}>
-          {today.visitors === 1 ? "visitor" : "visitors"}, {today.views.toLocaleString("en-US")} page {today.views === 1 ? "view" : "views"}
-        </Tile>
+        <Tile label="Visitors today" value={<CountUp value={today.visitors} />} />
       </Tiles>
       <BarChart points={traffic.days.map((d) => ({ date: d.date, value: d.visitors }))} unit="visitors" />
     </section>

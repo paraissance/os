@@ -161,21 +161,6 @@ export function totals(posts: Pick<PostRow, "metrics">[]): Totals {
   return t;
 }
 
-/** Published posts per platform with their totals, busiest first. */
-export function byPlatform(posts: Pick<PostRow, "platform" | "metrics">[]): (Totals & { platform: string })[] {
-  const groups = new Map<string, Pick<PostRow, "metrics">[]>();
-  for (const p of posts) groups.set(p.platform, [...(groups.get(p.platform) ?? []), p]);
-  return [...groups].map(([platform, list]) => ({ platform, ...totals(list) })).sort((a, b) => b.posts - a.posts || b.views - a.views);
-}
-
-/** The posts seen most, then liked most. Posts with no numbers yet are left out. */
-export function topPosts<T extends Pick<PostRow, "metrics">>(posts: T[], n = 5): T[] {
-  return posts
-    .filter((p) => (p.metrics?.views ?? 0) + (p.metrics?.likes ?? 0) + (p.metrics?.comments ?? 0) > 0)
-    .sort((a, b) => (b.metrics?.views ?? 0) - (a.metrics?.views ?? 0) || (b.metrics?.likes ?? 0) - (a.metrics?.likes ?? 0))
-    .slice(0, n);
-}
-
 /** Posts grouped by day in a time zone, in the order given. */
 export function groupByDay<T extends Pick<PostRow, "postTime">>(posts: T[], timeZone: string): { key: string; posts: T[] }[] {
   const groups: { key: string; posts: T[] }[] = [];

@@ -16,7 +16,7 @@ import { AgentView } from "@/components/agents/agent-view";
 import { AgentsImport } from "@/components/agents/agents-import";
 import { LearnWebsites } from "@/components/agents/embed-tools";
 import { AskBar } from "@/components/dashboard/ask-bar";
-import { Bars, Rows, Title } from "@/components/dashboard/ui";
+import { Rows, Title } from "@/components/dashboard/ui";
 import { Alert, PageHeader, Skeleton, buttonClass, pillClass, pillTrack } from "@/components/ui/primitives";
 
 export const metadata: Metadata = { title: "AI & Analytics" };
@@ -31,7 +31,7 @@ export const maxDuration = 300;
 export default function AiAnalyticsPage(props: PageProps<"/analytics">) {
   return (
     <>
-      <PageHeader eyebrow="Core" title="AI & Analytics" description="Ask Jody Core, pick up a conversation, and look after your website agents." />
+      <PageHeader title="AI & Analytics" />
       <div className="space-y-3">
         <section className="hero animate-rise rounded-3xl p-6 sm:p-8">
           <h2 className="label mb-3 text-white/70">Jody Core</h2>
@@ -92,7 +92,7 @@ async function CoreStatus() {
 
 async function RecentChats() {
   const user = await requireUser();
-  const [chats, now] = [await listConversations(user.id, 6), requestNow()];
+  const [chats, now] = [await listConversations(user.id, 3), requestNow()];
   return (
     <section className="reveal">
       <Title
@@ -116,7 +116,7 @@ async function RecentChats() {
           ))}
         </Rows>
       ) : (
-        <p className="rounded-3xl bg-wash px-6 py-5 text-muted">No conversations yet. Ask something above to start one.</p>
+        <p className="rounded-3xl bg-wash px-6 py-5 text-muted">No conversations yet.</p>
       )}
     </section>
   );
@@ -130,9 +130,6 @@ async function Agents({ searchParams }: { searchParams: PageProps<"/analytics">[
     return (
       <section id="agents" className="scroll-mt-24">
         <Title>AI agents</Title>
-        <p className="mb-4 max-w-2xl text-muted">
-          Each business&apos;s website assistant: what it says, what it knows and the rules it keeps. Drop the agents file made from the OS Analytics plugin to add them.
-        </p>
         <AgentsImport />
       </section>
     );
@@ -141,11 +138,8 @@ async function Agents({ searchParams }: { searchParams: PageProps<"/analytics">[
   const origin = await requestOrigin();
   return (
     <section id="agents" className="scroll-mt-24 space-y-3">
-      <Title count={agents.length} note="the website assistants">
-        AI agents
-      </Title>
-      <div className="flex flex-wrap items-center justify-between gap-4 rounded-3xl bg-wash p-6">
-        <p className="max-w-xl text-[15px] text-muted">Each agent also knows what its business&apos;s own website says. Read the websites again after you change them.</p>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <Title count={agents.length}>AI agents</Title>
         <LearnWebsites />
       </div>
       <nav aria-label="AI agents" className={pillTrack}>
@@ -156,8 +150,8 @@ async function Agents({ searchParams }: { searchParams: PageProps<"/analytics">[
         ))}
       </nav>
       <AgentView key={current.id} agent={current} origin={origin} aiReady={envStatus().anthropic} />
-      <details className="rounded-3xl bg-wash p-6">
-        <summary className="cursor-pointer font-semibold">Update the agents from a new file</summary>
+      <details className="pt-4">
+        <summary className="cursor-pointer text-sm font-semibold text-muted">Update the agents from a new file</summary>
         <div className="mt-4">
           <AgentsImport />
         </div>
@@ -172,10 +166,10 @@ async function Numbers() {
     return (
       <section className="reveal">
         <Title>Leads</Title>
-        <div className="space-y-4 rounded-3xl bg-wash p-6">
-          <p className="text-[15px] leading-relaxed text-muted">Not connected. Connect OS Analytics to see leads for each business.</p>
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-3xl bg-wash p-6">
+          <p className="text-[15px] text-muted">Not connected</p>
           <Link href="/integrations" className={buttonClass("light", "min-h-9! px-4!")}>
-            See Integrations →
+            Connect
           </Link>
         </div>
       </section>
@@ -204,12 +198,9 @@ async function Numbers() {
   return (
     <section className="reveal">
       <Title note="last 30 days">Leads</Title>
-      <div className="space-y-5 rounded-3xl bg-wash p-6">
-        <div>
-          <p className="text-4xl font-extrabold tabular-nums tracking-[-0.03em]">{total.toLocaleString("en-US")}</p>
-          <p className="mt-1 text-sm text-muted">{change === null ? "across your businesses" : change === 0 ? "the same as the 30 days before" : `${change > 0 ? "up" : "down"} ${Math.abs(change)}% on the 30 days before`}</p>
-        </div>
-        <Bars rows={rows.map((r) => ({ label: r.name, value: r.leads }))} empty="No leads recorded in the last 30 days." />
+      <div className="rounded-3xl bg-wash p-6">
+        <p className="text-4xl font-extrabold tabular-nums tracking-[-0.03em]">{total.toLocaleString("en-US")}</p>
+        {change ? <p className="mt-1 text-sm text-muted">{`${change > 0 ? "Up" : "Down"} ${Math.abs(change)}%`}</p> : null}
       </div>
     </section>
   );

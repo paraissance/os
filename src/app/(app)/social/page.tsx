@@ -10,12 +10,12 @@ import { envStatus } from "@/lib/env";
 import { dayKey, formatRelative } from "@/lib/format";
 import { getSettings } from "@/lib/settings";
 import { STATS_DAYS, brandPosts, getSyncState, isRunning, isStale, linkedChannelOwners, listBrands, syncBlotato, type Brand } from "@/lib/social";
-import { byPlatform, channelKey, groupByDay, platformLabel, profileUrl, suggestChannels, topPosts, totals, type PostRow } from "@/lib/social-model";
+import { channelKey, groupByDay, platformLabel, profileUrl, suggestChannels, totals, type PostRow } from "@/lib/social-model";
 import { CAMPAIGNS } from "@/lib/routines";
 import { BrandAccountsForm, RemoveBrandButton } from "@/components/social/brand-accounts-form";
 import { RunCampaign } from "@/components/social/run-campaign";
 import { AutoRefresh, RefreshButton } from "@/components/social/refresh";
-import { Rows, Title } from "@/components/dashboard/ui";
+import { Out, Rows, Title } from "@/components/dashboard/ui";
 import { Alert, Badge, PageHeader, Skeleton, buttonClass, cx, pillClass, pillTrack } from "@/components/ui/primitives";
 
 export const metadata: Metadata = { title: "Social Media" };
@@ -32,7 +32,7 @@ export const maxDuration = 300;
 export default function SocialPage(props: PageProps<"/social">) {
   return (
     <>
-      <PageHeader eyebrow="Business" title="Social Media" description="Each brand's accounts, today's schedule and the last 7 days, from Blotato." />
+      <PageHeader title="Social Media" />
       <Suspense fallback={<Skeleton className="h-[40rem] rounded-3xl" />}>
         <SocialBody searchParams={props.searchParams} />
       </Suspense>
@@ -106,9 +106,8 @@ function ConnectBlotato() {
   return (
     <div className="animate-rise rounded-3xl bg-wash p-6 sm:p-8">
       <p className="text-2xl font-extrabold">Connect Blotato.</p>
-      <p className="mt-2 max-w-2xl text-muted">
-        In Vercel, open the jodyos project → Settings → Environment Variables, add <code className="font-mono text-ink">BLOTATO_API_KEY</code> with your
-        key from Blotato&apos;s Settings → API, and redeploy. Then pick the brands to show here.
+      <p className="mt-2 text-muted">
+        Add <code className="font-mono text-ink">BLOTATO_API_KEY</code> in Vercel, then redeploy.
       </p>
     </div>
   );
@@ -133,12 +132,7 @@ async function Setup({ editSlug, brands }: { editSlug: string | null; brands: Br
 
   return (
     <section className="animate-rise space-y-6">
-      <div>
-        <h2 className="text-2xl font-extrabold tracking-[-0.02em]">{editing ? `${editing.name}: accounts` : "Add a brand"}</h2>
-        <p className="mt-1 max-w-2xl text-muted">
-          Pick the business, then tick its accounts in Blotato. The ones that look like it are ticked for you: check them, and tick any that were missed.
-        </p>
-      </div>
+      <h2 className="text-2xl font-extrabold tracking-[-0.02em]">{editing ? `${editing.name}: accounts` : "Add a brand"}</h2>
       <BrandAccountsForm
         initialId={initial.id}
         brands={book.businesses.map((b) => ({
@@ -176,15 +170,7 @@ function dayTitle(key: string) {
 
 /** Everything beyond today's schedule and the last 7 days lives in Blotato. */
 const BLOTATO_CALENDAR = "https://my.blotato.com/calendar";
-
-function BlotatoLink() {
-  return (
-    <a href={BLOTATO_CALENDAR} target="_blank" rel="noopener noreferrer" className={buttonClass("secondary", "min-h-9! px-4!")}>
-      Full calendar in Blotato <span aria-hidden="true">↗</span>
-      <span className="sr-only">(opens in a new tab)</span>
-    </a>
-  );
-}
+const LIST_LIMIT = 5;
 
 async function BrandView({ brand, now, timeZone, waiting }: { brand: Brand; now: Date; timeZone: string; waiting: boolean }) {
   const { scheduled, published, failed } = await brandPosts(brand.accounts, now);
@@ -193,10 +179,7 @@ async function BrandView({ brand, now, timeZone, waiting }: { brand: Brand; now:
   // One day only: today's posts, or the next day that has some.
   const next = groupByDay(scheduled, timeZone)[0] ?? null;
   const todayCount = next?.key === today ? next.posts.length : 0;
-  const platforms = byPlatform(published);
-  const top = topPosts(published, 5);
   const slug = brand.business.slug;
-  const week = `last ${STATS_DAYS} days`;
 
   return (
     <article aria-label={brand.business.name} className="space-y-3">
@@ -214,84 +197,49 @@ async function BrandView({ brand, now, timeZone, waiting }: { brand: Brand; now:
         ))}
       </ul>
 
-      {waiting ? <Alert>Getting the posts from Blotato. The first time takes about a minute; this page fills in by itself.</Alert> : null}
+      {waiting ? <Alert>Getting the posts from Blotato…</Alert> : null}
 
-      <div className={cx("stagger", SIX_COLUMNS)}>
-        <Stat label="Scheduled" period="today" value={todayCount} />
-        <Stat label="Published" period={week} value={t.posts} />
-        <Stat label="Views" period={week} value={t.views} />
-        <Stat label="Likes" period={week} value={t.likes} />
-        <Stat label="Comments" period={week} value={t.comments} />
-        <Stat label="Failed" period={week} value={failed.length} dark={failed.length > 0} />
-      </div>
-
-      {envStatus().campaignRoutine && Object.hasOwn(CAMPAIGNS, slug) ? <RunCampaign brand={slug} name={brand.business.name} /> : null}
-
-      <div className="grid grid-cols-[minmax(0,1fr)] gap-x-3 gap-y-10 pt-7 xl:grid-cols-6">
-        <section className="reveal xl:col-span-4">
-          <Title count={next?.posts.length} note={next && next.key !== today ? "nothing more today" : undefined}>
-            {!next || next.key === today ? "Scheduled today" : `Next up: ${dayTitle(next.key)}`}
-          </Title>
-          {next ? (
-            <Rows>
-              {next.posts.map((p) => (
-                <PostItem key={p.id} post={p} timeZone={timeZone} timeOnly />
-              ))}
-            </Rows>
-          ) : (
-            <p className="rounded-3xl bg-wash px-6 py-5 text-muted">Nothing scheduled.</p>
-          )}
-          <div className="mt-4">
-            <BlotatoLink />
-          </div>
-        </section>
-
-        <div className="space-y-10 xl:col-span-2">
-          <section className="reveal">
-            <Title note={week}>By platform</Title>
-            {platforms.length ? (
-              <Rows>
-                {platforms.map((p) => (
-                  <li key={p.platform}>
-                    <div className="flex items-baseline justify-between gap-3">
-                      <span className="font-bold">{platformLabel(p.platform)}</span>
-                      <span className="text-sm font-semibold tabular-nums">
-                        {n(p.posts)} post{p.posts === 1 ? "" : "s"}
-                      </span>
-                    </div>
-                    <p className="text-sm text-muted">
-                      {n(p.views)} views · {n(p.likes)} likes · {n(p.comments)} comments
-                    </p>
-                  </li>
-                ))}
-              </Rows>
-            ) : (
-              <p className="rounded-3xl bg-wash px-6 py-5 text-muted">Nothing published in the {week}.</p>
-            )}
-          </section>
-
-          <section className="reveal">
-            <Title note={week}>Top posts</Title>
-            {top.length ? (
-              <Rows>
-                {top.map((p) => (
-                  <PostItem key={p.id} post={p} timeZone={timeZone} />
-                ))}
-              </Rows>
-            ) : (
-              <p className="rounded-3xl bg-wash px-6 py-5 text-muted">No views or likes recorded yet.</p>
-            )}
-          </section>
+      <section className="pt-7">
+        <Title>Last {STATS_DAYS} days</Title>
+        <div className={cx("stagger", SIX_COLUMNS)}>
+          <Stat label="Scheduled today" value={todayCount} />
+          <Stat label="Published" value={t.posts} />
+          <Stat label="Views" value={t.views} />
+          <Stat label="Likes" value={t.likes} />
+          <Stat label="Comments" value={t.comments} />
+          <Stat label="Failed" value={failed.length} dark={failed.length > 0} />
         </div>
-      </div>
+      </section>
+
+      {envStatus().campaignRoutine && Object.hasOwn(CAMPAIGNS, slug) ? <RunCampaign brand={slug} /> : null}
+
+      <section className="reveal pt-7">
+        <Title
+          count={next?.posts.length}
+          note={
+            <Out href={BLOTATO_CALENDAR} className="font-semibold text-ink">
+              Full calendar
+            </Out>
+          }
+        >
+          {!next || next.key === today ? "Scheduled today" : `Next up: ${dayTitle(next.key)}`}
+        </Title>
+        {next ? (
+          <Rows>
+            {next.posts.slice(0, LIST_LIMIT).map((p) => (
+              <PostItem key={p.id} post={p} timeZone={timeZone} timeOnly />
+            ))}
+          </Rows>
+        ) : (
+          <p className="rounded-3xl bg-wash px-6 py-5 text-muted">Nothing scheduled.</p>
+        )}
+      </section>
 
       {failed.length ? (
         <section className="reveal pt-7">
-          <Title count={failed.length} note={week}>
-            Failed
-          </Title>
+          <Title count={failed.length}>Failed</Title>
           <Rows>
-            {failed.map((p) => (
+            {failed.slice(0, LIST_LIMIT).map((p) => (
               <PostItem key={p.id} post={p} timeZone={timeZone} />
             ))}
           </Rows>
@@ -331,41 +279,26 @@ function AccountCell({ account }: { account: Brand["accounts"][number] }) {
   );
 }
 
-function Stat({ label, period, value, dark = false }: { label: string; period: string; value: number; dark?: boolean }) {
+function Stat({ label, value, dark = false }: { label: string; value: number; dark?: boolean }) {
   return (
     <div className={cx("min-w-0 rounded-2xl p-4", dark ? "bg-ink text-paper" : "bg-wash")}>
       <p className={cx("text-sm font-semibold", dark ? "text-paper/80" : "text-muted")}>{label}</p>
       <p className="mt-2 text-3xl font-extrabold tabular-nums tracking-[-0.03em]" title={n(value)}>
         {short(value)}
       </p>
-      <p className={cx("mt-1 text-xs", dark ? "text-paper/80" : "text-muted")}>{period}</p>
     </div>
   );
 }
 
 function PostItem({ post, timeZone, timeOnly = false }: { post: PostRow; timeZone: string; timeOnly?: boolean }) {
-  const m = post.metrics;
-  const numbers = m ? [m.views !== undefined && `${n(m.views)} views`, m.likes !== undefined && `${n(m.likes)} likes`, m.comments !== undefined && `${n(m.comments)} comments`].filter(Boolean) : [];
   return (
     <li>
       <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
-        <span className="flex min-w-0 flex-wrap items-center gap-2 text-sm">
-          <Badge>{platformLabel(post.platform)}</Badge>
-          {post.accountName ? <span className="truncate font-semibold">{post.accountName}</span> : null}
-        </span>
+        <Badge>{platformLabel(post.platform)}</Badge>
         <span className="text-sm tabular-nums text-muted">{when(post.postTime, timeZone, !timeOnly)}</span>
       </div>
-      <p className="mt-1.5 line-clamp-3 whitespace-pre-line text-[15px] leading-relaxed">{post.text || <span className="text-muted">(no text)</span>}</p>
-      <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted">
-        {post.mediaCount ? <span>{post.mediaCount === 1 ? "1 image or video" : `${post.mediaCount} images or videos`}</span> : null}
-        {numbers.length ? <span className="font-semibold text-ink">{numbers.join(" · ")}</span> : null}
-        {post.postUrl ? (
-          <a href={post.postUrl} target="_blank" rel="noopener noreferrer" className="font-semibold text-ink underline decoration-1 underline-offset-4">
-            Open post ↗<span className="sr-only"> (opens in a new tab)</span>
-          </a>
-        ) : null}
-        {post.errorMessage ? <span className="text-ink">Why it failed: {post.errorMessage}</span> : null}
-      </div>
+      <p className="mt-1.5 line-clamp-2 whitespace-pre-line text-[15px] leading-relaxed">{post.text || <span className="text-muted">(no text)</span>}</p>
+      {post.errorMessage ? <p className="mt-1.5 text-sm">{post.errorMessage}</p> : null}
     </li>
   );
 }

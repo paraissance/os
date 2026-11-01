@@ -25,7 +25,7 @@ async function TryView({ searchParams }: { searchParams: PageProps<"/analytics/t
   if (!agent) {
     return (
       <>
-        <PageHeader eyebrow="AI agents" title="Try an agent" />
+        <PageHeader title="Try an agent" />
         <Alert>There&apos;s no agent with that name. Pick one on AI &amp; Analytics.</Alert>
       </>
     );
@@ -33,9 +33,8 @@ async function TryView({ searchParams }: { searchParams: PageProps<"/analytics/t
   return (
     <>
       <PageHeader
-        eyebrow="AI agents"
         title={`Try ${agent.name}`}
-        description="This is the same chat that appears on the website, bottom right. Ask it anything a visitor might."
+        description="The same chat visitors see, bottom right."
         action={
           <Link href={`/analytics?agent=${agent.business.slug}#agents`} className={buttonClass("secondary")}>
             ← Back to the agent
@@ -43,7 +42,7 @@ async function TryView({ searchParams }: { searchParams: PageProps<"/analytics/t
         }
       />
       {envStatus().anthropic ? null : (
-        <Alert>The AI isn&apos;t switched on yet (ANTHROPIC_API_KEY in Vercel), so it answers only with its starter and keyword answers and links.</Alert>
+        <Alert>The AI isn&apos;t on yet (ANTHROPIC_API_KEY), so it only gives its saved answers.</Alert>
       )}
       <TryAgent key={agent.business.slug} slug={agent.business.slug} />
     </>

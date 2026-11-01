@@ -23,11 +23,7 @@ const ACTION_FILTERS = [
 export default function ActivityPage(props: PageProps<"/activity">) {
   return (
     <>
-      <PageHeader
-        eyebrow="System"
-        title="Activity"
-        description="Everything that happened in JodyOS, newest first. Secrets are removed before anything is written."
-      />
+      <PageHeader title="Activity" />
       <Suspense fallback={<Skeleton className="h-96 rounded-3xl" />}>
         <ActivityView searchParams={props.searchParams} />
       </Suspense>
@@ -91,9 +87,9 @@ async function ActivityView({ searchParams }: { searchParams: PageProps<"/activi
 
       <Panel>
         {page.length ? (
-          <ActivityList rows={page} now={requestNow()} timeZone={settings.timezone} detailed />
+          <ActivityList rows={page} now={requestNow()} timeZone={settings.timezone} />
         ) : (
-          <EmptyState title="Nothing matches.">No activity for this filter yet.</EmptyState>
+          <EmptyState title="Nothing matches." />
         )}
 
         {hasMore || before ? (

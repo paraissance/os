@@ -5,7 +5,7 @@ import { moveBusinessAction } from "@/app/actions/businesses";
 import { requireUser } from "@/lib/auth/current-user";
 import { businessHref, editHref } from "@/lib/business-href";
 import { loadBook } from "@/lib/businesses";
-import { bookTotals, monthlyTotal, toolsFor, type BusinessBook, type BusinessRecord } from "@/lib/business-model";
+import { bookTotals, monthlyTotal, type BusinessBook, type BusinessRecord } from "@/lib/business-model";
 import { requestNow } from "@/lib/clock";
 import { formatMoney } from "@/lib/money";
 import { SubscriptionsEditor } from "@/components/businesses/editors";
@@ -19,9 +19,7 @@ export default function BusinessesPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Business"
         title="Businesses"
-        description="Everything about each business, in one place. The order here is the order on the dashboard."
         action={
           <div className="flex flex-wrap gap-2">
             <Link href="/businesses/new" className={buttonClass("primary")}>
@@ -96,15 +94,7 @@ function MoveButton({ id, name, direction, disabled }: { id: string; name: strin
 }
 
 function BusinessCard({ business: b, today, first, last }: { business: BusinessRecord; today: Date; first: boolean; last: boolean }) {
-  const monthly = monthlyTotal(b.subscriptions);
   const domains = b.sites.map((s) => s.domain).join(", ");
-  // Each count jumps straight to that part of the business's edit page.
-  const parts = [
-    ["websites", "Sites", b.sites.length],
-    ["links", "Links", b.links.length],
-    ["questions", "Q&A", b.faqs.length],
-    ["subscriptions", "Tools", b.subscriptions.length],
-  ] as const;
   return (
     <li className="flex flex-col rounded-3xl bg-wash p-6">
       <div className="flex items-start justify-between gap-3">
@@ -115,30 +105,10 @@ function BusinessCard({ business: b, today, first, last }: { business: BusinessR
         </h2>
         {b.status === "paused" ? <Badge>Paused</Badge> : null}
       </div>
-      <p className="mt-1 line-clamp-2 text-sm text-muted">{b.tagline ?? "No description yet"}</p>
       {domains ? <p className="mt-1 truncate text-sm text-muted">{domains}</p> : null}
+      <RenewalLine record={b} today={today} urgentOnly className="mt-3" />
 
-      <ul className="mt-5 grid grid-cols-4 gap-1.5">
-        {parts.map(([part, label, n]) => (
-          <li key={part}>
-            <Link
-              href={editHref(b.slug, part)}
-              aria-label={`${b.name}: ${n} ${label}`}
-              className="block rounded-2xl bg-paper py-2.5 text-center transition-colors duration-200 hover:bg-mist"
-            >
-              <span className="block text-xl font-extrabold leading-tight tabular-nums">{n}</span>
-              <span className="block text-xs text-muted">{label}</span>
-            </Link>
-          </li>
-        ))}
-      </ul>
-
-      <div className="mb-5 mt-4 space-y-1">
-        <RenewalLine record={b} today={today} />
-        <p className="text-sm text-muted">{monthly ? `${formatMoney(monthly, "USD")} a month in tools` : toolsFor(b, []).length ? "Free tools only" : "No subscriptions yet"}</p>
-      </div>
-
-      <div className="mt-auto flex items-center gap-1.5">
+      <div className="mt-auto flex items-center gap-1.5 pt-5">
         <Link href={editHref(b.slug)} className={buttonClass("primary", "min-h-9! px-4!")}>
           Edit
         </Link>
@@ -162,7 +132,6 @@ async function BusinessList() {
     return (
       <div className="animate-rise rounded-3xl bg-wash p-8 text-center sm:p-12">
         <p className="text-2xl font-extrabold">No businesses yet.</p>
-        <p className="mx-auto mt-2 max-w-md text-muted">Add your first one, or import a file with all of them at once.</p>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <Link href="/businesses/new" className={buttonClass("primary")}>
             + Add a business
@@ -189,7 +158,6 @@ async function BusinessList() {
       <Part
         id="shared-tools"
         title="Shared tools"
-        intro="Things you pay for once that every business uses, like a scheduler or an AI tool. Each business's own tools are under its Edit."
         count={book.shared.length}
         total={book.shared.length ? `${formatMoney(monthlyTotal(book.shared), "USD")} a month` : undefined}
       >

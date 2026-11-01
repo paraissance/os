@@ -106,7 +106,7 @@ export function mostUrgent<R extends Pick<Renewal, "status" | "daysLeft">>(renew
 }
 
 /** How a business's renewals stand, in one line for its card. */
-export function renewalSummary(record: BusinessRecord, today: Date): { tone: "bad" | "warn" | "ok" | "neutral"; text: string } {
+export function renewalSummary(record: Pick<BusinessRecord, "sites">, today: Date): { tone: "bad" | "warn" | "ok" | "neutral"; text: string } {
   const renewals = record.sites.flatMap((s) => siteRenewals(s, today));
   const worst = mostUrgent(renewals);
   if (worst) return { tone: worst.status === "expired" ? "bad" : "warn", text: `${worst.label}: ${renewalWords(worst).toLowerCase()}` };

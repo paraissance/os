@@ -47,12 +47,10 @@ async function EditView({
         </Link>
         <div className="mt-8 flex flex-wrap items-end justify-between gap-6">
           <div className="min-w-0">
-            <p className="label mb-3 text-white/70">Editing</p>
             <h1 className="flex flex-wrap items-center gap-3 text-4xl font-extrabold leading-[0.95] tracking-[-0.04em] sm:text-6xl">
               {record.name}
               {record.status === "paused" ? <Badge>Paused</Badge> : null}
             </h1>
-            {record.tagline ? <p className="mt-3 text-lg text-white/70">{record.tagline}</p> : null}
           </div>
           <div className="flex flex-wrap gap-2">
             <Link href={businessHref(record.slug)} className={buttonClass("hero")}>
@@ -68,7 +66,7 @@ async function EditView({
         </div>
       </header>
 
-      {sp.added ? <Alert tone="ok">Business added. Now add its websites, links, questions and subscriptions below.</Alert> : null}
+      {sp.added ? <Alert tone="ok">Business added.</Alert> : null}
 
       <SectionNav
         label="Parts of this business"
@@ -81,35 +79,29 @@ async function EditView({
         ]}
       />
 
-      <Part id="details" title="Details" intro="The name, website and what the business is about.">
+      <Part id="details" title="Details">
         <div className="rounded-3xl bg-wash p-5 sm:p-8">
           <BusinessForm business={record} />
         </div>
       </Part>
 
-      <Part id="websites" title="Websites" count={record.sites.length} intro="Domain, hosting and SSL dates, and where to log in. JodyOS warns you 30 days before anything expires.">
+      <Part id="websites" title="Websites" count={record.sites.length}>
         <SitesEditor businessId={record.id} sites={record.sites} today={today.toISOString()} />
       </Part>
 
-      <Part id="links" title="Links" count={record.links.length} intro="Web pages, social profiles, login pages and tools. They become this business's magic links.">
+      <Part id="links" title="Links" count={record.links.length}>
         <LinksEditor businessId={record.id} links={record.links} />
       </Part>
 
-      <Part id="questions" title="Questions" count={record.faqs.length} intro="What customers ask, with your answers.">
+      <Part id="questions" title="Questions" count={record.faqs.length}>
         <FaqsEditor businessId={record.id} faqs={record.faqs} />
       </Part>
 
-      <Part
-        id="subscriptions"
-        title="Subscriptions"
-        count={record.subscriptions.length}
-        total={monthly ? `${formatMoney(monthly, "USD")} a month` : undefined}
-        intro="Tools and services this business pays for. Tools every business shares are on the Businesses page."
-      >
+      <Part id="subscriptions" title="Subscriptions" count={record.subscriptions.length} total={monthly ? `${formatMoney(monthly, "USD")} a month` : undefined}>
         <SubscriptionsEditor businessId={record.id} subscriptions={record.subscriptions} />
       </Part>
 
-      <Part title="Delete" intro="Removes it with its websites, links, questions and subscriptions. Export a backup first if you might want it back.">
+      <Part title="Delete" intro="This can't be undone.">
         <div className="rounded-3xl bg-wash p-5 sm:p-8">
           <DeleteBusiness business={record} />
         </div>

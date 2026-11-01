@@ -41,6 +41,7 @@ export function RemoveInvoice({ id, source, label }: { id: string; source: Invoi
       type="button"
       disabled={pending}
       aria-label={`Remove the invoice of ${label}`}
+      title="Remove"
       onClick={() => {
         if (!window.confirm(`Remove the invoice of ${label}?`)) return;
         const data = new FormData();
@@ -48,9 +49,9 @@ export function RemoveInvoice({ id, source, label }: { id: string; source: Invoi
         data.set("source", source);
         startTransition(() => run(data));
       }}
-      className="min-h-8 rounded-full px-3 text-sm font-semibold text-muted transition-colors hover:bg-ink hover:text-paper"
+      className="size-8 rounded-full text-base font-semibold text-muted transition-colors hover:bg-ink hover:text-paper"
     >
-      {pending ? "Removing…" : "Remove"}
+      {pending ? "…" : "×"}
     </button>
   );
 }

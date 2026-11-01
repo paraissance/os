@@ -5,7 +5,7 @@ import { runCampaignAction } from "@/app/actions/social";
 import { Alert, Button, Input } from "@/components/ui/primitives";
 
 /** "Run a campaign week": how many days, then the campaign routine does the rest in Claude Code. */
-export function RunCampaign({ brand, name }: { brand: string; name: string }) {
+export function RunCampaign({ brand }: { brand: string }) {
   const [state, action, pending] = useActionState(runCampaignAction, undefined);
   return (
     <form action={action} className="space-y-3 rounded-3xl bg-wash p-6">
@@ -13,14 +13,12 @@ export function RunCampaign({ brand, name }: { brand: string; name: string }) {
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="max-w-xl">
           <p className="text-lg font-extrabold">Run a campaign week</p>
-          <p className="text-[15px] text-muted">
-            Fresh posts, photo cards and videos for {name}, scheduled into Blotato: 16 images and 8 videos a day. Already-scheduled posts stay.
-          </p>
+          <p className="text-[15px] text-muted">16 images and 8 videos a day, scheduled into Blotato.</p>
         </div>
         <div className="flex items-end gap-2">
-          <label className="text-sm font-semibold">
+          <label className="flex items-center gap-2 text-sm font-semibold">
             Days
-            <Input name="days" type="number" min={1} max={14} defaultValue={state?.values?.days ?? "7"} required className="mt-1 w-20!" />
+            <Input name="days" type="number" min={1} max={14} defaultValue={state?.values?.days ?? "7"} required className="w-20!" />
           </label>
           <Button type="submit" disabled={pending}>
             {pending ? "Starting…" : "Start"}

@@ -1,17 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { toPost } from "@/lib/blotato";
-import {
-  byPlatform,
-  channelKey,
-  groupByDay,
-  normalizeMetrics,
-  parseChannelKey,
-  profileUrl,
-  suggestChannels,
-  topPosts,
-  totals,
-  type Channel,
-} from "@/lib/social-model";
+import { channelKey, groupByDay, normalizeMetrics, parseChannelKey, profileUrl, suggestChannels, totals, type Channel } from "@/lib/social-model";
 
 const ch = (accountId: string, platform: string, name: string, handle: string | null = null, subaccountId = ""): Channel => ({ accountId, subaccountId, platform, name, handle });
 
@@ -65,20 +54,9 @@ describe("numbers", () => {
     expect(normalizeMetrics(null)).toBeNull();
   });
 
-  it("adds up posts, by platform, and picks the top ones", () => {
-    const posts = [
-      { platform: "instagram", metrics: { views: 100, likes: 5 } },
-      { platform: "instagram", metrics: { views: 50, comments: 2 } },
-      { platform: "tiktok", metrics: { views: 300, likes: 1 } },
-      { platform: "facebook", metrics: null },
-    ];
+  it("adds up posts", () => {
+    const posts = [{ metrics: { views: 100, likes: 5 } }, { metrics: { views: 50, comments: 2 } }, { metrics: { views: 300, likes: 1 } }, { metrics: null }];
     expect(totals(posts)).toEqual({ posts: 4, views: 450, likes: 6, comments: 2, shares: 0 });
-    expect(byPlatform(posts).map((p) => [p.platform, p.posts, p.views])).toEqual([
-      ["instagram", 2, 150],
-      ["tiktok", 1, 300],
-      ["facebook", 1, 0],
-    ]);
-    expect(topPosts(posts, 2).map((p) => p.metrics?.views)).toEqual([300, 100]);
   });
 });
 
