@@ -185,6 +185,10 @@
     outline-offset: 2px;
   }
 
+  .theme-switching * {
+    transition: none !important;
+  }
+
   /* On a filled black card the usual ring would vanish. */
   .bg-ink :focus-visible {
     outline-color: var(--color-paper);

@@ -51,3 +51,15 @@ export async function loadTraffic(businessId: string, now: Date, timeZone: strin
     .where(and(eq(siteTraffic.businessId, businessId), gte(siteTraffic.day, daysEnding(today, 60)[0])));
   return summarize(rows, today);
 }
+
+/** The same for every business with any visits, in one query: for the dashboard's cards. */
+export async function loadAllTraffic(now: Date, timeZone: string): Promise<Map<string, Traffic>> {
+  const today = dayKey(now, timeZone);
+  const db = await getDb();
+  const rows = await db
+    .select({ businessId: siteTraffic.businessId, date: siteTraffic.day, visitors: siteTraffic.visitors, views: siteTraffic.views, lastVisitAt: siteTraffic.lastVisitAt })
+    .from(siteTraffic)
+    .where(gte(siteTraffic.day, daysEnding(today, 60)[0]));
+  const byBusiness = Map.groupBy(rows, (r) => r.businessId);
+  return new Map([...byBusiness].map(([id, days]) => [id, summarize(days, today)]));
+}

@@ -119,9 +119,12 @@ function toggleRail() {
 }
 function toggleTheme() {
   const html = document.documentElement;
+  // All at once: a card still easing over while its text has already flipped would flash.
+  html.classList.add("theme-switching");
   if (isDark()) delete html.dataset.theme;
   else html.dataset.theme = "dark";
   remember(THEME_KEY, html.dataset.theme ?? "light");
+  requestAnimationFrame(() => requestAnimationFrame(() => html.classList.remove("theme-switching")));
 }
 
 const ROUND_BUTTON = "flex size-10 shrink-0 items-center justify-center rounded-full bg-wash transition-colors duration-200 hover:bg-mist";

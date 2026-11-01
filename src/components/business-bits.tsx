@@ -21,6 +21,19 @@ export function Delta({ current, previous, className }: { current: number; previ
   );
 }
 
+/** The shape of a month in small bars, beside its total. The number carries the meaning, so screen readers skip this. */
+export function Sparkline({ values }: { values: number[] }) {
+  const max = Math.max(1, ...values);
+  return (
+    <svg viewBox={`0 0 ${values.length * 3} 20`} preserveAspectRatio="none" aria-hidden="true" className="h-5 min-w-0 flex-1">
+      {values.map((v, i) => {
+        const h = v ? Math.max(3, (v / max) * 20) : 1.5;
+        return <rect key={i} x={i * 3} y={20 - h} width={2} height={h} rx={0.5} fill="currentColor" opacity={v ? 1 : 0.2} />;
+      })}
+    </svg>
+  );
+}
+
 /** Daily bars that grow up one after another. The summary in aria-label carries the numbers for screen readers. */
 export function BarChart({ points, unit, height = 120 }: { points: { date: string; value: number }[]; unit: string; height?: number }) {
   if (!points.length) return null;

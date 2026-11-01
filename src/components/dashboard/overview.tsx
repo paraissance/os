@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Suspense } from "react";
+import { Suspense, type ReactNode } from "react";
 import { requireUser } from "@/lib/auth/current-user";
 import { businessHref } from "@/lib/business-href";
 import { bookAttention, monthlyTotal, sortAttention, type Attention } from "@/lib/business-model";
@@ -8,10 +8,14 @@ import { loadBook } from "@/lib/businesses";
 import { requestNow } from "@/lib/clock";
 import { envStatus } from "@/lib/env";
 import { formatMoney, listBusinesses, liveListAttention, settle } from "@/lib/os-analytics";
+import { getSettings } from "@/lib/settings";
+import { checkSite } from "@/lib/site-check";
+import { loadAllTraffic } from "@/lib/traffic";
 import { ImportForm } from "@/components/businesses/editors";
-import { Delta } from "@/components/business-bits";
+import { Delta, Sparkline } from "@/components/business-bits";
 import { CountUp } from "@/components/motion/count-up";
-import { EmptyState, Skeleton, buttonClass } from "@/components/ui/primitives";
+import { EmptyState, Skeleton, buttonClass, cx } from "@/components/ui/primitives";
+import { mainAddress } from "./business-page";
 import { AttentionList, RenewalLine, Title } from "./ui";
 
 /**
@@ -87,10 +91,42 @@ async function Attention() {
     </section>
   );
 }
+/** A small labelled box on a business's card; all of a card's boxes line up along its bottom edge. */
+function CardStat({ label, children, wide = false }: { label: string; children: ReactNode; wide?: boolean }) {
+  return (
+    <span className={cx("flex min-w-0 flex-col rounded-2xl bg-paper px-3 py-2.5", wide && "col-span-2")}>
+      <span className="truncate text-xs text-muted">{label}</span>
+      <span className="mt-1 flex min-h-6 min-w-0 items-center gap-2 font-bold tabular-nums">{children}</span>
+    </span>
+  );
+}
+
+function SiteState({ state, title }: { state: "live" | "down" | "checking"; title?: string }) {
+  return (
+    <span className={cx("flex items-center gap-2", state === "live" ? "text-live" : state === "down" ? "text-down" : "font-semibold text-muted")} title={title}>
+      <span aria-hidden="true" className={cx("size-2 shrink-0 rounded-full", state === "live" ? "bg-live" : state === "down" ? "bg-down" : "animate-shimmer bg-line")} />
+      {state === "live" ? "Live" : state === "down" ? "Problem" : "Checking"}
+    </span>
+  );
+}
+
+/** Each card checks its own website, so one slow site never holds up the page or the other cards. */
+async function CardSite({ address }: { address: string }) {
+  await requireUser();
+  const health = await checkSite(address, requestNow());
+  return health.live ? <SiteState state="live" /> : <SiteState state="down" title={health.problem ?? undefined} />;
+}
+
+/** The "add" tile takes up whatever is left of the last row, so a lone card never sits beside a gap. */
+const ADD_SPAN_TWO_COLUMNS = ["sm:col-span-2", "sm:col-span-1"];
+const ADD_SPAN_THREE_COLUMNS = ["xl:col-span-3", "xl:col-span-2", "xl:col-span-1"];
+
 async function BusinessCards() {
   await requireUser();
-  const [book, live, today] = await Promise.all([loadBook(), liveList(), Promise.resolve(requestNow())]);
+  const [book, live, settings] = await Promise.all([loadBook(), liveList(), getSettings()]);
   if (!book.businesses.length) return null;
+  const today = requestNow();
+  const traffic = await loadAllTraffic(today, settings.timezone);
   const liveBySlug = new Map(live?.ok ? live.data.businesses.map((b) => [b.slug, b]) : []);
   const active = book.businesses.filter((b) => b.status === "active");
   const paused = book.businesses.filter((b) => b.status !== "active");
@@ -99,7 +135,15 @@ async function BusinessCards() {
 
   return (
     <section className="reveal">
-      <Title>Your businesses</Title>
+      <Title
+        note={
+          <Link href="/businesses" className="font-semibold text-ink underline decoration-1 underline-offset-4">
+            Edit or reorder
+          </Link>
+        }
+      >
+        Your businesses
+      </Title>
       <p className="-mt-2 mb-4 text-sm text-muted">
         {active.length} active business{active.length === 1 ? "" : "es"} with {sites} site{sites === 1 ? "" : "s"}
       </p>
@@ -109,6 +153,8 @@ async function BusinessCards() {
             const lb = liveBySlug.get(b.slug);
             const monthly = monthlyTotal(b.subscriptions);
             const domain = b.sites[0]?.domain ?? (b.websiteUrl ? shortUrl(b.websiteUrl) : null);
+            const address = mainAddress(b);
+            const visits = traffic.get(b.id);
             return (
               <li key={b.slug}>
                 <Link
@@ -124,26 +170,51 @@ async function BusinessCards() {
                       →
                     </span>
                   </span>
-                  <span className="mt-1 truncate text-sm text-muted">{b.tagline ?? domain ?? " "}</span>
-                  {lb ? (
-                    <span className="mt-5 flex items-center gap-2">
-                      <span className="text-4xl font-extrabold tabular-nums tracking-[-0.03em]">
+                  <span className="mt-1 truncate text-sm text-muted">{b.tagline ?? "No description yet"}</span>
+                  <span className="truncate text-sm text-muted">{[domain, monthly > 0 ? `${formatMoney(monthly, "USD")} a month in tools` : null].filter(Boolean).join(" · ")}</span>
+                  <RenewalLine record={b} today={today} urgentOnly className="mt-3" />
+                  <span className="mt-auto grid grid-cols-2 gap-1.5 pt-5">
+                    <CardStat label="Website">
+                      {address ? (
+                        <Suspense fallback={<SiteState state="checking" />}>
+                          <CardSite address={address} />
+                        </Suspense>
+                      ) : (
+                        <span className="font-semibold text-muted">None saved</span>
+                      )}
+                    </CardStat>
+                    <CardStat label="Visitors, 30 days">
+                      {visits ? (
+                        <>
+                          <CountUp value={visits.last30.visitors} />
+                          <Sparkline values={visits.days.map((d) => d.visitors)} />
+                        </>
+                      ) : (
+                        <span className="font-semibold text-muted">—</span>
+                      )}
+                    </CardStat>
+                    {lb ? (
+                      <CardStat label="Leads, 30 days" wide>
                         <CountUp value={lb.last30.leads} />
-                      </span>
-                      <span className="font-semibold">leads</span>
-                      <Delta current={lb.last30.leads} previous={lb.previous30.leads} />
-                    </span>
-                  ) : null}
-                  <span className="mt-4 space-y-1 text-sm">
-                    <span className="block text-muted">
-                      {[domain, monthly > 0 ? `${formatMoney(monthly, "USD")} a month in tools` : null].filter(Boolean).join(" · ") || "No details yet"}
-                    </span>
+                        <Delta current={lb.last30.leads} previous={lb.previous30.leads} />
+                      </CardStat>
+                    ) : null}
                   </span>
-                  <RenewalLine record={b} today={today} className="mt-auto pt-4" />
                 </Link>
               </li>
             );
           })}
+          <li className={cx(ADD_SPAN_TWO_COLUMNS[active.length % 2], ADD_SPAN_THREE_COLUMNS[active.length % 3])}>
+            <Link
+              href="/businesses/new"
+              className="flex h-full min-h-24 items-center justify-center gap-3 rounded-3xl bg-wash/50 p-6 font-semibold text-muted transition-colors duration-200 hover:bg-wash hover:text-ink"
+            >
+              <span aria-hidden="true" className="flex size-8 shrink-0 items-center justify-center rounded-full bg-wash text-lg">
+                +
+              </span>
+              Add a business
+            </Link>
+          </li>
         </ul>
       ) : (
         <EmptyState title="No active businesses." />
@@ -161,11 +232,6 @@ async function BusinessCards() {
           ))}
         </p>
       ) : null}
-      <p className="mt-4">
-        <Link href="/businesses" className="text-sm font-semibold underline decoration-1 underline-offset-4">
-          Add, edit or reorder businesses
-        </Link>
-      </p>
     </section>
   );
 }

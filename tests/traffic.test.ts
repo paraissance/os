@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { businessSites, businesses, siteTraffic } from "@/lib/db/schema";
 import { dayKey } from "@/lib/format";
-import { loadTraffic, recordVisit } from "@/lib/traffic";
+import { loadAllTraffic, loadTraffic, recordVisit } from "@/lib/traffic";
 import { daysEnding, fromOwnSite, isBot, siteHosts } from "@/lib/traffic-model";
 import { useTestDatabase } from "./helpers/db";
 
@@ -69,5 +69,12 @@ describe("traffic counts", () => {
     expect(t.previous30).toEqual({ visitors: 4, views: 10 });
     expect(t.today).toEqual({ visitors: 1, views: 3 });
     expect(t.lastVisitAt?.toISOString()).toBe("2026-10-15T18:00:00.000Z");
+  });
+
+  it("loads the same view for every business at once, leaving out those with no visits", async () => {
+    const [{ id: quiet }] = await ctx.db.insert(businesses).values({ slug: "quiet", name: "Quiet" }).returning({ id: businesses.id });
+    const all = await loadAllTraffic(now, "UTC");
+    expect(all.get(id)).toEqual(await loadTraffic(id, now, "UTC"));
+    expect(all.has(quiet)).toBe(false);
   });
 });

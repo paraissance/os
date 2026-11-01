@@ -84,9 +84,10 @@ export function Tile({ label, value, children }: { label: string; value: ReactNo
   );
 }
 
-/** How a business's renewals stand: a dot and a few words. */
-export function RenewalLine({ record, today, className }: { record: BusinessRecord; today: Date; className?: string }) {
+/** How a business's renewals stand: a dot and a few words. `urgentOnly` stays quiet unless something is due. */
+export function RenewalLine({ record, today, urgentOnly = false, className }: { record: BusinessRecord; today: Date; urgentOnly?: boolean; className?: string }) {
   const { tone, text } = renewalSummary(record, today);
+  if (urgentOnly && tone !== "warn" && tone !== "bad") return null;
   return (
     <span className={cx("flex items-center gap-2 text-sm font-semibold", className)}>
       <StatusDot tone={tone} />
