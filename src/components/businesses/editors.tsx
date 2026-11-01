@@ -13,9 +13,9 @@ import {
 } from "@/app/actions/businesses";
 import type { FormState } from "@/app/actions/form-state";
 import { CATEGORIES, CYCLE_LABELS, LINK_KIND_LABELS } from "@/lib/business-input";
-import type { Business, BusinessFaq, BusinessLink, BusinessSite, Subscription } from "@/lib/business-model";
+import { dayLabel, renewalWords, siteRenewals, type Business, type BusinessFaq, type BusinessLink, type BusinessSite, type Subscription } from "@/lib/business-model";
 import { formatMoney } from "@/lib/money";
-import { Alert, Badge, Button, Field, Input, Select, Textarea, buttonClass, cx } from "@/components/ui/primitives";
+import { Alert, Badge, Button, Field, Input, Select, StatusDot, Textarea, buttonClass, cx } from "@/components/ui/primitives";
 
 /*
  * Editing a business. Every form submits through onSubmit + startTransition
@@ -53,64 +53,73 @@ export function BusinessForm({ business }: { business?: Business }) {
   const { state, pending, onSubmit, err } = useForm(saveBusinessAction);
   const [name, setName] = useState(business?.name ?? "");
   return (
-    <form onSubmit={onSubmit} className="space-y-5">
-      <Status state={state} />
+    <form onSubmit={onSubmit} className="space-y-8">
       {business ? (
         <>
           <input type="hidden" name="id" value={business.id} />
           <input type="hidden" name="slugBefore" value={business.slug} />
         </>
       ) : null}
-      <div className="grid gap-5 sm:grid-cols-2">
-        <Field label="Business name" htmlFor="name" error={err.name}>
-          <Input id="name" name="name" required maxLength={120} value={name} onChange={(e) => setName(e.target.value)} placeholder="Done For You Leads" />
+      <Group title="The basics">
+        <div className="grid gap-5 sm:grid-cols-2">
+          <Field label="Business name" htmlFor="name" error={err.name}>
+            <Input id="name" name="name" required maxLength={120} value={name} onChange={(e) => setName(e.target.value)} placeholder="Done For You Leads" />
+          </Field>
+          <Field
+            label="Short name"
+            htmlFor="slug"
+            error={err.slug}
+            hint={business ? "Used in the dashboard address. Changing it changes the link." : "Optional. Made from the name if you leave it empty."}
+          >
+            <Input id="slug" name="slug" defaultValue={business?.slug ?? ""} maxLength={60} placeholder="dfu-leads" />
+          </Field>
+        </div>
+        <Field label="One-line description" htmlFor="tagline" error={err.tagline}>
+          <Input id="tagline" name="tagline" defaultValue={v(business?.tagline)} maxLength={200} placeholder="Real estate lead generation" />
         </Field>
+        <div className="grid gap-5 sm:grid-cols-2">
+          <Field label="Website" htmlFor="websiteUrl" error={err.websiteUrl}>
+            <Input id="websiteUrl" name="websiteUrl" defaultValue={v(business?.websiteUrl)} placeholder="example.com" inputMode="url" />
+          </Field>
+          <Field label="Status" htmlFor="status" error={err.status}>
+            <Select id="status" name="status" defaultValue={business?.status ?? "active"}>
+              <option value="active">Active</option>
+              <option value="paused">Paused</option>
+            </Select>
+          </Field>
+        </div>
+      </Group>
+      <Group title="Main button">
+        <div className="grid gap-5 sm:grid-cols-2">
+          <Field label="Button text" htmlFor="ctaLabel" error={err.ctaLabel} hint="What the website asks visitors to do.">
+            <Input id="ctaLabel" name="ctaLabel" defaultValue={v(business?.ctaLabel)} maxLength={80} placeholder="Book a call" />
+          </Field>
+          <Field label="Button link" htmlFor="ctaUrl" error={err.ctaUrl}>
+            <Input id="ctaUrl" name="ctaUrl" defaultValue={v(business?.ctaUrl)} placeholder="example.com/contact" inputMode="url" />
+          </Field>
+        </div>
+      </Group>
+      <Group title="What it's about">
         <Field
-          label="Short name"
-          htmlFor="slug"
-          error={err.slug}
-          hint={business ? "Used in the dashboard address. Changing it changes the link." : "Optional. Made from the name if you leave it empty."}
+          label="About the business"
+          htmlFor="about"
+          error={err.about}
+          hint='Plain text, one fact per line. Start a line with "# " to begin a new section, like "# Services".'
         >
-          <Input id="slug" name="slug" defaultValue={business?.slug ?? ""} maxLength={60} placeholder="dfu-leads" />
+          <Textarea id="about" name="about" defaultValue={v(business?.about)} rows={10} maxLength={20000} />
         </Field>
-      </div>
-      <Field label="One-line description" htmlFor="tagline" error={err.tagline}>
-        <Input id="tagline" name="tagline" defaultValue={v(business?.tagline)} maxLength={200} placeholder="Real estate lead generation" />
-      </Field>
-      <div className="grid gap-5 sm:grid-cols-2">
-        <Field label="Website" htmlFor="websiteUrl" error={err.websiteUrl}>
-          <Input id="websiteUrl" name="websiteUrl" defaultValue={v(business?.websiteUrl)} placeholder="example.com" inputMode="url" />
+        <Field label="Private notes" htmlFor="notes" error={err.notes} hint="Only you see these.">
+          <Textarea id="notes" name="notes" defaultValue={v(business?.notes)} rows={3} maxLength={5000} />
         </Field>
-        <Field label="Status" htmlFor="status" error={err.status}>
-          <Select id="status" name="status" defaultValue={business?.status ?? "active"}>
-            <option value="active">Active</option>
-            <option value="paused">Paused</option>
-          </Select>
-        </Field>
-      </div>
-      <div className="grid gap-5 sm:grid-cols-2">
-        <Field label="Main button text" htmlFor="ctaLabel" error={err.ctaLabel} hint="What the website asks visitors to do.">
-          <Input id="ctaLabel" name="ctaLabel" defaultValue={v(business?.ctaLabel)} maxLength={80} placeholder="Book a call" />
-        </Field>
-        <Field label="Main button link" htmlFor="ctaUrl" error={err.ctaUrl}>
-          <Input id="ctaUrl" name="ctaUrl" defaultValue={v(business?.ctaUrl)} placeholder="example.com/contact" inputMode="url" />
-        </Field>
-      </div>
-      <Field
-        label="About the business"
-        htmlFor="about"
-        error={err.about}
-        hint='Plain text, one fact per line. Start a line with "# " to begin a new section, like "# Services".'
-      >
-        <Textarea id="about" name="about" defaultValue={v(business?.about)} rows={10} maxLength={20000} />
-      </Field>
-      <Field label="Private notes" htmlFor="notes" error={err.notes} hint="Only you see these.">
-        <Textarea id="notes" name="notes" defaultValue={v(business?.notes)} rows={3} maxLength={5000} />
-      </Field>
-      <div className="flex justify-end">
-        <Button type="submit" disabled={pending || !name.trim()}>
-          {pending ? "Saving…" : business ? "Save details" : "Add business"}
-        </Button>
+      </Group>
+      {/* Docked to the card's bottom edge (its padding is cancelled here) so Save stays in reach, with the result beside it, not off-screen at the top. */}
+      <div className="sticky bottom-0 z-10 -mx-5 -mb-5 space-y-2 rounded-b-3xl border-t border-hair bg-wash/90 px-5 py-3 backdrop-blur sm:-mx-8 sm:-mb-8 sm:px-8">
+        <Status state={state} />
+        <div className="flex justify-end">
+          <Button type="submit" disabled={pending || !name.trim()}>
+            {pending ? "Saving…" : business ? "Save details" : "Add business"}
+          </Button>
+        </div>
       </div>
     </form>
   );
@@ -128,7 +137,7 @@ export function DeleteBusiness({ business }: { business: Business }) {
     <form onSubmit={onSubmit} className="space-y-3">
       <Status state={state} />
       <input type="hidden" name="id" value={business.id} />
-      <Button type="submit" variant="secondary" disabled={pending}>
+      <Button type="submit" variant="light" disabled={pending}>
         {pending ? "Deleting…" : `Delete ${business.name}`}
       </Button>
     </form>
@@ -190,7 +199,8 @@ function PartForm({
   );
 }
 
-type Row = { id: string; summary: ReactNode; what: string };
+/** `group` puts a small heading above the first row of each run of rows that share it. */
+type Row = { id: string; summary: ReactNode; what: string; group?: string };
 
 function ItemList({
   kind,
@@ -216,8 +226,13 @@ function ItemList({
   return (
     <div className="space-y-3">
       {rows.length ? (
-        <ul className="stagger overflow-hidden rounded-2xl bg-wash">
-          {rows.map((row) =>
+        <ul className="stagger overflow-hidden rounded-3xl bg-wash">
+          {rows.flatMap((row, i) => [
+            row.group && row.group !== rows[i - 1]?.group ? (
+              <li key={`group-${row.group}`} className="label border-b border-paper px-6 pb-2 pt-5 text-muted">
+                {row.group}
+              </li>
+            ) : null,
             editing === row.id ? (
               <li key={row.id} className="p-2">
                 <PartForm action={action} hidden={{ ...hidden, id: row.id }} submitLabel="Save" onDone={close}>
@@ -225,8 +240,8 @@ function ItemList({
                 </PartForm>
               </li>
             ) : (
-              <li key={row.id} className="flex items-center justify-between gap-3 border-b border-paper px-5 py-3.5 last:border-b-0">
-                <div className="min-w-0 flex-1">{row.summary}</div>
+              <li key={row.id} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-paper px-6 py-4 transition-colors duration-200 last:border-b-0 hover:bg-paper/40">
+                <div className="min-w-0 flex-1 basis-60">{row.summary}</div>
                 <div className="flex shrink-0 items-center gap-1">
                   <button
                     type="button"
@@ -239,13 +254,13 @@ function ItemList({
                 </div>
               </li>
             ),
-          )}
+          ])}
         </ul>
       ) : editing !== "new" ? (
-        <p className="rounded-2xl bg-wash px-5 py-4 text-muted">{empty}</p>
+        <p className="rounded-3xl bg-wash px-6 py-5 text-muted">{empty}</p>
       ) : null}
       {editing === "new" ? (
-        <div className="rounded-2xl bg-wash p-2">
+        <div className="rounded-3xl bg-wash p-2">
           <PartForm action={action} hidden={hidden} submitLabel={`Add ${noun}`} onDone={close}>
             {(err) => fields(valuesFor(null), err)}
           </PartForm>
@@ -270,30 +285,28 @@ function shortUrl(url: string) {
 
 /* ─── Links ───────────────────────────────────────────────────────── */
 
-/**
- * A business's links. With `only`, it lists and adds just that kind (the
- * Social Media page uses it for social accounts, one editor per business).
- */
-export function LinksEditor({ businessId, links, only }: { businessId: string; links: BusinessLink[]; only?: BusinessLink["kind"] }) {
+const LINK_KINDS_IN_ORDER = Object.keys(LINK_KIND_LABELS);
+
+/** A business's links, grouped by type. */
+export function LinksEditor({ businessId, links }: { businessId: string; links: BusinessLink[] }) {
   const byId = new Map(links.map((l) => [l.id, l]));
   const uid = useId();
   const fid = (field: string) => `${uid}-${field}`;
-  const social = only === "social";
+  const grouped = [...links].sort((a, b) => LINK_KINDS_IN_ORDER.indexOf(a.kind) - LINK_KINDS_IN_ORDER.indexOf(b.kind));
   return (
     <ItemList
       kind="link"
-      noun={social ? "account" : "link"}
-      empty={social ? "No social media accounts saved yet." : "No links yet. Add pages, social profiles, login pages and tools."}
+      noun="link"
+      empty="No links yet. Add pages, social profiles, login pages and tools."
       action={saveLinkAction}
       hidden={{ businessId }}
-      rows={links.map((l) => ({
+      rows={grouped.map((l) => ({
         id: l.id,
         what: `the link "${l.label}"`,
+        group: LINK_KIND_LABELS[l.kind],
         summary: (
           <>
-            <p className="flex flex-wrap items-center gap-2 font-bold">
-              {l.label} {only ? null : <Badge>{LINK_KIND_LABELS[l.kind]}</Badge>}
-            </p>
+            <p className="font-bold">{l.label}</p>
             <p className="truncate text-sm text-muted">
               {l.note ? `${l.note} · ` : ""}
               <a href={l.url} target="_blank" rel="noopener noreferrer" className="underline decoration-1 underline-offset-4 hover:text-ink">
@@ -306,7 +319,7 @@ export function LinksEditor({ businessId, links, only }: { businessId: string; l
       }))}
       valuesFor={(id) => {
         const l = id ? byId.get(id) : undefined;
-        return { label: v(l?.label), url: v(l?.url), kind: l?.kind ?? only ?? "page", note: v(l?.note) };
+        return { label: v(l?.label), url: v(l?.url), kind: l?.kind ?? "page", note: v(l?.note) };
       }}
       fields={(values, err) => (
         <>
@@ -327,7 +340,7 @@ export function LinksEditor({ businessId, links, only }: { businessId: string; l
           <Field label="Web address" htmlFor={fid("url")} error={err.url}>
             <Input id={fid("url")} name="url" defaultValue={values.url} required placeholder="instagram.com/yourbusiness" inputMode="url" />
           </Field>
-          <Field label="Note" htmlFor={fid("note")} error={err.note} hint={social ? "Optional, like the @handle." : "Optional, like which account it is."}>
+          <Field label="Note" htmlFor={fid("note")} error={err.note} hint="Optional, like which account it is.">
             <Input id={fid("note")} name="note" defaultValue={values.note} maxLength={200} />
           </Field>
         </>
@@ -400,7 +413,23 @@ function Group({ title, children }: { title: string; children: ReactNode }) {
   );
 }
 
-export function SitesEditor({ businessId, sites }: { businessId: string; sites: BusinessSite[] }) {
+/** A website's domain, hosting and SSL dates at a glance. */
+function RenewalChips({ site, today }: { site: BusinessSite; today: string }) {
+  const renewals = siteRenewals(site, new Date(today));
+  if (!renewals.length) return <p className="mt-2 text-sm text-muted">No renewal dates saved.</p>;
+  return (
+    <ul className="mt-2.5 flex flex-wrap gap-1.5">
+      {renewals.map((r) => (
+        <li key={r.item} className={cx("flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold", r.status === "expired" ? "bg-ink text-paper" : "bg-paper")}>
+          {r.status === "expired" ? null : <StatusDot tone={r.status === "ok" ? "ok" : "warn"} />}
+          {r.label}: {renewalWords(r)}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+export function SitesEditor({ businessId, sites, today }: { businessId: string; sites: BusinessSite[]; today: string }) {
   const byId = new Map(sites.map((s) => [s.id, s]));
   return (
     <ItemList
@@ -419,6 +448,7 @@ export function SitesEditor({ businessId, sites }: { businessId: string; sites: 
               {[s.platform, s.hostingProvider && `hosted on ${s.hostingProvider}`, s.registrar && `domain at ${s.registrar}`].filter(Boolean).join(" · ") ||
                 "No details yet"}
             </p>
+            <RenewalChips site={s} today={today} />
           </>
         ),
       }))}
@@ -520,21 +550,21 @@ export function SubscriptionsEditor({ businessId, subscriptions }: { businessId:
         id: s.id,
         what: s.name,
         summary: (
-          <>
-            <p className="flex flex-wrap items-center gap-2 font-bold">
-              {s.name}
-              {!s.businessId && businessId ? <Badge>Shared</Badge> : null}
+          <div className="flex items-start justify-between gap-4">
+            <div className="min-w-0">
+              <p className="flex flex-wrap items-center gap-2 font-bold">
+                {s.name}
+                {!s.businessId && businessId ? <Badge>Shared</Badge> : null}
+              </p>
+              <p className="truncate text-sm text-muted">
+                {[CATEGORIES[s.category as keyof typeof CATEGORIES] ?? "Other", s.nextRenewal && `renews ${dayLabel(s.nextRenewal)}`].filter(Boolean).join(" · ")}
+              </p>
+            </div>
+            <p className="shrink-0 text-right font-extrabold tabular-nums">
+              {formatMoney(s.amount, s.currency)}
+              <span className="block text-xs font-normal text-muted">{CYCLE_LABELS[s.billingCycle].toLowerCase()}</span>
             </p>
-            <p className="truncate text-sm text-muted">
-              {[
-                `${formatMoney(s.amount, s.currency)} ${CYCLE_LABELS[s.billingCycle].toLowerCase()}`,
-                CATEGORIES[s.category as keyof typeof CATEGORIES] ?? "Other",
-                s.nextRenewal && `renews ${s.nextRenewal}`,
-              ]
-                .filter(Boolean)
-                .join(" · ")}
-            </p>
-          </>
+          </div>
         ),
       }))}
       valuesFor={(id) => {

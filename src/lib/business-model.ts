@@ -105,6 +105,15 @@ export function mostUrgent<R extends Pick<Renewal, "status" | "daysLeft">>(renew
   return urgent[0] ?? null;
 }
 
+/** How a business's renewals stand, in one line for its card. */
+export function renewalSummary(record: BusinessRecord, today: Date): { tone: "bad" | "warn" | "ok" | "neutral"; text: string } {
+  const renewals = record.sites.flatMap((s) => siteRenewals(s, today));
+  const worst = mostUrgent(renewals);
+  if (worst) return { tone: worst.status === "expired" ? "bad" : "warn", text: `${worst.label}: ${renewalWords(worst).toLowerCase()}` };
+  if (renewals.length) return { tone: "ok", text: "Renewals all current" };
+  return { tone: "neutral", text: record.sites.length ? "No renewal dates saved" : "No websites saved yet" };
+}
+
 /* ─── Money ───────────────────────────────────────────────────────── */
 
 /** Monthly equivalent of a price: yearly ÷ 12, quarterly ÷ 3; one-time costs aren't recurring. */
@@ -221,4 +230,19 @@ export function bookAttention(book: BusinessBook, today: Date): Attention[] {
   }
   items.push(...subscriptionAttention(book.shared, today, "/businesses#shared-tools"));
   return sortAttention(items);
+}
+
+/** The totals across every business: what the top of the Businesses page shows. */
+export function bookTotals(book: BusinessBook, today: Date) {
+  const subs = [...book.businesses.flatMap((b) => b.subscriptions), ...book.shared];
+  const active = book.businesses.filter((b) => b.status === "active").length;
+  return {
+    active,
+    paused: book.businesses.length - active,
+    sites: book.businesses.reduce((n, b) => n + b.sites.length, 0),
+    monthly: monthlyTotal(subs),
+    due: bookAttention(book, today).length,
+    // With no dates saved, "nothing due" would be a promise JodyOS can't make.
+    datesSaved: subs.some((s) => s.nextRenewal) || book.businesses.some((b) => b.sites.some((s) => siteRenewals(s, today).length)),
+  };
 }

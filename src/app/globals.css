@@ -121,6 +121,12 @@
   }
 }
 
+/* The dark hero card: dark in both themes, so its words are white on purpose. */
+@utility hero {
+  background-image: radial-gradient(90% 140% at 100% 0%, var(--color-hero-glow), var(--color-hero) 70%);
+  color: #fff;
+}
+
 /* Hide a scrollbar on a row that scrolls sideways (the content still scrolls). */
 @utility no-scrollbar {
   scrollbar-width: none;

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { requireUser } from "@/lib/auth/current-user";
 import { BusinessForm } from "@/components/businesses/editors";
-import { PageHeader, Skeleton } from "@/components/ui/primitives";
+import { PageHeader, Skeleton, buttonClass } from "@/components/ui/primitives";
 
 export const metadata: Metadata = { title: "Add a business" };
 
@@ -16,8 +16,13 @@ export default function NewBusinessPage() {
       <PageHeader
         title="Add a business"
         description="Start with the name and website. You can add its websites, links, common questions and subscriptions on the next page."
+        action={
+          <Link href="/businesses/import" className={buttonClass("secondary")}>
+            Import a file instead
+          </Link>
+        }
       />
-      <Suspense fallback={<Skeleton className="h-[32rem]" />}>
+      <Suspense fallback={<Skeleton className="h-[32rem] rounded-3xl" />}>
         <NewForm />
       </Suspense>
     </>

@@ -13,31 +13,29 @@ import { checkSite } from "@/lib/site-check";
 import { loadTraffic } from "@/lib/traffic";
 import { embedCode } from "@/components/agents/agent-view";
 import { AskBar } from "@/components/dashboard/ask-bar";
-import { BusinessAbout, BusinessMagicLinks, SiteSide, TrafficPanel, mainSite } from "@/components/dashboard/business-page";
+import { BusinessAbout, BusinessMagicLinks, SiteSide, TrafficPanel, mainAddress, mainSite } from "@/components/dashboard/business-page";
 import { Overview } from "@/components/dashboard/overview";
 import { Badge, Skeleton, buttonClass } from "@/components/ui/primitives";
 
 export const metadata: Metadata = { title: "Dashboard" };
 
 /**
- * The dashboard: all businesses, and one page per business (`/?b=<slug>`,
- * opened from its card): what it is, its website checked live, and the
- * website's traffic.
+ * The dashboard: all businesses under a greeting, or one business (`/?b=<slug>`,
+ * opened from its card) under its own name: what it is, its website checked
+ * live, and the website's traffic.
  */
 export default function DashboardPage(props: PageProps<"/">) {
   return (
-    <>
-      {/* The hero stays dark in both themes, so its words are white on purpose. */}
-      <section className="mb-8 animate-rise rounded-3xl bg-[radial-gradient(90%_140%_at_100%_0%,var(--color-hero-glow),var(--color-hero)_70%)] p-6 text-white sm:p-10">
-        <Suspense fallback={<div aria-hidden="true" className="mb-6 h-32 animate-shimmer rounded-2xl bg-white/10" />}>
-          <Greeting />
-        </Suspense>
-        <AskBar />
-      </section>
-      <Suspense fallback={<Skeleton className="h-96" />}>
-        <Body searchParams={props.searchParams} />
-      </Suspense>
-    </>
+    <Suspense
+      fallback={
+        <div className="space-y-8">
+          <Skeleton className="h-64 rounded-3xl" />
+          <Skeleton className="h-96 rounded-3xl" />
+        </div>
+      }
+    >
+      <Body searchParams={props.searchParams} />
+    </Suspense>
   );
 }
 
@@ -65,11 +63,19 @@ async function Body({ searchParams }: { searchParams: PageProps<"/">["searchPara
   const slug = typeof b === "string" && b ? b : null;
 
   return slug ? (
-    <Suspense key={slug} fallback={<Skeleton className="h-[40rem]" />}>
+    <Suspense key={slug} fallback={<Skeleton className="h-[40rem] rounded-3xl" />}>
       <BusinessTab slug={slug} />
     </Suspense>
   ) : (
-    <Overview />
+    <>
+      <section className="hero mb-8 animate-rise rounded-3xl p-6 sm:p-10">
+        <Suspense fallback={<div aria-hidden="true" className="mb-6 h-32 animate-shimmer rounded-2xl bg-white/10" />}>
+          <Greeting />
+        </Suspense>
+        <AskBar />
+      </section>
+      <Overview />
+    </>
   );
 }
 
@@ -96,32 +102,40 @@ async function BusinessTab({ slug }: { slug: string }) {
   if (!record) return <NotFoundCard slug={slug} />;
 
   const site = mainSite(record);
-  const website = record.websiteUrl ?? site?.url ?? (site ? `https://${site.domain}` : null);
+  const website = mainAddress(record);
   const side = { record, site, timeZone: settings.timezone };
 
   return (
-    <article aria-label={record.name} className="space-y-14">
-      <header className="flex animate-rise flex-wrap items-end justify-between gap-x-6 gap-y-4">
-        <h2 className="flex min-w-0 flex-wrap items-center gap-3 text-4xl font-extrabold leading-[0.95] tracking-[-0.04em] sm:text-5xl">
-          {record.name}
-          {record.status === "paused" ? <Badge tone="neutral">Paused</Badge> : null}
-        </h2>
-        <div className="flex flex-wrap gap-2">
-          {website ? (
-            <a href={website} target="_blank" rel="noopener noreferrer" className={buttonClass("primary")}>
-              Visit website <span aria-hidden="true">↗</span>
-              <span className="sr-only">(opens in a new tab)</span>
-            </a>
-          ) : null}
-          <Link href={`/businesses/${record.slug}/edit`} className={buttonClass("secondary")}>
-            Edit details
-          </Link>
+    <article aria-label={record.name} className="space-y-4">
+      <header className="hero animate-rise rounded-3xl p-6 sm:p-10">
+        <Link href="/" className="text-sm font-semibold text-white/70 transition-colors hover:text-white">
+          ← All businesses
+        </Link>
+        <div className="mt-8 flex flex-wrap items-end justify-between gap-6">
+          <div className="min-w-0">
+            <h1 className="flex flex-wrap items-center gap-3 text-4xl font-extrabold leading-[0.95] tracking-[-0.04em] sm:text-6xl">
+              {record.name}
+              {record.status === "paused" ? <Badge tone="neutral">Paused</Badge> : null}
+            </h1>
+            {record.tagline ? <p className="mt-3 text-lg text-white/70">{record.tagline}</p> : null}
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {website ? (
+              <a href={website} target="_blank" rel="noopener noreferrer" className={buttonClass("hero")}>
+                Visit website <span aria-hidden="true">↗</span>
+                <span className="sr-only">(opens in a new tab)</span>
+              </a>
+            ) : null}
+            <Link href={`/businesses/${record.slug}/edit`} className={buttonClass("heroSoft")}>
+              Edit details
+            </Link>
+          </div>
         </div>
       </header>
 
       <BusinessMagicLinks record={record} />
 
-      <div className="grid grid-cols-[minmax(0,1fr)] gap-10 lg:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)] lg:gap-12">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)]">
         <BusinessAbout record={record} />
         {website ? (
           // The page shows at once; the live check fills in when the site has answered.
@@ -133,9 +147,11 @@ async function BusinessTab({ slug }: { slug: string }) {
         )}
       </div>
 
-      <Suspense fallback={<Skeleton className="h-72" />}>
-        <Traffic record={record} domain={site?.domain ?? null} timeZone={settings.timezone} />
-      </Suspense>
+      <div className="pt-6">
+        <Suspense fallback={<Skeleton className="h-72" />}>
+          <Traffic record={record} domain={site?.domain ?? null} timeZone={settings.timezone} />
+        </Suspense>
+      </div>
     </article>
   );
 }

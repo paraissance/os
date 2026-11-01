@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { requireUser } from "@/lib/auth/current-user";
 import { businessHref } from "@/lib/business-href";
-import { bookAttention, monthlyTotal, mostUrgent, renewalWords, siteRenewals, sortAttention, type Attention } from "@/lib/business-model";
+import { bookAttention, monthlyTotal, sortAttention, type Attention } from "@/lib/business-model";
 import { shortUrl } from "@/lib/business-view";
 import { loadBook } from "@/lib/businesses";
 import { requestNow } from "@/lib/clock";
@@ -11,13 +11,13 @@ import { formatMoney, listBusinesses, liveListAttention, settle } from "@/lib/os
 import { ImportForm } from "@/components/businesses/editors";
 import { Delta } from "@/components/business-bits";
 import { CountUp } from "@/components/motion/count-up";
-import { EmptyState, Skeleton, StatusDot, buttonClass } from "@/components/ui/primitives";
-import { AttentionList, Title } from "./ui";
+import { EmptyState, Skeleton, buttonClass } from "@/components/ui/primitives";
+import { AttentionList, RenewalLine, Title } from "./ui";
 
 /**
- * The "All businesses" tab: the businesses and what needs doing, nothing
- * else. Money has its own page (/spending); Ask Jody Core sits under the
- * greeting; each business's magic links are on its own tab.
+ * The dashboard home: the businesses and what needs doing, nothing else.
+ * Money has its own page (/spending); Ask Jody Core sits under the greeting;
+ * each business's magic links are on its own page.
  */
 export function Overview() {
   return (
@@ -51,7 +51,7 @@ async function Welcome() {
       <div>
         <p className="text-3xl font-extrabold tracking-[-0.02em]">Let&apos;s add your businesses.</p>
         <p className="mt-2 max-w-xl text-lg text-muted">
-          Each one gets its own tab here, with its websites, links, what it&apos;s about and what you pay for.
+          Each one gets its own page here, with its websites, links, what it&apos;s about and what you pay for.
         </p>
         <p className="mt-4 max-w-xl text-[15px] text-muted">
           Have a businesses file? Drop it in the box to add them all at once. Or add them one by one.
@@ -106,8 +106,6 @@ async function BusinessCards() {
       {active.length ? (
         <ul className="stagger grid grid-cols-[minmax(0,1fr)] gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {active.map((b) => {
-            const renewals = b.sites.flatMap((s) => siteRenewals(s, today));
-            const worst = mostUrgent(renewals);
             const lb = liveBySlug.get(b.slug);
             const monthly = monthlyTotal(b.subscriptions);
             const domain = b.sites[0]?.domain ?? (b.websiteUrl ? shortUrl(b.websiteUrl) : null);
@@ -115,7 +113,7 @@ async function BusinessCards() {
               <li key={b.slug}>
                 <Link
                   href={businessHref(b.slug)}
-                  className="group flex h-full flex-col rounded-2xl bg-wash p-5 transition-[background-color,transform] duration-200 hover:-translate-y-1 hover:bg-mist"
+                  className="group flex h-full flex-col rounded-3xl bg-wash p-6 transition-[background-color,transform] duration-200 hover:-translate-y-1 hover:bg-mist"
                 >
                   <span className="flex items-start justify-between gap-3 text-xl font-extrabold leading-tight tracking-[-0.02em]">
                     <span className="min-w-0">{b.name}</span>
@@ -141,16 +139,7 @@ async function BusinessCards() {
                       {[domain, monthly > 0 ? `${formatMoney(monthly, "USD")} a month in tools` : null].filter(Boolean).join(" · ") || "No details yet"}
                     </span>
                   </span>
-                  <span className="mt-auto flex items-center gap-2 pt-4 text-sm font-semibold">
-                    <StatusDot tone={worst ? (worst.status === "expired" ? "bad" : "warn") : renewals.length ? "ok" : "neutral"} />
-                    {worst
-                      ? `${worst.label}: ${renewalWords(worst).toLowerCase()}`
-                      : renewals.length
-                        ? "Renewals all current"
-                        : b.sites.length
-                          ? "No renewal dates saved"
-                          : "No websites saved yet"}
-                  </span>
+                  <RenewalLine record={b} today={today} className="mt-auto pt-4" />
                 </Link>
               </li>
             );

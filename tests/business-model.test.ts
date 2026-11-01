@@ -1,11 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
   bookAttention,
+  bookTotals,
   daysFrom,
   monthlyCost,
   monthlyTotal,
   mostUrgent,
   quickLinks,
+  renewalSummary,
   renewalWords,
   siteRenewals,
   type BusinessRecord,
@@ -115,6 +117,39 @@ describe("renewals", () => {
     expect(daysFrom(today, "2026-10-15")).toBe(5);
     expect(daysFrom(today, "2026-10-10")).toBe(0);
     expect(daysFrom(today, "nope")).toBeNull();
+  });
+
+  it("sums up a business in one line, worst first", () => {
+    expect(renewalSummary(record(), today)).toEqual({ tone: "neutral", text: "No websites saved yet" });
+    expect(renewalSummary(record({ sites: [site()] }), today)).toEqual({ tone: "neutral", text: "No renewal dates saved" });
+    expect(renewalSummary(record({ sites: [site({ domainExpiry: "2027-03-01" })] }), today)).toEqual({ tone: "ok", text: "Renewals all current" });
+    expect(renewalSummary(record({ sites: [site({ domainExpiry: "2026-10-20" })] }), today)).toEqual({ tone: "warn", text: "Domain: renews in 10 days" });
+    expect(renewalSummary(record({ sites: [site({ domainExpiry: "2026-10-20", sslExpiry: "2026-10-09" })] }), today)).toEqual({
+      tone: "bad",
+      text: "SSL certificate: expired 1 day ago",
+    });
+  });
+});
+
+describe("totals", () => {
+  it("adds up every business and the shared tools", () => {
+    const t = bookTotals(
+      {
+        businesses: [
+          record({ sites: [site({ domainExpiry: "2026-10-20" }), site()], subscriptions: [sub({ amount: 10 })] }),
+          record({ id: "b2", status: "paused", sites: [site({ domainExpiry: "2026-10-20" })], subscriptions: [sub({ amount: 120, billingCycle: "yearly" })] }),
+        ],
+        shared: [sub({ businessId: null, amount: 5 })],
+      },
+      today,
+    );
+    // The paused business still costs money and has a site, but its renewal isn't flagged.
+    expect(t).toEqual({ active: 1, paused: 1, sites: 3, monthly: 25, due: 1, datesSaved: true });
+  });
+
+  it("knows when no dates are saved", () => {
+    const t = bookTotals({ businesses: [record({ sites: [site()] })], shared: [] }, today);
+    expect(t).toEqual({ active: 1, paused: 0, sites: 1, monthly: 0, due: 0, datesSaved: false });
   });
 });
 

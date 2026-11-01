@@ -13,6 +13,9 @@ const buttonVariants = {
   secondary: "bg-wash text-ink hover:bg-mist",
   /** For use on a card. */
   light: "bg-paper text-ink hover:bg-mist",
+  /** For use on the dark hero card, in either theme. */
+  hero: "bg-white text-black hover:bg-white/85",
+  heroSoft: "bg-white/10 text-white hover:bg-white/20",
   ghost: "rounded-none px-0 underline decoration-1 underline-offset-4 hover:decoration-2 active:scale-100",
 } as const;
 

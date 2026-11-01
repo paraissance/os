@@ -31,13 +31,19 @@ export function mainSite(record: BusinessRecord): BusinessSite | null {
   return record.sites.find((s) => s.domain.replace(/^www\./, "") === main || host(s.url) === main) ?? record.sites[0] ?? null;
 }
 
+/** The address to open a business at: its own, else its main website's. */
+export function mainAddress(record: BusinessRecord): string | null {
+  const site = mainSite(record);
+  return record.websiteUrl ?? site?.url ?? (site ? `https://${site.domain}` : null);
+}
+
 /* ─── Magic links ─────────────────────────────────────────────────── */
 
 /** One tap to the business's site, where it's edited, its logins, tools and profiles; adjusted on its edit page. */
 export function BusinessMagicLinks({ record }: { record: BusinessRecord }) {
   const links = quickLinks(record);
   return (
-    <section className="animate-rise">
+    <section className="animate-rise rounded-3xl bg-wash p-6">
       <Title
         level={3}
         note={
@@ -48,7 +54,7 @@ export function BusinessMagicLinks({ record }: { record: BusinessRecord }) {
       >
         Magic links
       </Title>
-      {links.length ? <LinkPills links={links} className="rounded-2xl bg-wash p-5" /> : <Muted>No links saved for {record.name} yet.</Muted>}
+      {links.length ? <LinkPills links={links} /> : <Muted>No links saved for {record.name} yet.</Muted>}
     </section>
   );
 }
@@ -58,7 +64,7 @@ export function BusinessMagicLinks({ record }: { record: BusinessRecord }) {
 export function BusinessAbout({ record }: { record: BusinessRecord }) {
   const [first, ...rest] = knowledgeSections(record.about);
   return (
-    <section className="animate-rise">
+    <section className="animate-rise rounded-3xl bg-wash p-6 sm:p-8">
       <Title level={3}>About</Title>
       {first ? (
         <>
@@ -93,7 +99,7 @@ export function BusinessAbout({ record }: { record: BusinessRecord }) {
           ) : null}
         </>
       ) : (
-        <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-wash px-5 py-4">
+        <div className="flex flex-wrap items-center justify-between gap-4">
           <Muted>Nothing written about {record.name} yet.</Muted>
           <Link href={editHref(record.slug, "details")} className={buttonClass("primary", "min-h-9 px-4")}>
             Write about it
@@ -156,7 +162,7 @@ function Status({ health, timeZone }: { health: SiteHealth | null | "none"; time
  * the host isn't known yet.
  */
 export function SiteSide({ record, site, health, timeZone }: { record: BusinessRecord; site: BusinessSite | null; health: SiteHealth | null | "none"; timeZone: string }) {
-  const address = record.websiteUrl ?? site?.url ?? (site ? `https://${site.domain}` : null);
+  const address = mainAddress(record);
   let domain = site?.domain ?? null;
   if (!domain && address) {
     try {
@@ -206,7 +212,7 @@ export function TrafficPanel({ traffic, now, domain, code }: { traffic: Traffic;
     return (
       <section className="reveal">
         <Title level={3}>Website traffic</Title>
-        <div className="space-y-4 rounded-2xl bg-wash p-5">
+        <div className="space-y-4 rounded-3xl bg-wash p-6">
           <p className="max-w-2xl text-[15px] leading-relaxed">
             No visits counted yet. JodyOS counts them with the agent line: once it&apos;s on {domain ?? "the website"}, every page view shows here within a minute.
           </p>

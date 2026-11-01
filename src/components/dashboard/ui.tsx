@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import type { AttentionItem } from "@/lib/os-analytics";
+import { renewalSummary, type BusinessRecord } from "@/lib/business-model";
 import { linkify, shortUrl } from "@/lib/business-view";
 import { StatusDot, cx } from "@/components/ui/primitives";
 
@@ -55,6 +56,17 @@ export function Tile({ label, value, children }: { label: string; value: ReactNo
       <p className="mt-2 whitespace-nowrap text-3xl font-extrabold tabular-nums tracking-[-0.03em] sm:text-4xl">{value}</p>
       <div className="mt-1 min-h-5 text-sm text-muted">{children}</div>
     </div>
+  );
+}
+
+/** How a business's renewals stand: a dot and a few words. */
+export function RenewalLine({ record, today, className }: { record: BusinessRecord; today: Date; className?: string }) {
+  const { tone, text } = renewalSummary(record, today);
+  return (
+    <span className={cx("flex items-center gap-2 text-sm font-semibold", className)}>
+      <StatusDot tone={tone} />
+      {text}
+    </span>
   );
 }
 
@@ -123,7 +135,7 @@ export function Rows({ children, className }: { children: ReactNode; className?:
 /** Label → value rows on a soft card. Empty values show a dash. */
 export function Facts({ rows }: { rows: [label: string, value: ReactNode][] }) {
   return (
-    <dl className="rounded-2xl bg-wash px-5 py-1">
+    <dl className="rounded-3xl bg-wash px-6 py-2">
       {rows.map(([k, v]) => (
         <div key={k} className="grid grid-cols-[minmax(0,8.5rem)_minmax(0,1fr)] gap-3 border-b border-paper py-3 text-[15px] last:border-b-0">
           <dt className="text-muted">{k}</dt>
