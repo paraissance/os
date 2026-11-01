@@ -177,7 +177,7 @@ export function AttentionList({ items, empty }: { items: AttentionItem[]; empty:
               href={item.href}
               className={cx(
                 "group flex items-center gap-4 rounded-2xl px-5 py-4 transition-[background-color,transform] duration-200 hover:-translate-y-0.5",
-                urgent ? "bg-ink text-paper hover:bg-[#262626]" : "bg-wash hover:bg-mist",
+                urgent ? "bg-ink text-paper hover:bg-ink/85" : "bg-wash hover:bg-mist",
               )}
             >
               <span className="min-w-0 flex-1">

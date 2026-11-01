@@ -2,11 +2,11 @@ import { Wordmark } from "@/components/ui/logo";
 
 export default function AuthLayout({ children }: LayoutProps<"/">) {
   return (
-    <div className="relative flex min-h-dvh flex-col bg-wash">
+    <div className="relative flex min-h-dvh flex-col bg-paper">
       {/* A faint dot grid behind the card. */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 opacity-60 [background-image:radial-gradient(circle,#d4d4d4_1px,transparent_1.2px)] [background-size:24px_24px] [mask-image:radial-gradient(ellipse_at_center,black,transparent_75%)]"
+        className="pointer-events-none absolute inset-0 opacity-30 [background-image:radial-gradient(circle,var(--color-line)_1px,transparent_1.2px)] [background-size:24px_24px] [mask-image:radial-gradient(ellipse_at_center,black,transparent_75%)]"
       />
       <header className="relative flex h-14 items-center px-5 sm:px-8">
         <Wordmark />

@@ -48,7 +48,7 @@ export function SetupScreen() {
 
 function SetupCard({ children }: { children: ReactNode }) {
   return (
-    <div className="mx-auto w-full max-w-md animate-rise rounded-[2rem] bg-paper p-6 shadow-[0_50px_100px_-30px_rgba(0,0,0,0.35),0_20px_40px_-20px_rgba(0,0,0,0.2)] sm:p-10">
+    <div className="mx-auto w-full max-w-md animate-rise rounded-[2rem] bg-wash p-6 shadow-[0_50px_100px_-30px_rgba(0,0,0,0.35),0_20px_40px_-20px_rgba(0,0,0,0.2)] sm:p-10">
       <h1 className="text-4xl font-extrabold leading-none tracking-[-0.04em] sm:text-5xl">Set up.</h1>
       <p className="mb-6 mt-2 text-muted">Create the owner account. This only works once.</p>
       {children}

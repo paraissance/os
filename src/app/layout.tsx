@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Archivo, Cookie, IBM_Plex_Mono } from "next/font/google";
-import { NAV_SCRIPT } from "@/components/shell/nav-state";
+import { SHELL_SCRIPT } from "@/components/shell/shell-state";
 import "./globals.css";
 
 const archivo = Archivo({
@@ -28,16 +28,19 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#ffffff",
-  colorScheme: "light",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f2f2f2" },
+    { media: "(prefers-color-scheme: dark)", color: "#0b0b0b" },
+  ],
+  colorScheme: "light dark",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    // The head script may add data-nav before React hydrates.
+    // The head script may add data-nav and data-theme before React hydrates.
     <html lang="en" className={`${archivo.variable} ${plexMono.variable} ${cookie.variable}`} suppressHydrationWarning>
       <head>
-        <script dangerouslySetInnerHTML={{ __html: NAV_SCRIPT }} />
+        <script dangerouslySetInnerHTML={{ __html: SHELL_SCRIPT }} />
       </head>
       <body>{children}</body>
     </html>

@@ -462,7 +462,7 @@ export function SitesEditor({ businessId, sites }: { businessId: string; sites: 
                 {text("domainExpiry", "Renews on", { type: "date" })}
               </div>
               <label className="flex items-center gap-2 text-[15px]">
-                <input type="checkbox" name="domainAutoRenew" defaultChecked={values.domainAutoRenew === "on"} className="size-4 accent-black" />
+                <input type="checkbox" name="domainAutoRenew" defaultChecked={values.domainAutoRenew === "on"} className="size-4 accent-ink" />
                 Auto-renew is on
               </label>
             </Group>
@@ -601,7 +601,7 @@ export function SubscriptionsEditor({ businessId, subscriptions }: { businessId:
           </Field>
           {businessId ? (
             <label className="flex items-center gap-2 text-[15px]">
-              <input type="checkbox" name="shared" defaultChecked={values.shared === "on"} className="size-4 accent-black" />
+              <input type="checkbox" name="shared" defaultChecked={values.shared === "on"} className="size-4 accent-ink" />
               Shared by all businesses
             </label>
           ) : null}

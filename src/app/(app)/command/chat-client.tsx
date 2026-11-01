@@ -205,7 +205,7 @@ export function ChatClient({
   const pillButton = "min-h-9 rounded-full bg-paper px-3.5 text-sm font-semibold transition-colors duration-200 hover:bg-mist";
 
   return (
-    <div className="grid gap-3 lg:h-[calc(100dvh-6rem)] lg:grid-cols-[17rem_1fr]">
+    <div className="grid gap-3 lg:h-[calc(100dvh-8rem)] lg:grid-cols-[17rem_1fr]">
       {/* Conversation history */}
       <aside
         className={cx("min-h-0 flex-col overflow-hidden rounded-3xl bg-wash", showHistory ? "flex animate-rise" : "hidden lg:flex")}
@@ -236,7 +236,7 @@ export function ChatClient({
                   onClick={() => void remove(c.id)}
                   className={cx(
                     "w-10 shrink-0 text-base transition-opacity lg:opacity-0 lg:group-hover:opacity-100 focus-visible:opacity-100",
-                    active ? "lg:opacity-100 hover:bg-[#262626]" : "hover:bg-ink hover:text-paper",
+                    active ? "lg:opacity-100 hover:bg-ink/85" : "hover:bg-ink hover:text-paper",
                   )}
                   aria-label={`Delete conversation: ${c.title}`}
                   title="Delete"

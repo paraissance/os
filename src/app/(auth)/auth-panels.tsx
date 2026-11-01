@@ -120,7 +120,7 @@ export function AuthPanels({ login, code }: { login: ReactNode; code: ReactNode 
 
   return (
     <ModeContext value={show}>
-      <div className="relative mx-auto flex w-full max-w-5xl animate-rise flex-col overflow-hidden rounded-[2rem] bg-paper shadow-[0_50px_100px_-30px_rgba(0,0,0,0.35),0_20px_40px_-20px_rgba(0,0,0,0.2)] md:block md:min-h-[540px]">
+      <div className="relative mx-auto flex w-full max-w-5xl animate-rise flex-col overflow-hidden rounded-[2rem] bg-wash shadow-[0_50px_100px_-30px_rgba(0,0,0,0.35),0_20px_40px_-20px_rgba(0,0,0,0.2)] md:block md:min-h-[540px]">
         <div className="order-2 md:grid md:min-h-[540px] md:grid-cols-2">
           <Panel
             mode="code"

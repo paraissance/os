@@ -6,7 +6,7 @@ export function AskBar() {
   return (
     <Form
       action="/command"
-      className="mb-10 flex max-w-3xl animate-rise items-center gap-2 rounded-full border border-line bg-paper p-1.5 pl-5 transition-colors focus-within:border-ink hover:border-ink"
+      className="flex max-w-3xl animate-rise items-center gap-2 rounded-full border border-line bg-paper p-1.5 pl-5 text-ink transition-colors focus-within:border-ink hover:border-ink"
     >
       <label htmlFor="quick-command" className="sr-only">
         Ask Jody Core

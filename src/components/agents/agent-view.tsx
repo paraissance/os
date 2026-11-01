@@ -83,7 +83,7 @@ export function AgentView({ agent, origin, aiReady }: { agent: Agent; origin: st
         {agent.ctaUrl && agent.ctaLabel ? (
           <div className="text-right">
             <p className="mb-1 text-sm text-muted">Main button</p>
-            <Out link={{ label: agent.ctaLabel, url: agent.ctaUrl }} className="bg-ink text-paper hover:bg-[#262626]" />
+            <Out link={{ label: agent.ctaLabel, url: agent.ctaUrl }} className="bg-ink text-paper hover:bg-ink/85" />
           </div>
         ) : null}
       </header>

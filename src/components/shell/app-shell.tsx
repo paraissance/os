@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { Suspense, useEffect, useRef, useState, useSyncExternalStore, type CSSProperties, type ReactNode } from "react";
 import { Wordmark } from "@/components/ui/logo";
 import { cx } from "@/components/ui/primitives";
-import { NAV_KEY } from "./nav-state";
+import { NAV_KEY, THEME_KEY } from "./shell-state";
 
 /**
  * The main places, nothing more. Everything else (Activity, Integrations and
@@ -111,23 +111,58 @@ function Icon({ children, className }: { children: ReactNode; className?: string
   );
 }
 
-/* The folded rail lives on <html> (data-nav), so the head script can apply it before the first paint. */
-const NAV_EVENT = "jodyos-nav";
+/* The folded rail and the theme live on <html> (data-nav, data-theme), so the head script can apply them before the first paint. */
+const SHELL_EVENT = "jodyos-shell";
 const railClosed = () => document.documentElement.dataset.nav === "closed";
-function onRailChange(notify: () => void) {
-  window.addEventListener(NAV_EVENT, notify);
-  return () => window.removeEventListener(NAV_EVENT, notify);
+const isDark = () => document.documentElement.dataset.theme === "dark";
+function onShellChange(notify: () => void) {
+  window.addEventListener(SHELL_EVENT, notify);
+  return () => window.removeEventListener(SHELL_EVENT, notify);
+}
+function remember(key: string, value: string) {
+  try {
+    localStorage.setItem(key, value);
+  } catch {
+    // Private windows may refuse storage; the change still holds for this visit.
+  }
+  window.dispatchEvent(new Event(SHELL_EVENT));
 }
 function toggleRail() {
   const html = document.documentElement;
   if (railClosed()) delete html.dataset.nav;
   else html.dataset.nav = "closed";
-  try {
-    localStorage.setItem(NAV_KEY, html.dataset.nav ?? "open");
-  } catch {
-    // Private windows may refuse storage; the rail still folds for this visit.
-  }
-  window.dispatchEvent(new Event(NAV_EVENT));
+  remember(NAV_KEY, html.dataset.nav ?? "open");
+}
+function toggleTheme() {
+  const html = document.documentElement;
+  if (isDark()) delete html.dataset.theme;
+  else html.dataset.theme = "dark";
+  remember(THEME_KEY, html.dataset.theme ?? "light");
+}
+
+function ThemeToggle() {
+  const dark = useSyncExternalStore(onShellChange, isDark, () => false);
+  const label = dark ? "Switch to light mode" : "Switch to dark mode";
+  return (
+    <button
+      type="button"
+      onClick={toggleTheme}
+      aria-label={label}
+      title={label}
+      className="flex size-10 shrink-0 items-center justify-center rounded-full bg-wash transition-colors duration-200 hover:bg-mist"
+    >
+      <Icon>
+        {dark ? (
+          <>
+            <circle cx="12" cy="12" r="4" />
+            <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
+          </>
+        ) : (
+          <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z" />
+        )}
+      </Icon>
+    </button>
+  );
 }
 
 function under(pathname: string, href: string) {
@@ -188,7 +223,38 @@ function ActiveNav(props: NavProps) {
   return <NavGroups activePath={usePathname()} {...props} />;
 }
 
-function SidebarContent({ userSlot, rail, onNavigate }: NavProps & { userSlot: ReactNode }) {
+/**
+ * The pills across the top: the main places by name (Others and Settings stay
+ * in the rail). Only while the rail is folded; open, it shows the names itself.
+ */
+function TopNav({ activePath }: { activePath: string | null }) {
+  return (
+    <nav aria-label="Top" className="col-start-2 hidden items-center gap-1 rounded-full bg-wash p-1 lg:rail:flex">
+      {NAV.slice(0, 6).map((item) => {
+        const active = activePath !== null && isActive(activePath, item.href);
+        return (
+          <Link
+            key={item.href}
+            href={item.href}
+            aria-current={active ? "page" : undefined}
+            className={cx(
+              "flex min-h-9 items-center whitespace-nowrap rounded-full px-4 text-sm font-semibold transition-colors duration-200",
+              active ? "bg-ink text-paper" : "text-muted hover:text-ink",
+            )}
+          >
+            {item.label}
+          </Link>
+        );
+      })}
+    </nav>
+  );
+}
+
+function ActiveTopNav() {
+  return <TopNav activePath={usePathname()} />;
+}
+
+function SidebarContent({ userSlot, rail, onNavigate }: NavProps & { userSlot?: ReactNode }) {
   return (
     <div className="flex h-full flex-col">
       <div className="flex h-16 shrink-0 items-center px-6 transition-[padding] duration-500 ease-out-soft lg:rail:justify-center lg:rail:px-0">
@@ -198,22 +264,22 @@ function SidebarContent({ userSlot, rail, onNavigate }: NavProps & { userSlot: R
         </Link>
       </div>
 
-      {/* Desktop: the list sits mid-height, level with the arrow. pt-10 makes up for the user box being 24px taller than the header. */}
-      <nav className="no-scrollbar flex-1 overflow-y-auto py-4 lg:flex lg:flex-col lg:pt-10" aria-label="Main">
+      {/* Desktop: the list sits mid-height, level with the arrow. pb-20 balances the header above it. */}
+      <nav className="no-scrollbar flex-1 overflow-y-auto py-4 lg:flex lg:flex-col lg:pb-20" aria-label="Main">
         <Suspense fallback={<NavGroups activePath={null} rail={rail} onNavigate={onNavigate} />}>
           <ActiveNav rail={rail} onNavigate={onNavigate} />
         </Suspense>
       </nav>
 
-      {/* Folded: just the avatar; signing out waits for the open sidebar. */}
-      <div className="m-3 shrink-0 overflow-hidden rounded-2xl bg-wash lg:rail:[&_form]:hidden lg:rail:[&>div]:px-2.5">{userSlot}</div>
+      {/* Only the phone menu: on a computer the user sits in the top bar. */}
+      {userSlot ? <div className="m-3 shrink-0 rounded-full bg-wash">{userSlot}</div> : null}
     </div>
   );
 }
 
 export function AppShell({ children, userSlot }: { children: ReactNode; userSlot: ReactNode }) {
   const [open, setOpen] = useState(false);
-  const rail = useSyncExternalStore(onRailChange, railClosed, () => false);
+  const rail = useSyncExternalStore(onShellChange, railClosed, () => false);
   const router = useRouter();
   const drawerRef = useRef<HTMLDivElement>(null);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
@@ -251,7 +317,7 @@ export function AppShell({ children, userSlot }: { children: ReactNode; userSlot
     <div className="min-h-dvh">
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 border-r border-hair bg-paper transition-[width] duration-500 ease-out-soft lg:block lg:rail:w-20">
         <div className="h-full overflow-hidden">
-          <SidebarContent userSlot={userSlot} rail={rail} />
+          <SidebarContent rail={rail} />
         </div>
         <button
           type="button"
@@ -271,20 +337,23 @@ export function AppShell({ children, userSlot }: { children: ReactNode; userSlot
         <Link href="/" aria-label="JodyOS dashboard">
           <Wordmark />
         </Link>
-        <button
-          ref={menuButtonRef}
-          type="button"
-          onClick={() => setOpen(true)}
-          className="min-h-10 rounded-full bg-wash px-4 text-sm font-semibold transition-colors hover:bg-mist"
-          aria-expanded={open}
-        >
-          Menu
-        </button>
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+          <button
+            ref={menuButtonRef}
+            type="button"
+            onClick={() => setOpen(true)}
+            className="min-h-10 rounded-full bg-wash px-4 text-sm font-semibold transition-colors hover:bg-mist"
+            aria-expanded={open}
+          >
+            Menu
+          </button>
+        </div>
       </header>
 
       {open ? (
         <div className="fixed inset-0 z-40 lg:hidden">
-          <div className="absolute inset-0 animate-fade bg-ink/40" onClick={close} aria-hidden="true" />
+          <div className="absolute inset-0 animate-fade bg-black/40" onClick={close} aria-hidden="true" />
           <div
             ref={drawerRef}
             role="dialog"
@@ -306,7 +375,16 @@ export function AppShell({ children, userSlot }: { children: ReactNode; userSlot
       ) : null}
 
       <div className="transition-[padding] duration-500 ease-out-soft lg:pl-64 lg:rail:pl-20">
-        <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-8 lg:px-12 lg:py-12">{children}</main>
+        <header className="sticky top-0 z-20 hidden h-16 grid-cols-[1fr_auto_1fr] items-center gap-4 bg-paper/85 px-6 backdrop-blur lg:grid">
+          <Suspense fallback={<TopNav activePath={null} />}>
+            <ActiveTopNav />
+          </Suspense>
+          <div className="col-start-3 flex items-center justify-end gap-2">
+            <ThemeToggle />
+            <div className="rounded-full bg-wash">{userSlot}</div>
+          </div>
+        </header>
+        <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-8 lg:px-12 lg:pb-12 lg:pt-4">{children}</main>
       </div>
     </div>
   );

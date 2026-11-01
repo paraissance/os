@@ -9,9 +9,9 @@ const buttonBase =
   "inline-flex min-h-11 items-center justify-center gap-2 rounded-full px-5 text-sm font-semibold transition-[background-color,color,transform] duration-200 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-40 disabled:active:scale-100";
 
 const buttonVariants = {
-  primary: "bg-ink text-paper hover:bg-[#262626]",
+  primary: "bg-ink text-paper hover:bg-ink/85",
   secondary: "bg-wash text-ink hover:bg-mist",
-  /** For use on a grey surface. */
+  /** For use on a card. */
   light: "bg-paper text-ink hover:bg-mist",
   ghost: "rounded-none px-0 underline decoration-1 underline-offset-4 hover:decoration-2 active:scale-100",
 } as const;
@@ -75,7 +75,7 @@ export function Field({
   );
 }
 
-/** A soft grey surface. No outline: space separates panels. */
+/** A card on the page. No outline: space separates panels. */
 export function Panel({ className, ...props }: ComponentProps<"section">) {
   return <section className={cx("animate-rise overflow-hidden rounded-2xl bg-wash", className)} {...props} />;
 }
@@ -112,13 +112,13 @@ export function PageHeader({
   action?: ReactNode;
 }) {
   return (
-    <header className="mb-10 animate-rise">
-      {eyebrow ? <p className="label mb-3 text-muted">{eyebrow}</p> : null}
+    <header className="mb-8 animate-rise">
+      {eyebrow ? <p className="label mb-2 text-muted">{eyebrow}</p> : null}
       <div className="flex flex-wrap items-end justify-between gap-4">
-        <h1 className="text-5xl font-extrabold leading-[0.95] tracking-[-0.045em] sm:text-6xl">{title}</h1>
+        <h1 className="text-4xl font-extrabold leading-[0.95] tracking-[-0.04em] sm:text-5xl">{title}</h1>
         {action}
       </div>
-      {description ? <p className="mt-4 max-w-2xl text-lg leading-relaxed text-muted">{description}</p> : null}
+      {description ? <p className="mt-3 max-w-2xl text-base leading-relaxed text-muted">{description}</p> : null}
     </header>
   );
 }

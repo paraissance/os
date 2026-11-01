@@ -13,7 +13,7 @@ export async function UserMenu() {
     );
   }
   return (
-    <div className="flex items-center justify-between gap-3 px-4 py-3.5">
+    <div className="flex items-center justify-between gap-3 py-1.5 pl-1.5 pr-2">
       <span className="flex min-w-0 items-center gap-3">
         <span aria-hidden="true" className="flex size-9 shrink-0 items-center justify-center rounded-full bg-ink text-paper">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="size-5">
@@ -21,7 +21,8 @@ export async function UserMenu() {
             <path d="M4 21a8 8 0 0 1 16 0" />
           </svg>
         </span>
-        <span className="min-w-0">
+        {/* The top bar is tight on small laptops: there, just the icon and Sign out. */}
+        <span className="min-w-0 lg:max-xl:hidden">
           <span className="block truncate text-sm font-semibold">{user.name}</span>
           <span className="block truncate text-xs text-muted">{user.email}</span>
         </span>
@@ -37,9 +38,9 @@ export async function UserMenu() {
 
 export function UserMenuSkeleton() {
   return (
-    <div className="flex items-center gap-3 px-4 py-3.5">
+    <div className="flex items-center gap-3 py-1.5 pl-1.5 pr-4">
       <Skeleton className="size-9 rounded-full" />
-      <div className="space-y-1.5">
+      <div className="space-y-1.5 lg:max-xl:hidden">
         <Skeleton className="h-4 w-24 rounded-md" />
         <Skeleton className="h-3 w-36 rounded-md" />
       </div>

@@ -83,7 +83,7 @@ export function BrandAccountsForm({ brands, channels, initialId }: { brands: Bra
                           else next.delete(c.key);
                           setChecked(next);
                         }}
-                        className="mt-1 size-4 shrink-0 accent-black"
+                        className="mt-1 size-4 shrink-0 accent-ink"
                       />
                       <span className="min-w-0">
                         <span className="flex flex-wrap items-center gap-1.5 text-[15px] font-semibold">

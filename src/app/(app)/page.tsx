@@ -27,10 +27,13 @@ export const metadata: Metadata = { title: "Dashboard" };
 export default function DashboardPage(props: PageProps<"/">) {
   return (
     <>
-      <Suspense fallback={<Skeleton className="mb-6 h-32 w-full" />}>
-        <Greeting />
-      </Suspense>
-      <AskBar />
+      {/* The hero stays dark in both themes, so its words are white on purpose. */}
+      <section className="mb-8 animate-rise rounded-3xl bg-[radial-gradient(90%_140%_at_100%_0%,var(--color-hero-glow),var(--color-hero)_70%)] p-6 text-white sm:p-10">
+        <Suspense fallback={<div aria-hidden="true" className="mb-6 h-32 animate-shimmer rounded-2xl bg-white/10" />}>
+          <Greeting />
+        </Suspense>
+        <AskBar />
+      </section>
       <Suspense fallback={<Skeleton className="h-96" />}>
         <Body searchParams={props.searchParams} />
       </Suspense>
@@ -46,11 +49,11 @@ async function Greeting() {
   const date = new Intl.DateTimeFormat("en-GB", { timeZone: timezone, weekday: "long", day: "numeric", month: "long" }).format(now);
   return (
     <header className="mb-6 animate-rise">
-      <p className="label mb-3 text-muted">{date}</p>
-      <h1 className="text-5xl font-extrabold leading-[0.95] tracking-[-0.045em] sm:text-7xl">
+      <p className="label mb-3 text-white/70">{date}</p>
+      <h1 className="text-4xl font-extrabold leading-[0.95] tracking-[-0.04em] sm:text-6xl">
         {greeting(now, timezone)}, {(owner ?? user.name).split(" ")[0]}.
       </h1>
-      <p className="mt-3 text-lg text-muted">Here&apos;s how your businesses are doing.</p>
+      <p className="mt-3 text-lg text-white/70">Here&apos;s how your businesses are doing.</p>
     </header>
   );
 }
@@ -99,7 +102,7 @@ async function BusinessTab({ slug }: { slug: string }) {
   return (
     <article aria-label={record.name} className="space-y-14">
       <header className="flex animate-rise flex-wrap items-end justify-between gap-x-6 gap-y-4">
-        <h2 className="flex min-w-0 flex-wrap items-center gap-3 text-4xl font-extrabold leading-[0.95] tracking-[-0.04em] sm:text-6xl">
+        <h2 className="flex min-w-0 flex-wrap items-center gap-3 text-4xl font-extrabold leading-[0.95] tracking-[-0.04em] sm:text-5xl">
           {record.name}
           {record.status === "paused" ? <Badge tone="neutral">Paused</Badge> : null}
         </h2>
