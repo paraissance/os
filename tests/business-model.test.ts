@@ -144,12 +144,25 @@ describe("totals", () => {
       today,
     );
     // The paused business still costs money and has a site, but its renewal isn't flagged.
-    expect(t).toEqual({ active: 1, paused: 1, sites: 3, monthly: 25, due: 1, datesSaved: true });
+    expect(t).toEqual({ active: 1, paused: 1, sites: 3, monthly: 25, tools: 3, mixedCurrency: false, due: 1, datesSaved: true });
   });
 
   it("knows when no dates are saved", () => {
     const t = bookTotals({ businesses: [record({ sites: [site()] })], shared: [] }, today);
-    expect(t).toEqual({ active: 1, paused: 0, sites: 1, monthly: 0, due: 0, datesSaved: false });
+    expect(t).toEqual({ active: 1, paused: 0, sites: 1, monthly: 0, tools: 0, mixedCurrency: false, due: 0, datesSaved: false });
+  });
+
+  it("doesn't count dates on things it isn't watching", () => {
+    const t = bookTotals(
+      { businesses: [record({ status: "paused", sites: [site({ domainExpiry: "2027-03-01" })] }), record({ id: "b2", subscriptions: [sub({ active: false, nextRenewal: "2027-03-01" })] })], shared: [] },
+      today,
+    );
+    expect(t.datesSaved).toBe(false);
+  });
+
+  it("says when prices are in different currencies", () => {
+    const t = bookTotals({ businesses: [record({ subscriptions: [sub({ currency: "EUR" })] })], shared: [sub({ businessId: null })] }, today);
+    expect(t.mixedCurrency).toBe(true);
   });
 });
 

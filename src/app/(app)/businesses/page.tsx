@@ -54,7 +54,11 @@ function Totals({ book, today }: { book: BusinessBook; today: Date }) {
       stats={[
         { label: t.active === 1 ? "Active business" : "Active businesses", value: <CountUp value={t.active} />, note: t.paused ? `${t.paused} paused` : null },
         { label: t.sites === 1 ? "Website" : "Websites", value: <CountUp value={t.sites} /> },
-        { label: "A month in tools", value: t.monthly ? formatMoney(t.monthly, "USD") : "—", note: t.monthly ? null : "No prices saved yet" },
+        {
+          label: "A month in tools",
+          value: t.monthly ? formatMoney(t.monthly, "USD") : "—",
+          note: t.monthly ? (t.mixedCurrency ? "Mixed currencies, not converted" : null) : t.tools ? "Free tools only" : "No subscriptions yet",
+        },
         {
           label: "Due soon",
           value: <CountUp value={t.due} />,
@@ -135,10 +139,10 @@ function BusinessCard({ business: b, today, first, last }: { business: BusinessR
       </div>
 
       <div className="mt-auto flex items-center gap-1.5">
-        <Link href={editHref(b.slug)} className={buttonClass("primary", "min-h-9 px-4")}>
+        <Link href={editHref(b.slug)} className={buttonClass("primary", "min-h-9! px-4!")}>
           Edit
         </Link>
-        <Link href={businessHref(b.slug)} className={buttonClass("light", "min-h-9 px-4")}>
+        <Link href={businessHref(b.slug)} className={buttonClass("light", "min-h-9! px-4!")}>
           Open
         </Link>
         <span className="ml-auto flex gap-1.5">

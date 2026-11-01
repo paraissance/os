@@ -10,7 +10,7 @@ function InlineNodes({ nodes }: { nodes: Inline[] }) {
             return <Fragment key={i}>{n.text}</Fragment>;
           case "code":
             return (
-              <code key={i} className="rounded-md bg-wash px-1 py-0.5 font-mono text-[0.86em]">
+              <code key={i} className="rounded-md bg-paper px-1 py-0.5 font-mono text-[0.86em]">
                 {n.text}
               </code>
             );
@@ -54,7 +54,7 @@ function BlockNode({ block }: { block: Block }) {
       );
     case "code":
       return (
-        <pre className="overflow-x-auto rounded-xl bg-wash p-4 font-mono text-[13px] leading-relaxed">
+        <pre className="overflow-x-auto rounded-xl bg-paper p-4 font-mono text-[13px] leading-relaxed">
           <code>{block.text}</code>
         </pre>
       );
@@ -74,7 +74,7 @@ function BlockNode({ block }: { block: Block }) {
     }
     case "quote":
       return (
-        <blockquote className="whitespace-pre-wrap rounded-r-xl border-l-4 border-ink bg-wash py-2 pl-4 pr-3 text-muted">
+        <blockquote className="whitespace-pre-wrap rounded-r-xl border-l-4 border-ink bg-paper py-2 pl-4 pr-3 text-muted">
           <InlineNodes nodes={block.children} />
         </blockquote>
       );

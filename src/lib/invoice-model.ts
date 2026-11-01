@@ -18,10 +18,11 @@ export function paidByMonth(list: InvoiceRow[], limit = 6): { key: string; label
     .map(([key, total]) => ({ key, label: MONTH.format(new Date(`${key}-01T00:00:00Z`)), total: Math.round(total * 100) / 100 }));
 }
 
-/** The totals across every paid invoice; the average counts only months with a paid invoice. */
+/** The totals across every paid invoice, and since when; the average counts only months with a paid invoice. */
 export function invoiceTotals(list: InvoiceRow[]) {
   const paid = list.filter((i) => i.status === "paid");
   const total = Math.round(paid.reduce((s, i) => s + i.amount, 0) * 100) / 100;
   const months = new Set(paid.map((i) => i.billedOn.slice(0, 7))).size;
-  return { total, count: paid.length, monthly: months ? Math.round((total / months) * 100) / 100 : 0 };
+  const since = paid.map((i) => i.billedOn).sort()[0] ?? null;
+  return { total, count: paid.length, monthly: months ? Math.round((total / months) * 100) / 100 : 0, since };
 }

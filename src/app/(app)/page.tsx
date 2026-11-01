@@ -82,7 +82,7 @@ async function Body({ searchParams }: { searchParams: PageProps<"/">["searchPara
 function NotFoundCard({ slug }: { slug: string }) {
   return (
     <div className="animate-rise rounded-3xl bg-wash p-6 sm:p-8">
-      <p className="text-2xl font-extrabold">There is no business called “{slug}”.</p>
+      <h1 className="text-2xl font-extrabold">There is no business called “{slug}”.</h1>
       <div className="mt-4 flex flex-wrap gap-2">
         <Link href="/" className={buttonClass("light")}>
           Back to all businesses

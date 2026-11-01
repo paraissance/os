@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { Suspense, useEffect, useRef, useState, useSyncExternalStore, type CSSProperties, type ReactNode } from "react";
 import { Icon, SparkIcon } from "@/components/ui/icon";
 import { Wordmark } from "@/components/ui/logo";
-import { cx, pillClass, pillTrack } from "@/components/ui/primitives";
+import { cx, pillClass, pillRail } from "@/components/ui/primitives";
 import { NAV_KEY, THEME_KEY } from "./shell-state";
 
 /**
@@ -218,11 +218,12 @@ function ActiveNav(props: NavProps) {
  */
 function TopNav({ activePath }: { activePath: string | null }) {
   return (
-    <nav aria-label="Top" className={cx(pillTrack, "col-start-2 hidden lg:rail:flex")}>
+    <nav aria-label="Top" className={cx(pillRail, "col-start-2 hidden lg:rail:flex")}>
       {NAV.slice(0, 6).map((item) => {
         const active = activePath !== null && isActive(activePath, item.href);
         return (
-          <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined} className={pillClass(active)}>
+          // A little tighter on small laptops, where the top bar has to share the width with the user chip.
+          <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined} className={cx(pillClass(active), "lg:max-xl:px-2.5")}>
             {item.label}
           </Link>
         );
@@ -246,7 +247,7 @@ function SidebarContent({ userSlot, rail, onNavigate }: NavProps & { userSlot?: 
       </div>
 
       {/* Desktop: the list sits mid-height, level with the arrow. pb-20 balances the header above it. */}
-      <nav className="no-scrollbar flex-1 overflow-y-auto py-4 lg:flex lg:flex-col lg:pb-20" aria-label="Main">
+      <nav className="no-scrollbar flex-1 overflow-y-auto overflow-x-hidden py-4 lg:flex lg:flex-col lg:pb-20" aria-label="Main">
         <Suspense fallback={<NavGroups activePath={null} rail={rail} onNavigate={onNavigate} />}>
           <ActiveNav rail={rail} onNavigate={onNavigate} />
         </Suspense>
@@ -261,10 +262,17 @@ function SidebarContent({ userSlot, rail, onNavigate }: NavProps & { userSlot?: 
 export function AppShell({ children, userSlot }: { children: ReactNode; userSlot: ReactNode }) {
   const [open, setOpen] = useState(false);
   const rail = useSyncExternalStore(onShellChange, railClosed, () => false);
+  const dark = useSyncExternalStore(onShellChange, isDark, () => false);
   const router = useRouter();
   const drawerRef = useRef<HTMLDivElement>(null);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
   const close = () => setOpen(false);
+
+  // A phone's browser bar follows the chosen theme, not only the system's.
+  useEffect(() => {
+    const paper = getComputedStyle(document.documentElement).getPropertyValue("--color-paper");
+    document.querySelectorAll('meta[name="theme-color"]').forEach((m) => m.setAttribute("content", paper));
+  }, [dark]);
 
   // Ctrl/Cmd+K jumps to AI Command from anywhere.
   useEffect(() => {
@@ -308,7 +316,7 @@ export function AppShell({ children, userSlot }: { children: ReactNode; userSlot
           title={rail ? "Open the sidebar" : "Close the sidebar"}
           className="absolute -right-4 top-1/2 flex size-8 -translate-y-1/2 items-center justify-center rounded-full border border-hair bg-paper transition-colors duration-200 hover:bg-ink hover:text-paper"
         >
-          <Icon className="size-4 transition-transform duration-500 ease-out-soft lg:rail:rotate-180">
+          <Icon size="size-4" className="transition-transform duration-500 ease-out-soft lg:rail:rotate-180">
             <path d="m15 6-6 6 6 6" />
           </Icon>
         </button>
@@ -367,7 +375,8 @@ export function AppShell({ children, userSlot }: { children: ReactNode; userSlot
             <div className="rounded-full bg-wash">{userSlot}</div>
           </div>
         </header>
-        <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-8 lg:px-12 lg:pb-12 lg:pt-4">{children}</main>
+        {/* A size container: dense grids go by the room they really have, which the open sidebar takes from. */}
+        <main className="@container mx-auto w-full max-w-6xl px-4 py-8 sm:px-8 lg:px-12 lg:pb-12 lg:pt-4">{children}</main>
       </div>
     </div>
   );

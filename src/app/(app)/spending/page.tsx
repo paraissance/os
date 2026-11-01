@@ -65,8 +65,8 @@ async function InvoicesTab({ searchParams }: { searchParams: PageProps<"/spendin
           <HeroStats
             title={`Claude Code Console · ${current.label}`}
             stats={[
-              { label: "Paid in total", value: formatMoney(totals.total, currency), note: `since ${dayLabel(list.at(-1)?.billedOn ?? null)}` },
-              { label: totals.count === 1 ? "Invoice" : "Invoices", value: totals.count },
+              { label: "Paid in total", value: formatMoney(totals.total, currency), note: totals.since ? `since ${dayLabel(totals.since)}` : "nothing paid yet" },
+              { label: totals.count === 1 ? "Paid invoice" : "Paid invoices", value: totals.count },
               { label: "Average a month", value: formatMoney(totals.monthly, currency) },
               { label: "Last invoice", value: formatMoney(list[0].amount, list[0].currency), note: dayLabel(list[0].billedOn) },
             ]}
@@ -75,7 +75,8 @@ async function InvoicesTab({ searchParams }: { searchParams: PageProps<"/spendin
           <div className="grid grid-cols-[minmax(0,1fr)] gap-x-3 gap-y-10 pt-7 xl:grid-cols-6">
             <section className="min-w-0 xl:col-span-4">
               <Title count={list.length}>Invoices</Title>
-              <div className="animate-rise overflow-x-auto rounded-3xl bg-wash">
+              {/* relative: keeps the screen-reader-only heading inside the scroller, or it stretches the page on a phone. */}
+              <div className="relative animate-rise overflow-x-auto rounded-3xl bg-wash">
                 <table className="w-full min-w-[28rem] text-left text-[15px]">
                   <thead>
                     <tr className="border-b border-paper text-sm text-muted">

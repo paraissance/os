@@ -174,7 +174,7 @@ async function Numbers() {
         <Title>Leads</Title>
         <div className="space-y-4 rounded-3xl bg-wash p-6">
           <p className="text-[15px] leading-relaxed text-muted">Not connected. Connect OS Analytics to see leads for each business.</p>
-          <Link href="/integrations" className={buttonClass("light", "min-h-9 px-4")}>
+          <Link href="/integrations" className={buttonClass("light", "min-h-9! px-4!")}>
             See Integrations →
           </Link>
         </div>

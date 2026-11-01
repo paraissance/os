@@ -27,7 +27,7 @@ export default function WebsitesPage() {
 
 function OutButton({ href, children, variant }: { href: string; children: string; variant: "light" | "primary" }) {
   return (
-    <a href={href} target="_blank" rel="noopener noreferrer" className={buttonClass(variant, "min-h-9 px-4")}>
+    <a href={href} target="_blank" rel="noopener noreferrer" className={buttonClass(variant, "min-h-9! px-4!")}>
       {children} <span aria-hidden="true">↗</span>
       <span className="sr-only">(opens in a new tab)</span>
     </a>

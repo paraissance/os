@@ -33,8 +33,10 @@ export function Button({
   return <button className={buttonClass(variant, className)} {...props} />;
 }
 
-/** A row of pills on one soft track: the same control for top bar, tabs and filters. */
-export const pillTrack = "no-scrollbar flex w-fit max-w-full gap-1 overflow-x-auto rounded-full bg-wash p-1";
+/** Pills on one soft track: the same control for tabs and filters. Many pills wrap, so none is hidden. */
+export const pillTrack = "flex w-fit max-w-full flex-wrap gap-1 rounded-3xl bg-wash p-1 [&>*]:max-w-full [&>*]:overflow-hidden";
+/** The same on one line that scrolls sideways, for the bars that stick to the top of the page. */
+export const pillRail = "no-scrollbar flex w-fit max-w-full gap-1 overflow-x-auto rounded-full bg-wash p-1";
 
 export function pillClass(active: boolean) {
   return cx(

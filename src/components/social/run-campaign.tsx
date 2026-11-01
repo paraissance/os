@@ -20,7 +20,7 @@ export function RunCampaign({ brand, name }: { brand: string; name: string }) {
         <div className="flex items-end gap-2">
           <label className="text-sm font-semibold">
             Days
-            <Input name="days" type="number" min={1} max={14} defaultValue={state?.values?.days ?? "7"} required className="mt-1 w-20 bg-paper" />
+            <Input name="days" type="number" min={1} max={14} defaultValue={state?.values?.days ?? "7"} required className="mt-1 w-20!" />
           </label>
           <Button type="submit" disabled={pending}>
             {pending ? "Starting…" : "Start"}

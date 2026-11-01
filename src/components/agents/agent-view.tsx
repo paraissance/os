@@ -13,13 +13,16 @@ import { CopyButton } from "./embed-tools";
  * rules it keeps, what it knows, and how to put it on a site.
  */
 
-function Out({ link, className }: { link: AgentLink; className?: string }) {
+function Out({ link, filled = false }: { link: AgentLink; filled?: boolean }) {
   const phone = link.url.startsWith("tel:");
   return (
     <a
       href={link.url}
       {...(phone ? {} : { target: "_blank", rel: "noopener noreferrer" })}
-      className={cx("inline-flex items-center gap-1 rounded-full bg-paper px-3 py-1 text-sm font-semibold transition-colors hover:bg-ink hover:text-paper", className)}
+      className={cx(
+        "inline-flex items-center gap-1 rounded-full px-3 py-1 text-sm font-semibold transition-colors",
+        filled ? "bg-ink text-paper hover:bg-ink/85" : "bg-paper text-ink hover:bg-mist",
+      )}
     >
       {link.label}
       {phone ? null : (
@@ -82,7 +85,7 @@ export function AgentView({ agent, origin, aiReady }: { agent: Agent; origin: st
         {agent.ctaUrl && agent.ctaLabel ? (
           <div className="text-right">
             <p className="mb-1 text-sm text-muted">Main button</p>
-            <Out link={{ label: agent.ctaLabel, url: agent.ctaUrl }} className="bg-ink text-paper hover:bg-ink/85" />
+            <Out link={{ label: agent.ctaLabel, url: agent.ctaUrl }} filled />
           </div>
         ) : null}
       </header>
@@ -175,7 +178,7 @@ export function AgentView({ agent, origin, aiReady }: { agent: Agent; origin: st
                 <p className="whitespace-pre-line text-[15px] leading-relaxed">{agent.crisis.answer}</p>
                 <div className="flex flex-wrap gap-2">
                   {agent.crisis.actions.map((a) => (
-                    <Out key={a.url} link={a} className="text-ink" />
+                    <Out key={a.url} link={a} />
                   ))}
                 </div>
               </div>
@@ -225,7 +228,7 @@ export function AgentView({ agent, origin, aiReady }: { agent: Agent; origin: st
               <code className="block select-all break-all rounded-xl bg-paper px-3 py-2 font-mono text-sm">{embedCode(origin, agent.business.slug)}</code>
               <div className="flex flex-wrap gap-2">
                 <CopyButton text={embedCode(origin, agent.business.slug)} />
-                <a href={`/analytics/try?agent=${agent.business.slug}`} className={buttonClass("light", "min-h-9 px-4")}>
+                <a href={`/analytics/try?agent=${agent.business.slug}`} className={buttonClass("light", "min-h-9! px-4!")}>
                   Try it here
                 </a>
               </div>

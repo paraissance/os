@@ -125,6 +125,9 @@
 @utility hero {
   background-image: radial-gradient(90% 140% at 100% 0%, var(--color-hero-glow), var(--color-hero) 70%);
   color: #fff;
+  & :focus-visible {
+    outline-color: #fff;
+  }
 }
 
 /* Hide a scrollbar on a row that scrolls sideways (the content still scrolls). */
@@ -180,6 +183,11 @@
   :focus-visible {
     outline: 2px solid var(--color-ink);
     outline-offset: 2px;
+  }
+
+  /* On a filled black card the usual ring would vanish. */
+  .bg-ink :focus-visible {
+    outline-color: var(--color-paper);
   }
 
   @media (prefers-reduced-motion: reduce) {

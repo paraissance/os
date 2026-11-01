@@ -237,7 +237,7 @@ export function ChatClient({
                   onClick={() => void remove(c.id)}
                   className={cx(
                     "w-10 shrink-0 text-base transition-opacity lg:opacity-0 lg:group-hover:opacity-100 focus-visible:opacity-100",
-                    active ? "lg:opacity-100 hover:bg-ink/85" : "hover:bg-ink hover:text-paper",
+                    active ? "lg:opacity-100 hover:bg-paper/20" : "hover:bg-ink hover:text-paper",
                   )}
                   aria-label={`Delete conversation: ${c.title}`}
                   title="Delete"
@@ -258,7 +258,7 @@ export function ChatClient({
         <header className="flex h-14 shrink-0 items-center justify-between gap-3 border-b border-paper px-4 sm:px-6">
           <div className="flex min-w-0 items-center gap-2.5">
             <span aria-hidden="true" className="flex size-8 items-center justify-center rounded-full bg-ink text-paper">
-              <SparkIcon className="size-4" />
+              <SparkIcon size="size-4" />
             </span>
             <h1 className="font-extrabold tracking-[-0.02em]">Jody Core</h1>
           </div>
@@ -324,7 +324,7 @@ export function ChatClient({
                 ) : (
                   <li key={m.id} className="flex animate-rise gap-3">
                     <span aria-hidden="true" className="flex size-8 shrink-0 items-center justify-center rounded-full bg-ink text-paper">
-                      <SparkIcon className="size-4" />
+                      <SparkIcon size="size-4" />
                     </span>
                     <div className="min-w-0 flex-1 break-words pt-1">
                     <p className="sr-only">Jody Core:</p>
@@ -390,12 +390,12 @@ export function ChatClient({
                 <button
                   type="button"
                   onClick={() => abortRef.current?.abort()}
-                  className={buttonClass("secondary", "min-h-10 shrink-0")}
+                  className={buttonClass("secondary", "min-h-10! shrink-0")}
                 >
                   Stop
                 </button>
               ) : (
-                <button type="submit" disabled={!input.trim()} className={buttonClass("primary", "min-h-10 shrink-0")}>
+                <button type="submit" disabled={!input.trim()} className={buttonClass("primary", "min-h-10! shrink-0")}>
                   Send
                 </button>
               )}

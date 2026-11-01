@@ -61,7 +61,7 @@ export function BrandAccountsForm({ brands, channels, initialId }: { brands: Bra
 
       <div className="grid grid-cols-[minmax(0,1fr)] gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {groups.map((g) => (
-          <fieldset key={g.platform} className="rounded-2xl bg-wash p-4">
+          <fieldset key={g.platform} className="rounded-3xl bg-wash p-5">
             <legend className="sr-only">{platformLabel(g.platform)}</legend>
             <p aria-hidden="true" className="mb-2 text-sm font-extrabold">
               {platformLabel(g.platform)}

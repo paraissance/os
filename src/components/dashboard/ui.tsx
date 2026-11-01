@@ -16,25 +16,22 @@ export function Title({
   note,
   count,
   id,
-  level = 2,
 }: {
   children: ReactNode;
   note?: ReactNode;
   count?: number;
   id?: string;
-  level?: 2 | 3;
 }) {
-  const H = level === 2 ? "h2" : "h3";
   return (
     <div id={id} className="mb-4 flex scroll-mt-24 flex-wrap items-center justify-between gap-x-4 gap-y-1">
-      <H className="flex items-center gap-2.5 text-xl font-extrabold tracking-[-0.02em] sm:text-2xl">
+      <h2 className="flex items-center gap-2.5 text-xl font-extrabold tracking-[-0.02em] sm:text-2xl">
         {children}
         {count ? (
           <span className="inline-flex min-w-7 items-center justify-center rounded-full bg-ink px-2 py-0.5 text-sm font-bold tabular-nums text-paper">
             {count}
           </span>
         ) : null}
-      </H>
+      </h2>
       {note ? <p className="text-sm text-muted">{note}</p> : null}
     </div>
   );
@@ -59,11 +56,12 @@ export function HeroStats({ title, stats }: { title?: ReactNode; stats: { label:
   return (
     <section className="hero animate-rise rounded-3xl p-6 sm:p-8">
       {title ? <h2 className="label mb-6 text-white/70">{title}</h2> : null}
-      <dl className={cx("grid grid-cols-2 gap-x-6 gap-y-8", stats.length === 3 ? "sm:grid-cols-3" : "lg:grid-cols-4")}>
+      <dl className={cx("grid grid-cols-2 gap-x-6 gap-y-8", stats.length === 3 ? "sm:grid-cols-3" : "@5xl:grid-cols-4")}>
         {stats.map((s) => (
-          <div key={s.label} className="min-w-0 lg:border-l lg:border-white/15 lg:pl-6 lg:first:border-l-0 lg:first:pl-0">
+          <div key={s.label} className="min-w-0 @5xl:border-l @5xl:border-white/15 @5xl:pl-6 @5xl:first:border-l-0 @5xl:first:pl-0">
             <dt className="text-sm font-semibold text-white/70">{s.label}</dt>
-            <dd className="mt-2 whitespace-nowrap text-4xl font-extrabold tabular-nums tracking-[-0.03em] sm:text-5xl">{s.value}</dd>
+            {/* Scales with the room there is, so a figure like $12,345.67 fits its column, down to the smallest phone. */}
+            <dd className="mt-2 whitespace-nowrap text-[clamp(1.125rem,6.5cqw,2.25rem)] font-extrabold leading-tight tabular-nums tracking-[-0.03em]">{s.value}</dd>
             {s.note ? <dd className="mt-1 text-sm text-white/70">{s.note}</dd> : null}
           </div>
         ))}

@@ -30,7 +30,7 @@ export function CopyButton({ text }: { text: string }) {
           window.setTimeout(() => setCopied(false), 2000);
         });
       }}
-      className={buttonClass("primary", "min-h-9 px-4")}
+      className={buttonClass("primary", "min-h-9! px-4!")}
     >
       {copied ? "Copied" : "Copy"}
     </button>

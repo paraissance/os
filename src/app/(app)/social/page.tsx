@@ -42,6 +42,8 @@ export default function SocialPage(props: PageProps<"/social">) {
 
 const first =(v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
 const n = (v: number) => v.toLocaleString("en-US");
+/** For a narrow tile: 1,234,567 wouldn't fit, 1.2M does. */
+const short = (v: number) => (v < 1_000_000 ? n(v) : new Intl.NumberFormat("en-US", { notation: "compact", maximumFractionDigits: 1 }).format(v));
 
 async function SocialBody({ searchParams }: { searchParams: PageProps<"/social">["searchParams"] }) {
   await requireUser();
@@ -177,7 +179,7 @@ const BLOTATO_CALENDAR = "https://my.blotato.com/calendar";
 
 function BlotatoLink() {
   return (
-    <a href={BLOTATO_CALENDAR} target="_blank" rel="noopener noreferrer" className={buttonClass("secondary", "min-h-9 px-4")}>
+    <a href={BLOTATO_CALENDAR} target="_blank" rel="noopener noreferrer" className={buttonClass("secondary", "min-h-9! px-4!")}>
       Full calendar in Blotato <span aria-hidden="true">↗</span>
       <span className="sr-only">(opens in a new tab)</span>
     </a>
@@ -299,7 +301,7 @@ async function BrandView({ brand, now, timeZone, waiting }: { brand: Brand; now:
   );
 }
 
-const SIX_COLUMNS = "grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6";
+const SIX_COLUMNS = "grid grid-cols-2 gap-3 sm:grid-cols-3 @5xl:grid-cols-6";
 
 /** One account in a cell the same size as the rest: the platform on top, the name under it. */
 function AccountCell({ account }: { account: Brand["accounts"][number] }) {
@@ -333,7 +335,9 @@ function Stat({ label, period, value, dark = false }: { label: string; period: s
   return (
     <div className={cx("min-w-0 rounded-2xl p-4", dark ? "bg-ink text-paper" : "bg-wash")}>
       <p className={cx("text-sm font-semibold", dark ? "text-paper/80" : "text-muted")}>{label}</p>
-      <p className="mt-2 text-3xl font-extrabold tabular-nums tracking-[-0.03em]">{n(value)}</p>
+      <p className="mt-2 text-3xl font-extrabold tabular-nums tracking-[-0.03em]" title={n(value)}>
+        {short(value)}
+      </p>
       <p className={cx("mt-1 text-xs", dark ? "text-paper/80" : "text-muted")}>{period}</p>
     </div>
   );

@@ -45,7 +45,6 @@ export function BusinessMagicLinks({ record }: { record: BusinessRecord }) {
   return (
     <section className="animate-rise rounded-3xl bg-wash p-6">
       <Title
-        level={3}
         note={
           <Link href={editHref(record.slug, "links")} className="font-semibold text-ink underline decoration-1 underline-offset-4">
             Adjust links
@@ -65,7 +64,7 @@ export function BusinessAbout({ record }: { record: BusinessRecord }) {
   const [first, ...rest] = knowledgeSections(record.about);
   return (
     <section className="animate-rise rounded-3xl bg-wash p-6 sm:p-8">
-      <Title level={3}>About</Title>
+      <Title>About</Title>
       {first ? (
         <>
           <div className="max-w-prose space-y-3 text-[17px] leading-relaxed">
@@ -84,7 +83,7 @@ export function BusinessAbout({ record }: { record: BusinessRecord }) {
               <div className="mt-5 max-w-prose animate-fade space-y-6">
                 {rest.map((s, i) => (
                   <div key={i}>
-                    {s.heading ? <h4 className="label mb-2 text-muted">{s.heading}</h4> : null}
+                    {s.heading ? <h3 className="label mb-2 text-muted">{s.heading}</h3> : null}
                     <div className="space-y-2 text-[15px] leading-relaxed">
                       {s.lines.map((line, j) => (
                         <p key={j}>
@@ -101,7 +100,7 @@ export function BusinessAbout({ record }: { record: BusinessRecord }) {
       ) : (
         <div className="flex flex-wrap items-center justify-between gap-4">
           <Muted>Nothing written about {record.name} yet.</Muted>
-          <Link href={editHref(record.slug, "details")} className={buttonClass("primary", "min-h-9 px-4")}>
+          <Link href={editHref(record.slug, "details")} className={buttonClass("primary", "min-h-9! px-4!")}>
             Write about it
           </Link>
         </div>
@@ -211,7 +210,7 @@ export function TrafficPanel({ traffic, now, domain, code }: { traffic: Traffic;
   if (!traffic.lastVisitAt) {
     return (
       <section className="reveal">
-        <Title level={3}>Website traffic</Title>
+        <Title>Website traffic</Title>
         <div className="space-y-4 rounded-3xl bg-wash p-6">
           <p className="max-w-2xl text-[15px] leading-relaxed">
             No visits counted yet. JodyOS counts them with the agent line: once it&apos;s on {domain ?? "the website"}, every page view shows here within a minute.
@@ -227,7 +226,7 @@ export function TrafficPanel({ traffic, now, domain, code }: { traffic: Traffic;
   const { last30, previous30, today } = traffic;
   return (
     <section className="reveal space-y-4">
-      <Title level={3} note={`last 30 days · last visit ${formatRelative(traffic.lastVisitAt, now)}`}>
+      <Title note={`last 30 days · last visit ${formatRelative(traffic.lastVisitAt, now)}`}>
         Website traffic
       </Title>
       <Tiles className="sm:grid-cols-3">

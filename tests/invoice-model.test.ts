@@ -18,7 +18,8 @@ describe("invoices", () => {
   });
 
   it("averages over the months that had a paid invoice", () => {
-    expect(invoiceTotals(list)).toEqual({ total: 25.3, count: 3, monthly: 12.65 });
-    expect(invoiceTotals([])).toEqual({ total: 0, count: 0, monthly: 0 });
+    // The unpaid August invoice doesn't move "paid since" back.
+    expect(invoiceTotals(list)).toEqual({ total: 25.3, count: 3, monthly: 12.65, since: "2026-09-01" });
+    expect(invoiceTotals([])).toEqual({ total: 0, count: 0, monthly: 0, since: null });
   });
 });

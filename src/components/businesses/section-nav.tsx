@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { cx, pillClass, pillTrack } from "@/components/ui/primitives";
+import { cx, pillClass, pillRail } from "@/components/ui/primitives";
 
 /** Jump pills for a long page: they stay in view, and the section being read is the filled one. */
 export function SectionNav({ label, parts }: { label: string; parts: { id: string; label: string; count?: number }[] }) {
@@ -24,11 +24,11 @@ export function SectionNav({ label, parts }: { label: string; parts: { id: strin
   }, [ids]);
 
   return (
-    <nav aria-label={label} className={cx(pillTrack, "sticky top-[3.75rem] z-10 border border-hair lg:top-[4.25rem]")}>
+    <nav aria-label={label} className={cx(pillRail, "sticky top-[3.75rem] z-10 border border-hair lg:top-[4.25rem]")}>
       {parts.map((part) => (
         <a key={part.id} href={`#${part.id}`} aria-current={current === part.id ? "location" : undefined} className={pillClass(current === part.id)}>
           {part.label}
-          {part.count ? <span className="text-xs tabular-nums opacity-70">{part.count}</span> : null}
+          {part.count ? <span className="text-xs tabular-nums">{part.count}</span> : null}
         </a>
       ))}
     </nav>

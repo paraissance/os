@@ -234,15 +234,18 @@ export function bookAttention(book: BusinessBook, today: Date): Attention[] {
 
 /** The totals across every business: what the top of the Businesses page shows. */
 export function bookTotals(book: BusinessBook, today: Date) {
-  const subs = [...book.businesses.flatMap((b) => b.subscriptions), ...book.shared];
-  const active = book.businesses.filter((b) => b.status === "active").length;
+  const subs = [...book.businesses.flatMap((b) => b.subscriptions), ...book.shared].filter((s) => s.active);
+  const active = book.businesses.filter((b) => b.status === "active");
   return {
-    active,
-    paused: book.businesses.length - active,
+    active: active.length,
+    paused: book.businesses.length - active.length,
     sites: book.businesses.reduce((n, b) => n + b.sites.length, 0),
     monthly: monthlyTotal(subs),
+    tools: subs.length,
+    mixedCurrency: new Set(subs.map((s) => s.currency)).size > 1,
     due: bookAttention(book, today).length,
-    // With no dates saved, "nothing due" would be a promise JodyOS can't make.
-    datesSaved: subs.some((s) => s.nextRenewal) || book.businesses.some((b) => b.sites.some((s) => siteRenewals(s, today).length)),
+    // With no dates on anything being watched, "nothing due" would be a promise JodyOS can't make.
+    datesSaved:
+      [...active.flatMap((b) => b.subscriptions), ...book.shared].some((s) => s.active && s.nextRenewal) || active.some((b) => b.sites.some((s) => siteRenewals(s, today).length)),
   };
 }

@@ -69,7 +69,7 @@ function Panel({
 function Point({ children }: { children: ReactNode }) {
   return (
     <li className="flex items-start gap-3">
-      <span aria-hidden="true" className="mt-[0.45rem] size-2 shrink-0 rounded-full bg-paper" />
+      <span aria-hidden="true" className="mt-[0.45rem] size-2 shrink-0 rounded-full bg-white" />
       <span>{children}</span>
     </li>
   );
@@ -92,7 +92,7 @@ function Story({ mode, active, children }: { mode: AuthMode; active: boolean; ch
 }
 
 const lightButton =
-  "group inline-flex min-h-11 items-center gap-2 rounded-full bg-paper px-5 text-sm font-semibold text-ink transition-[transform,background-color] duration-200 hover:bg-mist active:scale-[0.97]";
+  "group inline-flex min-h-11 items-center gap-2 rounded-full bg-white px-5 text-sm font-semibold text-black transition-[transform,background-color] duration-200 hover:bg-white/85 active:scale-[0.97]";
 
 export function AuthPanels({ login, code }: { login: ReactNode; code: ReactNode }) {
   const [mode, setMode] = useState<AuthMode>("login");
@@ -142,10 +142,10 @@ export function AuthPanels({ login, code }: { login: ReactNode; code: ReactNode 
           </Panel>
         </div>
 
-        {/* The black panel: words on top on a phone, sliding over one half on wider screens. */}
+        {/* The black panel, dark in both themes: words on top on a phone, sliding over one half on wider screens. */}
         <div
           className={cx(
-            "relative order-1 overflow-hidden bg-ink px-6 py-10 text-paper sm:px-12 md:absolute md:inset-y-0 md:left-0 md:z-10 md:flex md:w-1/2 md:items-center md:py-10",
+            "hero relative order-1 overflow-hidden px-6 py-10 sm:px-12 md:absolute md:inset-y-0 md:left-0 md:z-10 md:flex md:w-1/2 md:items-center md:py-10",
             "md:transition-transform md:duration-[850ms] md:ease-[cubic-bezier(0.77,0,0.18,1)]",
             isLogin ? "md:translate-x-0" : "md:translate-x-full",
           )}
@@ -153,16 +153,16 @@ export function AuthPanels({ login, code }: { login: ReactNode; code: ReactNode 
           <Backdrop flipped={!isLogin} />
           <div className="relative grid w-full">
             <Story mode="login" active={isLogin}>
-              <p className="label text-paper/70">JodyOS · private</p>
+              <p className="label text-white/70">JodyOS · private</p>
               <p className="mt-4 text-4xl font-extrabold leading-[0.95] tracking-[-0.04em] sm:text-6xl">Hello Jody.</p>
-              <p className="mt-5 max-w-sm text-lg leading-relaxed text-paper/80">Your businesses, websites, links and spending, in one calm place.</p>
-              <ul className="mt-8 hidden space-y-3 text-[15px] text-paper/90 sm:block">
-                <Point>Every business in its own tab</Point>
+              <p className="mt-5 max-w-sm text-lg leading-relaxed text-white/80">Your businesses, websites, links and spending, in one calm place.</p>
+              <ul className="mt-8 hidden space-y-3 text-[15px] text-white/90 sm:block">
+                <Point>Every business on its own page</Point>
                 <Point>Reminders before a domain or payment is due</Point>
                 <Point>Jody Core, ready when you are</Point>
               </ul>
               <div className="mt-10 flex flex-wrap items-center gap-4">
-                <span className="text-sm text-paper/70">No password to hand?</span>
+                <span className="text-sm text-white/70">No password to hand?</span>
                 <SwitchTo mode="code" className={lightButton}>
                   Get code
                   <span aria-hidden="true" className="transition-transform duration-200 group-hover:translate-x-1">
@@ -172,16 +172,16 @@ export function AuthPanels({ login, code }: { login: ReactNode; code: ReactNode 
               </div>
             </Story>
             <Story mode="code" active={!isLogin}>
-              <p className="label text-paper/70">One-time code</p>
+              <p className="label text-white/70">One-time code</p>
               <p className="mt-4 text-4xl font-extrabold leading-[0.95] tracking-[-0.04em] sm:text-6xl">Just your email.</p>
-              <p className="mt-5 max-w-sm text-lg leading-relaxed text-paper/80">We email you a 6-digit code. Type it in and you&apos;re signed in.</p>
-              <ul className="mt-8 hidden space-y-3 text-[15px] text-paper/90 sm:block">
+              <p className="mt-5 max-w-sm text-lg leading-relaxed text-white/80">We email you a 6-digit code. Type it in and you&apos;re signed in.</p>
+              <ul className="mt-8 hidden space-y-3 text-[15px] text-white/90 sm:block">
                 <Point>Only for people a super admin added</Point>
                 <Point>Works once, for 10 minutes</Point>
                 <Point>Nothing to remember</Point>
               </ul>
               <div className="mt-10 flex flex-wrap items-center gap-4">
-                <span className="text-sm text-paper/70">Have your password?</span>
+                <span className="text-sm text-white/70">Have your password?</span>
                 <SwitchTo mode="login" className={lightButton}>
                   <span aria-hidden="true" className="transition-transform duration-200 group-hover:-translate-x-1">
                     ←
@@ -205,7 +205,7 @@ function Backdrop({ flipped }: { flipped: boolean }) {
       <svg
         viewBox="0 0 64 64"
         className={cx(
-          "absolute -bottom-10 -right-6 size-64 text-paper opacity-[0.09] transition-transform duration-[1200ms] ease-[cubic-bezier(0.77,0,0.18,1)]",
+          "absolute -bottom-10 -right-6 size-64 text-white opacity-[0.09] transition-transform duration-[1200ms] ease-[cubic-bezier(0.77,0,0.18,1)]",
           flipped ? "-rotate-[10deg] scale-90" : "rotate-[6deg]",
         )}
       >
