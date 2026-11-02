@@ -183,7 +183,7 @@ async function BrandView({ brand, now, timeZone, waiting }: { brand: Brand; now:
 
   return (
     <article aria-label={brand.business.name} className="space-y-3">
-      <header className="hero flex animate-rise flex-wrap items-center justify-between gap-4 rounded-3xl p-6 sm:p-8">
+      <header className="hero shine flex animate-rise flex-wrap items-center justify-between gap-4 rounded-3xl p-6 sm:p-8">
         <h2 className="min-w-0 text-4xl font-extrabold leading-[0.95] tracking-[-0.04em] sm:text-5xl">{brand.business.name}</h2>
         <Link href={`/social?add=${slug}`} className={buttonClass("hero")}>
           Change accounts
@@ -268,7 +268,7 @@ function AccountCell({ account }: { account: Brand["accounts"][number] }) {
   return (
     <li>
       {url ? (
-        <a href={url} target="_blank" rel="noopener noreferrer" className="block h-full rounded-2xl bg-wash p-4 transition-colors duration-200 hover:bg-mist">
+        <a href={url} target="_blank" rel="noopener noreferrer" className="shine lift block h-full rounded-2xl bg-wash p-4 hover:bg-mist">
           {body}
           <span className="sr-only">(opens in a new tab)</span>
         </a>

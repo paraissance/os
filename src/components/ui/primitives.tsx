@@ -6,16 +6,18 @@ export function cx(...parts: (string | false | null | undefined)[]) {
 }
 
 const buttonBase =
-  "inline-flex min-h-11 items-center justify-center gap-2 rounded-full px-5 text-sm font-semibold transition-[background-color,color,transform] duration-200 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-40 disabled:active:scale-100";
+  "inline-flex min-h-11 items-center justify-center gap-2 rounded-full px-5 text-sm font-semibold transition-[background-color,color,scale,box-shadow] duration-200 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-40 disabled:active:scale-100";
+
+const lit = "shine hover:not-disabled:shadow-[0_10px_24px_-10px_var(--color-glow)]";
 
 const buttonVariants = {
-  primary: "bg-ink text-paper hover:bg-ink/85",
-  secondary: "bg-wash text-ink hover:bg-mist",
+  primary: cx(lit, "shine-on-ink bg-ink text-paper hover:bg-ink/85"),
+  secondary: cx(lit, "bg-wash text-ink hover:bg-mist"),
   /** For use on a card. */
-  light: "bg-paper text-ink hover:bg-mist",
+  light: cx(lit, "bg-paper text-ink hover:bg-mist"),
   /** For use on the dark hero card, in either theme. */
-  hero: "bg-white text-black hover:bg-white/85",
-  heroSoft: "bg-white/10 text-white hover:bg-white/20",
+  hero: "shine [--shine:rgb(0_0_0/0.14)] bg-white text-black hover:bg-white/85",
+  heroSoft: "shine [--shine:rgb(255_255_255/0.3)] bg-white/10 text-white hover:bg-white/20",
   ghost: "rounded-none px-0 underline decoration-1 underline-offset-4 hover:decoration-2 active:scale-100",
 } as const;
 
@@ -40,8 +42,8 @@ export const pillRail = "no-scrollbar flex w-fit max-w-full gap-1 overflow-x-aut
 
 export function pillClass(active: boolean) {
   return cx(
-    "flex min-h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-4 text-sm font-semibold transition-colors duration-200",
-    active ? "bg-ink text-paper" : "text-muted hover:text-ink",
+    "shine flex min-h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-4 text-sm font-semibold transition-colors duration-200",
+    active ? "shine-on-ink bg-ink text-paper" : "text-muted hover:bg-mist hover:text-ink",
   );
 }
 

@@ -43,7 +43,7 @@ export function AgentsImport() {
           picked(e.dataTransfer.files);
         }}
         className={cx(
-          "flex min-h-28 cursor-pointer flex-col items-center justify-center gap-1.5 rounded-2xl border-2 border-dashed bg-paper px-5 py-6 text-center transition-[border-color,background-color,transform] duration-200 hover:border-ink",
+          "shine flex min-h-28 cursor-pointer flex-col items-center justify-center gap-1.5 rounded-2xl border-2 border-dashed bg-paper px-5 py-6 text-center transition-[border-color,background-color,scale] duration-200 hover:border-ink",
           dragging ? "scale-[1.01] border-ink bg-wash" : "border-line",
         )}
       >

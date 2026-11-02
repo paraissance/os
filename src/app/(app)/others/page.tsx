@@ -23,13 +23,13 @@ export default function OthersPage() {
             <li key={m.id}>
               <Link
                 href={m.href}
-                className="group flex h-full flex-col rounded-3xl bg-wash p-6 transition-[background-color,transform] duration-200 hover:-translate-y-1 hover:bg-mist"
+                className="shine lift group flex h-full flex-col rounded-3xl bg-wash p-6 hover:bg-mist"
               >
                 <span className="flex items-start justify-between gap-3 text-xl font-extrabold tracking-[-0.02em]">
                   {m.label}
                   <span
                     aria-hidden="true"
-                    className="flex size-8 shrink-0 items-center justify-center rounded-full bg-paper text-base transition-[background-color,color,transform] duration-200 group-hover:translate-x-0.5 group-hover:bg-ink group-hover:text-paper"
+                    className="flex size-8 shrink-0 items-center justify-center rounded-full bg-paper text-base transition-[background-color,color,translate] duration-200 group-hover:translate-x-0.5 group-hover:bg-ink group-hover:text-paper"
                   >
                     →
                   </span>
@@ -45,7 +45,7 @@ export default function OthersPage() {
         <ul className="stagger grid grid-cols-[minmax(0,1fr)] gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {LATER.map((m) => (
             <li key={m.id}>
-              <Link href={m.href} className="group flex h-full flex-col rounded-3xl bg-wash/50 p-6 transition-colors duration-200 hover:bg-wash">
+              <Link href={m.href} className="shine lift group flex h-full flex-col rounded-3xl bg-wash/50 p-6 hover:bg-mist">
                 <span className="flex items-center justify-between gap-3 font-bold">
                   {m.label}
                   <Badge>Phase {m.phase}</Badge>

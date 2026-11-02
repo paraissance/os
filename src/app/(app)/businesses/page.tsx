@@ -85,7 +85,7 @@ function MoveButton({ id, name, direction, disabled }: { id: string; name: strin
         disabled={disabled}
         aria-label={`Move ${name} ${direction}`}
         title={direction === "up" ? "Move earlier" : "Move later"}
-        className="flex size-9 items-center justify-center rounded-full bg-paper text-sm font-bold transition-colors hover:bg-mist disabled:opacity-30"
+        className="shine flex size-9 items-center justify-center rounded-full bg-paper text-sm font-bold transition-colors hover:bg-mist disabled:opacity-30"
       >
         {direction === "up" ? "↑" : "↓"}
       </button>

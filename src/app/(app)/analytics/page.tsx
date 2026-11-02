@@ -33,7 +33,7 @@ export default function AiAnalyticsPage(props: PageProps<"/analytics">) {
     <>
       <PageHeader title="AI & Analytics" />
       <div className="space-y-3">
-        <section className="hero animate-rise rounded-3xl p-6 sm:p-8">
+        <section className="hero shine animate-rise rounded-3xl p-6 sm:p-8">
           <h2 className="label mb-3 text-white/70">Jody Core</h2>
           <Suspense fallback={<div aria-hidden="true" className="mb-6 h-9 max-w-xl animate-shimmer rounded-full bg-white/10" />}>
             <CoreStatus />

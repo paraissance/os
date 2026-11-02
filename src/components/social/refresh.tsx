@@ -21,7 +21,7 @@ export function RefreshButton({ busy }: { busy: boolean }) {
         onClick={() => startTransition(() => run())}
         disabled={working}
         className={cx(
-          "inline-flex min-h-9 items-center gap-2 rounded-full bg-wash px-4 text-sm font-semibold transition-colors hover:bg-mist disabled:cursor-default disabled:opacity-60",
+          "shine inline-flex min-h-9 items-center gap-2 rounded-full bg-wash px-4 text-sm font-semibold transition-colors hover:bg-mist disabled:cursor-default disabled:opacity-60",
         )}
       >
         <span aria-hidden="true" className={cx("inline-block", working && "animate-spin")}>

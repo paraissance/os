@@ -67,7 +67,7 @@ async function Body({ searchParams }: { searchParams: PageProps<"/">["searchPara
     </Suspense>
   ) : (
     <>
-      <section className="hero mb-8 animate-rise rounded-3xl p-6 sm:p-10">
+      <section className="hero shine mb-8 animate-rise rounded-3xl p-6 sm:p-10">
         <Suspense fallback={<div aria-hidden="true" className="mb-6 h-32 animate-shimmer rounded-2xl bg-white/10" />}>
           <Greeting />
         </Suspense>
@@ -106,7 +106,7 @@ async function BusinessTab({ slug }: { slug: string }) {
 
   return (
     <article aria-label={record.name} className="space-y-4">
-      <header className="hero animate-rise rounded-3xl p-6 sm:p-10">
+      <header className="hero shine animate-rise rounded-3xl p-6 sm:p-10">
         <Link href="/" className="text-sm font-semibold text-white/70 transition-colors hover:text-white">
           ← All businesses
         </Link>

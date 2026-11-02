@@ -156,7 +156,7 @@ function DeleteButton({ kind, id, what }: { kind: string; id: string; what: stri
     >
       <input type="hidden" name="kind" value={kind} />
       <input type="hidden" name="id" value={id} />
-      <button type="submit" disabled={pending} className="min-h-9 rounded-full px-3 text-sm font-semibold text-muted transition-colors hover:bg-ink hover:text-paper">
+      <button type="submit" disabled={pending} className="shine shine-on-ink min-h-9 rounded-full px-3 text-sm font-semibold text-muted transition-colors hover:bg-ink hover:text-paper">
         {pending ? "Deleting…" : "Delete"}
       </button>
     </form>
@@ -243,7 +243,7 @@ function ItemList({
                   <button
                     type="button"
                     onClick={() => setEditing(row.id)}
-                    className="min-h-9 rounded-full bg-paper px-3.5 text-sm font-semibold transition-colors hover:bg-mist"
+                    className="shine min-h-9 rounded-full bg-paper px-3.5 text-sm font-semibold transition-colors hover:bg-mist"
                   >
                     Edit
                   </button>
@@ -660,7 +660,7 @@ export function ImportForm({ submitOnPick = false }: { submitOnPick?: boolean })
           picked(e.dataTransfer.files);
         }}
         className={cx(
-          "flex min-h-32 cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed bg-paper px-5 py-8 text-center transition-[border-color,background-color,transform] duration-200 hover:border-ink",
+          "shine flex min-h-32 cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed bg-paper px-5 py-8 text-center transition-[border-color,background-color,scale] duration-200 hover:border-ink",
           dragging ? "scale-[1.01] border-ink bg-wash" : fileName ? "border-ink" : "border-line",
         )}
       >

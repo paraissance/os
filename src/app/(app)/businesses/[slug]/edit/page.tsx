@@ -41,7 +41,7 @@ async function EditView({
 
   return (
     <div className="space-y-10">
-      <header className="hero animate-rise rounded-3xl p-6 sm:p-10">
+      <header className="hero shine animate-rise rounded-3xl p-6 sm:p-10">
         <Link href="/businesses" className="text-sm font-semibold text-white/70 transition-colors hover:text-white">
           ← All businesses
         </Link>

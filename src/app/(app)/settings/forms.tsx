@@ -160,7 +160,7 @@ export function RemoveAdminButton({ id, name }: { id: string; name: string }) {
         type="button"
         onClick={remove}
         disabled={pending}
-        className="min-h-9 rounded-full bg-paper px-3.5 text-sm font-semibold transition-colors hover:bg-ink hover:text-paper"
+        className="shine shine-on-ink min-h-9 rounded-full bg-paper px-3.5 text-sm font-semibold transition-colors hover:bg-ink hover:text-paper"
       >
         {pending ? "Removing…" : "Remove"}
       </button>

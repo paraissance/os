@@ -18,7 +18,7 @@ function Out({ link }: { link: AgentLink }) {
     <a
       href={link.url}
       {...(phone ? {} : { target: "_blank", rel: "noopener noreferrer" })}
-      className="inline-flex items-center gap-1 rounded-full bg-paper px-3 py-1 text-sm font-semibold text-ink transition-colors hover:bg-mist"
+      className="shine inline-flex items-center gap-1 rounded-full bg-paper px-3 py-1 text-sm font-semibold text-ink transition-colors hover:bg-mist"
     >
       {link.label}
       {phone ? null : (

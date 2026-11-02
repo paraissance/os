@@ -152,13 +152,13 @@ async function BusinessCards() {
               <li key={b.slug}>
                 <Link
                   href={businessHref(b.slug)}
-                  className="group flex h-full flex-col rounded-3xl bg-wash p-6 transition-[background-color,transform] duration-200 hover:-translate-y-1 hover:bg-mist"
+                  className="shine lift group flex h-full flex-col rounded-3xl bg-wash p-6 hover:bg-mist"
                 >
                   <span className="flex items-start justify-between gap-3 text-xl font-extrabold leading-tight tracking-[-0.02em]">
                     <span className="min-w-0">{b.name}</span>
                     <span
                       aria-hidden="true"
-                      className="flex size-8 shrink-0 items-center justify-center rounded-full bg-paper text-base transition-[background-color,color,transform] duration-200 group-hover:translate-x-0.5 group-hover:bg-ink group-hover:text-paper"
+                      className="flex size-8 shrink-0 items-center justify-center rounded-full bg-paper text-base transition-[background-color,color,translate] duration-200 group-hover:translate-x-0.5 group-hover:bg-ink group-hover:text-paper"
                     >
                       →
                     </span>
@@ -198,7 +198,7 @@ async function BusinessCards() {
           <li className={cx(ADD_SPAN_TWO_COLUMNS[active.length % 2], ADD_SPAN_THREE_COLUMNS[active.length % 3])}>
             <Link
               href="/businesses/new"
-              className="flex h-full min-h-24 items-center justify-center gap-3 rounded-3xl bg-wash/50 p-6 font-semibold text-muted transition-colors duration-200 hover:bg-wash hover:text-ink"
+              className="shine lift flex h-full min-h-24 items-center justify-center gap-3 rounded-3xl bg-wash/50 p-6 font-semibold text-muted hover:bg-mist hover:text-ink"
             >
               <span aria-hidden="true" className="flex size-8 shrink-0 items-center justify-center rounded-full bg-wash text-lg">
                 +

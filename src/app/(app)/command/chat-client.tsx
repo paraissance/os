@@ -203,7 +203,7 @@ export function ChatClient({
 
   const modelLabel = (id?: string | null) => (id ? (modelInfo(id)?.label ?? id) : null);
 
-  const pillButton = "min-h-9 rounded-full bg-paper px-3.5 text-sm font-semibold transition-colors duration-200 hover:bg-mist";
+  const pillButton = "shine min-h-9 rounded-full bg-paper px-3.5 text-sm font-semibold transition-colors duration-200 hover:bg-mist";
 
   return (
     <div className="grid gap-3 lg:h-[calc(100dvh-8rem)] lg:grid-cols-[17rem_1fr]">
@@ -223,7 +223,7 @@ export function ChatClient({
           {conversations.map((c) => {
             const active = c.id === conversationId;
             return (
-              <li key={c.id} className={cx("group flex items-stretch overflow-hidden rounded-xl transition-colors", active ? "bg-ink text-paper" : "hover:bg-mist")}>
+              <li key={c.id} className={cx("shine group flex items-stretch rounded-xl transition-colors", active ? "shine-on-ink bg-ink text-paper" : "hover:bg-mist")}>
                 <Link
                   href={`/command?c=${c.id}`}
                   onClick={() => setShowHistory(false)}
@@ -300,7 +300,7 @@ export function ChatClient({
                       <button
                         type="button"
                         onClick={() => void send(s)}
-                        className="group flex w-full items-center justify-between gap-4 rounded-2xl bg-paper px-5 py-3.5 text-left text-[15px] font-medium transition-[background-color,transform] duration-200 hover:-translate-y-0.5 hover:bg-mist"
+                        className="shine lift group flex w-full items-center justify-between gap-4 rounded-2xl bg-paper px-5 py-3.5 text-left text-[15px] font-medium hover:bg-mist"
                       >
                         {s}
                         <span aria-hidden="true" className="transition-transform duration-200 group-hover:translate-x-1">

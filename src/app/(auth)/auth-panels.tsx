@@ -49,7 +49,7 @@ function Panel({
       className={cx(
         "flex items-center px-6 py-10 sm:px-12 md:row-start-1 md:py-6",
         mode === "code" ? "md:col-start-1" : "md:col-start-2",
-        "transition-[opacity,transform] duration-500 ease-out",
+        "transition-[opacity,translate] duration-500 ease-out",
         active
           ? "translate-x-0 opacity-100 md:delay-300"
           : cx("pointer-events-none opacity-0 max-md:hidden", mode === "code" ? "md:-translate-x-12" : "md:translate-x-12"),
@@ -82,7 +82,7 @@ function Story({ mode, active, children }: { mode: AuthMode; active: boolean; ch
       inert={!active}
       data-mode={mode}
       className={cx(
-        "[grid-area:1/1] transition-[opacity,transform] duration-500 ease-out",
+        "[grid-area:1/1] transition-[opacity,translate] duration-500 ease-out",
         active ? "translate-y-0 opacity-100 delay-300" : "pointer-events-none translate-y-4 opacity-0",
       )}
     >
@@ -92,7 +92,7 @@ function Story({ mode, active, children }: { mode: AuthMode; active: boolean; ch
 }
 
 const lightButton =
-  "group inline-flex min-h-11 items-center gap-2 rounded-full bg-white px-5 text-sm font-semibold text-black transition-[transform,background-color] duration-200 hover:bg-white/85 active:scale-[0.97]";
+  "shine [--shine:rgb(0_0_0/0.14)] group inline-flex min-h-11 items-center gap-2 rounded-full bg-white px-5 text-sm font-semibold text-black transition-[scale,background-color] duration-200 hover:bg-white/85 active:scale-[0.97]";
 
 export function AuthPanels({ login, code }: { login: ReactNode; code: ReactNode }) {
   const [mode, setMode] = useState<AuthMode>("login");

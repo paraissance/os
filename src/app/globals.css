@@ -24,6 +24,9 @@
   --color-mist: #e8e8e8; /* hover on a surface, skeletons */
   --color-hero: #000000; /* the dashboard's hero card, dark in both themes */
   --color-hero-glow: #3d3d3d;
+  --color-shine: rgb(255 255 255 / 0.75); /* the band of light on a hovered surface */
+  --color-shine-ink: rgb(255 255 255 / 0.3); /* the same on a filled black control */
+  --color-glow: rgb(0 0 0 / 0.2); /* what a hovered card or button casts */
 
   --ease-out-soft: cubic-bezier(0.2, 0.7, 0.2, 1);
 
@@ -125,8 +128,49 @@
 @utility hero {
   background-image: radial-gradient(90% 140% at 100% 0%, var(--color-hero-glow), var(--color-hero) 70%);
   color: #fff;
+  --shine: rgb(255 255 255 / 0.2);
   & :focus-visible {
     outline-color: #fff;
+  }
+}
+
+/*
+ * A band of light crosses once as the pointer arrives, never on a touch screen.
+ * It sets position and overflow, so it can't go on an absolutely placed element.
+ */
+@utility shine {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(105deg, transparent 30%, var(--shine) 50%, transparent 70%);
+    transform: translateX(-101%);
+  }
+  @media (hover: hover) {
+    &:not(:disabled):hover::after {
+      transform: translateX(101%);
+      transition: transform 0.7s ease-in-out;
+    }
+  }
+}
+
+/* For a control that is, or turns, filled black (white in the dark theme). */
+@utility shine-on-ink {
+  --shine: var(--color-shine-ink);
+}
+
+/* A clickable card: it rises and casts a soft glow. */
+@utility lift {
+  transition: background-color 0.2s, color 0.2s, translate 0.2s var(--ease-out-soft), box-shadow 0.2s;
+  @media (hover: hover) {
+    &:hover {
+      translate: 0 -3px;
+      box-shadow: 0 0 0 1px var(--color-glow), 0 18px 36px -16px var(--color-glow);
+    }
   }
 }
 
@@ -158,6 +202,14 @@
     --color-mist: #262626;
     --color-hero: #141414;
     --color-hero-glow: #3d3d3d;
+    --color-shine: rgb(255 255 255 / 0.14);
+    --color-shine-ink: rgb(0 0 0 / 0.16);
+    --color-glow: rgb(255 255 255 / 0.18);
+  }
+
+  /* In the base layer so a utility overrides it, and on each one so a hero's band doesn't reach the buttons inside it. */
+  .shine {
+    --shine: var(--color-shine);
   }
 
   html {

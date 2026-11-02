@@ -25,7 +25,7 @@ export function ActivityList({ rows, now, timeZone }: { rows: Row[]; now: Date; 
         return (
           <li key={row.id} className="border-b border-paper last:border-b-0">
             <details>
-              <summary className="flex cursor-pointer list-none items-center gap-3 px-6 py-4 transition-colors duration-200 hover:bg-paper/40 [&::-webkit-details-marker]:hidden">
+              <summary className="shine flex cursor-pointer list-none items-center gap-3 px-6 py-4 transition-colors duration-200 hover:bg-mist [&::-webkit-details-marker]:hidden">
                 <span className="min-w-0 flex-1 truncate text-[15px] font-semibold">{summary}</span>
                 {row.status === "success" ? null : <Badge tone={STATUS_TONE[row.status]}>{row.status}</Badge>}
                 <time dateTime={row.createdAt.toISOString()} className="shrink-0 text-xs text-muted">

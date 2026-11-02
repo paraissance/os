@@ -28,7 +28,7 @@ export async function UserMenu() {
         </span>
       </span>
       <form action={logoutAction}>
-        <button type="submit" className="shrink-0 whitespace-nowrap rounded-full bg-paper px-3 py-1.5 text-xs font-semibold transition-colors hover:bg-mist">
+        <button type="submit" className="shine shrink-0 whitespace-nowrap rounded-full bg-paper px-3 py-1.5 text-xs font-semibold transition-colors hover:bg-mist">
           Sign out
         </button>
       </form>

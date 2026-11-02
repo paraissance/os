@@ -54,7 +54,7 @@ export function Part({ id, title, intro, count, total, children }: { id?: string
 /** The dark card of big numbers at the top of a page. */
 export function HeroStats({ title, stats }: { title?: ReactNode; stats: { label: string; value: ReactNode; note?: ReactNode }[] }) {
   return (
-    <section className="hero animate-rise rounded-3xl p-6 sm:p-8">
+    <section className="hero shine animate-rise rounded-3xl p-6 sm:p-8">
       {title ? <h2 className="label mb-6 text-white/70">{title}</h2> : null}
       <dl className={cx("grid grid-cols-2 gap-x-6 gap-y-8", stats.length === 3 ? "sm:grid-cols-3" : "@5xl:grid-cols-4")}>
         {stats.map((s) => (
@@ -121,7 +121,7 @@ export function LinkPills({ links, className }: { links: { label: string; url: s
             href={l.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 rounded-full bg-paper px-3.5 py-1.5 text-sm font-semibold transition-colors duration-200 hover:bg-ink hover:text-paper"
+            className="shine shine-on-ink inline-flex items-center gap-1 rounded-full bg-paper px-3.5 py-1.5 text-sm font-semibold transition-colors duration-200 hover:bg-ink hover:text-paper"
           >
             {l.label} <span aria-hidden="true">↗</span>
             <span className="sr-only">(opens in a new tab)</span>
@@ -190,8 +190,8 @@ export function AttentionList({ items, empty }: { items: AttentionItem[]; empty:
             <Link
               href={item.href}
               className={cx(
-                "group flex items-center gap-4 rounded-3xl px-6 py-4 transition-[background-color,transform] duration-200 hover:-translate-y-0.5",
-                urgent ? "bg-ink text-paper hover:bg-ink/85" : "bg-wash hover:bg-mist",
+                "shine lift group flex items-center gap-4 rounded-3xl px-6 py-4",
+                urgent ? "shine-on-ink bg-ink text-paper hover:bg-ink/85" : "bg-wash hover:bg-mist",
               )}
             >
               <span className="min-w-0 flex-1">

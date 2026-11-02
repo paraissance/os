@@ -127,7 +127,7 @@ function toggleTheme() {
   requestAnimationFrame(() => requestAnimationFrame(() => html.classList.remove("theme-switching")));
 }
 
-const ROUND_BUTTON = "flex size-10 shrink-0 items-center justify-center rounded-full bg-wash transition-colors duration-200 hover:bg-mist";
+const ROUND_BUTTON = "shine flex size-10 shrink-0 items-center justify-center rounded-full bg-wash transition-colors duration-200 hover:bg-mist";
 
 /** Jody Core from any page (Ctrl+K does the same). */
 function AskButton() {
@@ -186,8 +186,8 @@ function NavGroups({ activePath, rail, onNavigate }: NavProps & { activePath: st
               aria-current={active ? "page" : undefined}
               title={rail ? item.label : undefined}
               className={cx(
-                "flex min-h-11 items-center gap-3 rounded-xl px-[18px] text-base transition-colors duration-200",
-                active ? "bg-ink font-semibold text-paper" : "hover:bg-wash",
+                "shine flex min-h-11 items-center gap-3 rounded-xl px-[18px] text-base transition-colors duration-200",
+                active ? "shine-on-ink bg-ink font-semibold text-paper" : "hover:bg-mist",
               )}
             >
               <Icon>{item.icon}</Icon>
