@@ -27,7 +27,13 @@ export async function runCampaignAction(_prev: FormState, formData: FormData): P
   if (!key) return { error: "This brand has no campaign program." };
   if (!days.success) return { error: "Choose 1 to 14 days.", values: { days: String(formData.get("days") ?? "") } };
 
-  const text = [`Brand: ${key} (in config.py)`, `Days: ${days.data}`, `Asked by: ${user.name}, from the JodyOS Social Media page`].join("\n");
+  // The exact command, so the run can only ever schedule this one brand.
+  const text = [
+    `Brand: ${key} (in config.py)`,
+    `Days: ${days.data}`,
+    `Run: python run.py go --brand ${key} --days ${days.data}`,
+    `Asked by: ${user.name}, from the JodyOS Social Media page`,
+  ].join("\n");
   try {
     const link = await fireRoutine({ id: CAMPAIGN_ROUTINE_ID, token: CAMPAIGN_ROUTINE_TOKEN, envName: "CAMPAIGN_ROUTINE" }, text);
     await logActivity({ action: "social.campaign_started", status: "success", userId: user.id, request: text, result: link });

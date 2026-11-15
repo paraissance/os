@@ -11,7 +11,7 @@ import { z } from "zod";
  */
 
 /** Businesses whose weekly Blotato campaign the campaign routine can run: JodyOS short name → its key in the program's config.py. */
-export const CAMPAIGNS: Record<string, string> = { "agent-coach": "agent_broker_coach" };
+export const CAMPAIGNS: Record<string, string> = { "agent-coach": "agent_broker_coach", "dfu-leads": "done_for_you_leads" };
 
 export class RoutineError extends Error {
   constructor(message: string) {
