@@ -10,10 +10,11 @@ import { greeting } from "@/lib/format";
 import { requestOrigin } from "@/lib/request-origin";
 import { getSettings } from "@/lib/settings";
 import { checkSite } from "@/lib/site-check";
+import { MetaAdsError, adAccountsFor, loadAds } from "@/lib/meta-ads";
 import { loadTraffic } from "@/lib/traffic";
 import { embedCode } from "@/components/agents/agent-view";
 import { AskBar } from "@/components/dashboard/ask-bar";
-import { BusinessAbout, BusinessMagicLinks, SiteSide, TrafficPanel, mainAddress, mainSite } from "@/components/dashboard/business-page";
+import { AdsPanel, BusinessAbout, BusinessMagicLinks, SiteSide, TrafficPanel, mainAddress, mainSite } from "@/components/dashboard/business-page";
 import { Overview } from "@/components/dashboard/overview";
 import { Badge, Skeleton, buttonClass } from "@/components/ui/primitives";
 
@@ -150,6 +151,14 @@ async function BusinessTab({ slug }: { slug: string }) {
           <Traffic record={record} domain={site?.domain ?? null} timeZone={settings.timezone} />
         </Suspense>
       </div>
+
+      {adAccountsFor(record.slug).length ? (
+        <div className="pt-6">
+          <Suspense fallback={<Skeleton className="h-72" />}>
+            <Ads accountIds={adAccountsFor(record.slug)} />
+          </Suspense>
+        </div>
+      ) : null}
     </article>
   );
 }
@@ -165,4 +174,16 @@ async function Traffic({ record, domain, timeZone }: { record: BusinessRecord; d
   const now = requestNow();
   const [traffic, origin] = await Promise.all([loadTraffic(record.id, now, timeZone), requestOrigin()]);
   return <TrafficPanel traffic={traffic} domain={domain} code={embedCode(origin, record.slug)} />;
+}
+
+async function Ads({ accountIds }: { accountIds: string[] }) {
+  await requireUser();
+  let ads: Awaited<ReturnType<typeof loadAds>> | string;
+  try {
+    ads = await loadAds(accountIds);
+  } catch (e) {
+    if (!(e instanceof MetaAdsError)) throw e;
+    ads = e.message;
+  }
+  return <AdsPanel ads={ads} />;
 }

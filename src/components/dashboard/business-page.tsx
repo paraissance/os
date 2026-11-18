@@ -3,6 +3,8 @@ import type { BusinessRecord, BusinessSite } from "@/lib/business-model";
 import { editHref } from "@/lib/business-href";
 import { dayLabel, quickLinks } from "@/lib/business-model";
 import { knowledgeSections } from "@/lib/business-view";
+import { costPer, funnelTotals, type CampaignFunnel } from "@/lib/meta-ads-model";
+import { formatMoney } from "@/lib/money";
 import type { SiteHealth } from "@/lib/site-health";
 import type { Traffic } from "@/lib/traffic-model";
 import { CopyButton } from "@/components/agents/embed-tools";
@@ -14,7 +16,7 @@ import { Facts, LinkPills, Linked, Muted, Out, Tile, Tiles, Title } from "./ui";
 /*
  * One business on the dashboard: its magic links, what it is (left), its
  * website at a glance with a live check (right), and the website's traffic
- * below. Nothing else.
+ * and Facebook ads below. Nothing else.
  */
 
 /** The website a business is mainly known by: the one its address points to, else the first. */
@@ -231,6 +233,72 @@ export function TrafficPanel({ traffic, domain, code }: { traffic: Traffic; doma
         <Tile label="Visitors today" value={<CountUp value={today.visitors} />} />
       </Tiles>
       <BarChart points={traffic.days.map((d) => ({ date: d.date, value: d.visitors }))} unit="visitors" />
+    </section>
+  );
+}
+
+/* ─── Facebook ads ────────────────────────────────────────────────── */
+
+const count = (n: number) => Math.round(n).toLocaleString("en-US");
+const money = (n: number | null, currency: string) => (n === null ? "–" : formatMoney(n, currency, n < 100 ? 2 : 0));
+
+/** Each campaign from ad to site visit to conversion, last 30 days. `ads` is an error line when Facebook didn't answer. */
+export function AdsPanel({ ads }: { ads: { campaigns: CampaignFunnel[]; currency: string } | string }) {
+  if (typeof ads === "string" || !ads.campaigns.length) {
+    return (
+      <section className="reveal">
+        <Title note="last 30 days">Facebook ads</Title>
+        <Muted>{typeof ads === "string" ? ads : "No ad spend in the last 30 days."}</Muted>
+      </section>
+    );
+  }
+  const { campaigns, currency } = ads;
+  const t = funnelTotals(campaigns);
+  return (
+    <section className="reveal space-y-4">
+      <Title note="last 30 days">Facebook ads</Title>
+      <Tiles className="sm:grid-cols-4">
+        <Tile label="Spent" value={<CountUp value={t.spend} currency={currency} digits={0} />} />
+        <Tile label="Link clicks" value={<CountUp value={t.clicks} />}>
+          {money(costPer(t.spend, t.clicks), currency)} each
+        </Tile>
+        <Tile label="Site visits" value={<CountUp value={t.visits} />}>
+          {money(costPer(t.spend, t.visits), currency)} each
+        </Tile>
+        <Tile label="Conversions" value={<CountUp value={t.conversions} />}>
+          {t.conversions ? `${money(costPer(t.spend, t.conversions), currency)} each` : null}
+        </Tile>
+      </Tiles>
+      <div className="overflow-x-auto rounded-3xl bg-wash p-2 sm:p-4">
+        <table className="w-full min-w-[40rem] text-left text-[15px] tabular-nums">
+          <thead className="text-sm text-muted">
+            <tr>
+              <th className="p-3 font-semibold">Campaign</th>
+              <th className="p-3 text-right font-semibold">Spent</th>
+              <th className="p-3 text-right font-semibold">Clicks</th>
+              <th className="p-3 text-right font-semibold">Site visits</th>
+              <th className="p-3 text-right font-semibold">Conversions</th>
+              <th className="p-3 text-right font-semibold">Per conversion</th>
+            </tr>
+          </thead>
+          <tbody>
+            {campaigns.map((c) => (
+              <tr key={c.id} className="border-t border-line">
+                <td className="max-w-xs truncate p-3 font-semibold" title={c.name}>
+                  {c.name}
+                </td>
+                <td className="p-3 text-right">{money(c.spend, currency)}</td>
+                <td className="p-3 text-right">{count(c.clicks)}</td>
+                <td className="p-3 text-right">{count(c.visits)}</td>
+                <td className="p-3 text-right" title={c.byType.map((b) => `${count(b.count)} ${b.label}`).join(", ") || undefined}>
+                  {count(c.conversions)}
+                </td>
+                <td className="p-3 text-right">{money(costPer(c.spend, c.conversions), currency)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </section>
   );
 }

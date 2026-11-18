@@ -119,6 +119,17 @@ export function listIntegrations(): Integration[] {
         "On claude.ai/code create a routine on paraissance/Blotato-Compain, with BLOTATO_API_KEY, PEXELS_API_KEY and ANTHROPIC_API_KEY in its environment. Add an API trigger and generate its token. In Vercel add the routine's id (trig_…) as CAMPAIGN_ROUTINE_ID and the token as CAMPAIGN_ROUTINE_TOKEN, and redeploy.",
     },
     {
+      id: "meta-ads",
+      name: "Facebook ads",
+      category: "Analytics",
+      phase: 1,
+      description: "Each business's dashboard page: its campaigns over the last 30 days, from spend to link clicks, site visits and conversions. Read-only.",
+      status: env.metaAds ? "connected" : "not_configured",
+      envVars: ["META_ADS_TOKEN", "META_AD_ACCOUNTS"],
+      setup:
+        "In Meta Business Settings → Users → System users: add one, give it the ad accounts (View performance), and generate a token with ads_read. In Vercel add it as META_ADS_TOKEN, and META_AD_ACCOUNTS as business-short-name=ad-account-id pairs separated by commas. Redeploy.",
+    },
+    {
       id: "ga4",
       name: "Google Analytics 4",
       category: "Analytics",

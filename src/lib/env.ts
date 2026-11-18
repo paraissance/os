@@ -1,5 +1,6 @@
 import "server-only";
 import { z } from "zod";
+import { AD_ACCOUNTS_FORMAT } from "@/lib/meta-ads-model";
 
 /**
  * Server-side environment. Read lazily (never at module load) so `next build`
@@ -79,6 +80,21 @@ const schema = z.object({
     .trim()
     .optional()
     .transform((v) => (v ? v : undefined)),
+  // Facebook (Meta) ads, read-only: a token with ads_read, and which ad
+  // accounts each business's campaigns are in ("business-short-name=ad-account-id, …").
+  META_ADS_TOKEN: z
+    .string()
+    .trim()
+    .optional()
+    .transform((v) => (v ? v : undefined)),
+  META_AD_ACCOUNTS: z
+    .string()
+    .trim()
+    .optional()
+    .transform((v) => (v ? v : undefined))
+    .refine((v) => v === undefined || AD_ACCOUNTS_FORMAT.test(v), {
+      message: "META_AD_ACCOUNTS must be business-short-name=ad-account-id pairs, separated by commas",
+    }),
   // Email (Resend): sends the 6-digit sign-in codes. EMAIL_FROM is a sender
   // on a domain verified in Resend, like "JodyOS <login@example.com>".
   RESEND_API_KEY: z
@@ -150,5 +166,6 @@ export function envStatus() {
     blotato: Boolean(e.BLOTATO_API_KEY),
     siteRoutine: Boolean(e.SITE_ROUTINE_ID && e.SITE_ROUTINE_TOKEN),
     campaignRoutine: Boolean(e.CAMPAIGN_ROUTINE_ID && e.CAMPAIGN_ROUTINE_TOKEN),
+    metaAds: Boolean(e.META_ADS_TOKEN && e.META_AD_ACCOUNTS),
   };
 }

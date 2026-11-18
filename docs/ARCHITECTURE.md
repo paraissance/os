@@ -55,6 +55,10 @@ Every business is stored in JodyOS's own database and edited in JodyOS (`/busine
 
 **Dashboard tabs.** The dashboard (`/`) has an "All businesses" tab and one tab per business (`/?b=<slug>`). Each business has Summary, About, Links, Money and Website sections (`&s=<section>`), each opening with a plain sentence, with an Edit shortcut to the matching part of the edit page. All sections render on the server and switch instantly on the client; the URL is updated in place. Switching business keeps the open section. `/businesses/<slug>` redirects to the tab.
 
+### Facebook ads (optional)
+
+When `META_ADS_TOKEN` (a Meta system user token with `ads_read`) and `META_AD_ACCOUNTS` (`business-short-name=ad-account-id, …`) are set, a business with ad accounts gets a Facebook ads panel under its website traffic: the last 30 days per campaign, from spend to link clicks, site visits (landing page views) and conversions (the site's Meta Pixel events, plus Facebook form leads). Read live from the Marketing API (`src/lib/meta-ads.ts`); the counting rules are pure and tested (`src/lib/meta-ads-model.ts`).
+
 ### Live numbers (optional): OS Analytics
 
 When `OS_ANALYTICS_URL` and `OS_ANALYTICS_KEY` are set, the OS Analytics WordPress plugin (1.3.0+) adds live numbers on top, matched by slug: leads, pipeline, funnel, appointments, social, posts, campaigns and tasks. Businesses then also get Marketing and Leads sections, and "needs attention" adds lead drops, overdue tasks and failed posts. Without it, everything else works.
