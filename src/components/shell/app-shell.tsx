@@ -225,7 +225,7 @@ function TopNav({ activePath }: { activePath: string | null }) {
       {NAV.slice(0, 6).map((item) => {
         const active = activePath !== null && isActive(activePath, item.href);
         return (
-          // A little tighter on small laptops, where the top bar has to share the width with the user chip.
+          // A little tighter on small laptops.
           <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined} className={cx(pillClass(active), "lg:max-xl:px-2.5")}>
             {item.label}
           </Link>
@@ -249,14 +249,13 @@ function SidebarContent({ userSlot, rail, onNavigate }: NavProps & { userSlot?: 
         </Link>
       </div>
 
-      {/* Desktop: the list sits mid-height, level with the arrow. pb-20 balances the header above it. */}
-      <nav className="no-scrollbar flex-1 overflow-y-auto overflow-x-hidden py-4 lg:flex lg:flex-col lg:pb-20" aria-label="Main">
+      {/* Desktop: the list sits mid-height, level with the arrow. The top padding evens out the header (64px) and the user block below (72px open, 114px folded). */}
+      <nav className="no-scrollbar flex-1 overflow-y-auto overflow-x-hidden py-4 lg:flex lg:flex-col lg:pb-0 lg:pt-2 lg:rail:pt-12" aria-label="Main">
         <Suspense fallback={<NavGroups activePath={null} rail={rail} onNavigate={onNavigate} />}>
           <ActiveNav rail={rail} onNavigate={onNavigate} />
         </Suspense>
       </nav>
 
-      {/* Only the phone menu: on a computer the user sits in the top bar. */}
       {userSlot ? <div className="m-3 shrink-0 rounded-full bg-wash">{userSlot}</div> : null}
     </div>
   );
@@ -309,7 +308,7 @@ export function AppShell({ children, userSlot }: { children: ReactNode; userSlot
     <div className="min-h-dvh">
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 border-r border-hair bg-paper transition-[width] duration-500 ease-out-soft lg:block lg:rail:w-20">
         <div className="h-full overflow-hidden">
-          <SidebarContent rail={rail} />
+          <SidebarContent rail={rail} userSlot={userSlot} />
         </div>
         <button
           type="button"
@@ -368,14 +367,14 @@ export function AppShell({ children, userSlot }: { children: ReactNode; userSlot
       ) : null}
 
       <div className="transition-[padding] duration-500 ease-out-soft lg:pl-64 lg:rail:pl-20">
-        <header className="sticky top-0 z-20 hidden h-16 grid-cols-[1fr_auto_1fr] items-center gap-4 bg-paper/85 px-6 backdrop-blur lg:grid">
+        {/* Equal side columns keep the pills in the middle. */}
+        <header className="sticky top-0 z-20 hidden h-16 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-4 bg-paper/85 px-6 backdrop-blur lg:grid">
           <Suspense fallback={<TopNav activePath={null} />}>
             <ActiveTopNav />
           </Suspense>
           <div className="col-start-3 flex items-center justify-end gap-2">
             <AskButton />
             <ThemeToggle />
-            <div className="rounded-full bg-wash">{userSlot}</div>
           </div>
         </header>
         {/* A size container: dense grids go by the room they really have, which the open sidebar takes from. */}
