@@ -123,7 +123,7 @@ export function listIntegrations(): Integration[] {
       name: "Facebook ads",
       category: "Analytics",
       phase: 1,
-      description: "Each business's dashboard page: its campaigns over the last 30 days, from spend to link clicks, site visits and conversions. Read-only.",
+      description: "Each business's dashboard page: its campaigns over the last 7 or 30 days, from spend to link clicks, site visits and conversions. Read-only.",
       status: env.metaAds ? "connected" : "not_configured",
       envVars: ["META_ADS_TOKEN", "META_AD_ACCOUNTS"],
       setup:

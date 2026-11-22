@@ -11,19 +11,20 @@ import { listBusinesses, liveListAttention, settle } from "@/lib/os-analytics";
 import { getSettings } from "@/lib/settings";
 import { checkSite } from "@/lib/site-check";
 import { loadAllTraffic } from "@/lib/traffic";
+import { SPANS, type Span } from "@/lib/traffic-model";
 import { ImportForm } from "@/components/businesses/editors";
 import { Delta, Sparkline } from "@/components/business-bits";
 import { CountUp } from "@/components/motion/count-up";
 import { EmptyState, Skeleton, buttonClass, cx } from "@/components/ui/primitives";
 import { mainAddress } from "./business-page";
-import { AttentionList, Title } from "./ui";
+import { AttentionList, SpanPills, Title } from "./ui";
 
 /**
  * The dashboard home: the businesses and what needs doing, nothing else.
  * Money has its own page (/spending); Ask Jody Core sits under the greeting;
  * each business's magic links are on its own page.
  */
-export function Overview() {
+export function Overview({ span }: { span: Span }) {
   return (
     <div className="space-y-12">
       {/* Only shows before any business is added. */}
@@ -35,7 +36,7 @@ export function Overview() {
         <Attention />
       </Suspense>
       <Suspense fallback={<Skeleton className="h-96" />}>
-        <BusinessCards />
+        <BusinessCards span={span} />
       </Suspense>
     </div>
   );
@@ -115,12 +116,12 @@ async function CardSite({ address }: { address: string }) {
 const ADD_SPAN_TWO_COLUMNS = ["sm:col-span-2", "sm:col-span-1"];
 const ADD_SPAN_THREE_COLUMNS = ["xl:col-span-3", "xl:col-span-2", "xl:col-span-1"];
 
-async function BusinessCards() {
+async function BusinessCards({ span }: { span: Span }) {
   await requireUser();
   const [book, live, settings] = await Promise.all([loadBook(), liveList(), getSettings()]);
   if (!book.businesses.length) return null;
   const today = requestNow();
-  const traffic = await loadAllTraffic(today, settings.timezone);
+  const traffic = await loadAllTraffic(today, settings.timezone, span);
   const liveBySlug = new Map(live?.ok ? live.data.businesses.map((b) => [b.slug, b]) : []);
   const active = book.businesses.filter((b) => b.status === "active");
   const paused = book.businesses.filter((b) => b.status !== "active");
@@ -138,9 +139,12 @@ async function BusinessCards() {
       >
         Your businesses
       </Title>
-      <p className="-mt-2 mb-4 text-sm text-muted">
-        {active.length} active business{active.length === 1 ? "" : "es"} with {sites} site{sites === 1 ? "" : "s"}
-      </p>
+      <div className="-mt-2 mb-4 flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm text-muted">
+          {active.length} active business{active.length === 1 ? "" : "es"} with {sites} site{sites === 1 ? "" : "s"}
+        </p>
+        <SpanPills span={span} href={(s) => (s === SPANS[0] ? "/" : `/?days=${s}`)} />
+      </div>
       {active.length ? (
         <ul className="stagger grid grid-cols-[minmax(0,1fr)] gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {active.map((b) => {
@@ -174,10 +178,10 @@ async function BusinessCards() {
                         <span className="font-semibold text-muted">None saved</span>
                       )}
                     </CardStat>
-                    <CardStat label="Visitors, 30 days">
+                    <CardStat label={`Visitors, ${span} days`}>
                       {visits ? (
                         <>
-                          <CountUp value={visits.last30.visitors} />
+                          <CountUp value={visits.current.visitors} />
                           <Sparkline values={visits.days.map((d) => d.visitors)} />
                         </>
                       ) : (

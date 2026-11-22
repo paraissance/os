@@ -3,7 +3,8 @@ import type { ReactNode } from "react";
 import type { AttentionItem } from "@/lib/os-analytics";
 import { renewalSummary, type BusinessRecord } from "@/lib/business-model";
 import { linkify, shortUrl } from "@/lib/business-view";
-import { StatusDot, cx } from "@/components/ui/primitives";
+import { SPANS, type Span } from "@/lib/traffic-model";
+import { StatusDot, cx, pillClass, pillTrack } from "@/components/ui/primitives";
 
 /*
  * Building blocks for the dashboard: big titles, plain sentences, large
@@ -34,6 +35,19 @@ export function Title({
       </h2>
       {note ? <p className="text-sm text-muted">{note}</p> : null}
     </div>
+  );
+}
+
+/** "7 days | 30 days". Spans, not a nav, so it fits in a Title's note; the page stays where it is. */
+export function SpanPills({ span, href }: { span: Span; href: (span: Span) => string }) {
+  return (
+    <span role="group" aria-label="Period" className={pillTrack}>
+      {SPANS.map((s) => (
+        <Link key={s} href={href(s)} scroll={false} aria-current={s === span ? "true" : undefined} className={pillClass(s === span)}>
+          {s} days
+        </Link>
+      ))}
+    </span>
   );
 }
 

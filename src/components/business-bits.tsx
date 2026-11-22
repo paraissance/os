@@ -2,7 +2,7 @@ import { formatDay, percentChange } from "@/lib/os-analytics";
 import { cx } from "@/components/ui/primitives";
 
 /** "↑ 40%" / "↓ 20%" / "new" against the previous period, as a small pill. */
-export function Delta({ current, previous, className }: { current: number; previous: number; className?: string }) {
+export function Delta({ current, previous, days = 30, className }: { current: number; previous: number; days?: number; className?: string }) {
   const change = percentChange(current, previous);
   const text = change === null ? "new" : change === 0 ? "same" : `${change > 0 ? "↑" : "↓"} ${Math.abs(change)}%`;
   const label =
@@ -16,7 +16,7 @@ export function Delta({ current, previous, className }: { current: number; previ
       )}
     >
       <span aria-hidden="true">{text}</span>
-      <span className="sr-only">{label} versus the previous 30 days</span>
+      <span className="sr-only">{label} versus the previous {days} days</span>
     </span>
   );
 }

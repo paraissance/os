@@ -12,6 +12,7 @@ import { getSettings } from "@/lib/settings";
 import { checkSite } from "@/lib/site-check";
 import { MetaAdsError, adAccountsFor, loadAds } from "@/lib/meta-ads";
 import { loadTraffic } from "@/lib/traffic";
+import { spanFrom, type Span } from "@/lib/traffic-model";
 import { embedCode } from "@/components/agents/agent-view";
 import { AskBar } from "@/components/dashboard/ask-bar";
 import { AdsPanel, BusinessAbout, BusinessMagicLinks, SiteSide, TrafficPanel, mainAddress, mainSite } from "@/components/dashboard/business-page";
@@ -59,12 +60,13 @@ async function Greeting() {
 
 async function Body({ searchParams }: { searchParams: PageProps<"/">["searchParams"] }) {
   await requireUser();
-  const { b } = await searchParams;
+  const { b, days } = await searchParams;
   const slug = typeof b === "string" && b ? b : null;
+  const span = spanFrom(days);
 
   return slug ? (
     <Suspense key={slug} fallback={<Skeleton className="h-[40rem] rounded-3xl" />}>
-      <BusinessTab slug={slug} />
+      <BusinessTab slug={slug} span={span} />
     </Suspense>
   ) : (
     <>
@@ -74,7 +76,7 @@ async function Body({ searchParams }: { searchParams: PageProps<"/">["searchPara
         </Suspense>
         <AskBar />
       </section>
-      <Overview />
+      <Overview span={span} />
     </>
   );
 }
@@ -95,7 +97,7 @@ function NotFoundCard({ slug }: { slug: string }) {
   );
 }
 
-async function BusinessTab({ slug }: { slug: string }) {
+async function BusinessTab({ slug, span }: { slug: string; span: Span }) {
   await requireUser();
   const [book, settings] = await Promise.all([loadBook(), getSettings()]);
   const record = book.businesses.find((x) => x.slug === slug);
@@ -148,14 +150,15 @@ async function BusinessTab({ slug }: { slug: string }) {
 
       <div className="pt-6">
         <Suspense fallback={<Skeleton className="h-72" />}>
-          <Traffic record={record} domain={site?.domain ?? null} timeZone={settings.timezone} />
+          <Traffic record={record} domain={site?.domain ?? null} timeZone={settings.timezone} span={span} />
         </Suspense>
       </div>
 
       {adAccountsFor(record.slug).length ? (
         <div className="pt-6">
-          <Suspense fallback={<Skeleton className="h-72" />}>
-            <Ads accountIds={adAccountsFor(record.slug)} />
+          {/* Keyed so switching the period shows the skeleton while Facebook answers. */}
+          <Suspense key={span} fallback={<Skeleton className="h-72" />}>
+            <Ads accountIds={adAccountsFor(record.slug)} span={span} />
           </Suspense>
         </div>
       ) : null}
@@ -169,21 +172,21 @@ async function LiveSite({ address, ...props }: { record: BusinessRecord; site: B
   return <SiteSide {...props} health={health} />;
 }
 
-async function Traffic({ record, domain, timeZone }: { record: BusinessRecord; domain: string | null; timeZone: string }) {
+async function Traffic({ record, domain, timeZone, span }: { record: BusinessRecord; domain: string | null; timeZone: string; span: Span }) {
   await requireUser();
   const now = requestNow();
-  const [traffic, origin] = await Promise.all([loadTraffic(record.id, now, timeZone), requestOrigin()]);
-  return <TrafficPanel traffic={traffic} domain={domain} code={embedCode(origin, record.slug)} />;
+  const [traffic, origin] = await Promise.all([loadTraffic(record.id, now, timeZone, span), requestOrigin()]);
+  return <TrafficPanel traffic={traffic} span={span} slug={record.slug} domain={domain} code={embedCode(origin, record.slug)} />;
 }
 
-async function Ads({ accountIds }: { accountIds: string[] }) {
+async function Ads({ accountIds, span }: { accountIds: string[]; span: Span }) {
   await requireUser();
   let ads: Awaited<ReturnType<typeof loadAds>> | string;
   try {
-    ads = await loadAds(accountIds);
+    ads = await loadAds(accountIds, span);
   } catch (e) {
     if (!(e instanceof MetaAdsError)) throw e;
     ads = e.message;
   }
-  return <AdsPanel ads={ads} />;
+  return <AdsPanel ads={ads} span={span} />;
 }

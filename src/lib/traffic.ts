@@ -5,7 +5,7 @@ import { businessSites, businesses, siteTraffic } from "@/lib/db/schema";
 import { dayKey } from "@/lib/format";
 import { consumeRateLimit } from "@/lib/rate-limit";
 import { getSettings } from "@/lib/settings";
-import { daysEnding, fromOwnSite, isBot, siteHosts, summarize, type Traffic } from "@/lib/traffic-model";
+import { daysEnding, fromOwnSite, isBot, siteHosts, summarize, type Span, type Traffic } from "@/lib/traffic-model";
 
 /*
  * Website visits, counted by the agent line (public/agent.js): one row per
@@ -41,19 +41,19 @@ export async function recordVisit(visit: { slug: string; origin: string | null; 
   return true;
 }
 
-/** The last 30 days of a business's traffic (and the 30 before, to compare). */
-export async function loadTraffic(businessId: string, now: Date, timeZone: string): Promise<Traffic> {
+/** The last `span` days of a business's traffic (and the days before, to compare). Reads 60 days either way, so "no visits yet" means none in 60 days. */
+export async function loadTraffic(businessId: string, now: Date, timeZone: string, span: Span): Promise<Traffic> {
   const today = dayKey(now, timeZone);
   const db = await getDb();
   const rows = await db
     .select({ date: siteTraffic.day, visitors: siteTraffic.visitors, views: siteTraffic.views, lastVisitAt: siteTraffic.lastVisitAt })
     .from(siteTraffic)
     .where(and(eq(siteTraffic.businessId, businessId), gte(siteTraffic.day, daysEnding(today, 60)[0])));
-  return summarize(rows, today);
+  return summarize(rows, today, span);
 }
 
 /** The same for every business with any visits, in one query: for the dashboard's cards. */
-export async function loadAllTraffic(now: Date, timeZone: string): Promise<Map<string, Traffic>> {
+export async function loadAllTraffic(now: Date, timeZone: string, span: Span): Promise<Map<string, Traffic>> {
   const today = dayKey(now, timeZone);
   const db = await getDb();
   const rows = await db
@@ -61,5 +61,5 @@ export async function loadAllTraffic(now: Date, timeZone: string): Promise<Map<s
     .from(siteTraffic)
     .where(gte(siteTraffic.day, daysEnding(today, 60)[0]));
   const byBusiness = Map.groupBy(rows, (r) => r.businessId);
-  return new Map([...byBusiness].map(([id, days]) => [id, summarize(days, today)]));
+  return new Map([...byBusiness].map(([id, days]) => [id, summarize(days, today, span)]));
 }

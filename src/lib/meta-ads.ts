@@ -2,10 +2,11 @@ import "server-only";
 import { z } from "zod";
 import { env } from "@/lib/env";
 import { campaignFunnel, parseAdAccounts, type CampaignFunnel } from "@/lib/meta-ads-model";
+import type { Span } from "@/lib/traffic-model";
 
 /*
  * Facebook (Meta) ads, read-only, through the Marketing API: each campaign's
- * last 30 days in the business's ad accounts. The token travels in a header,
+ * last 7 or 30 days in the business's ad accounts. The token travels in a header,
  * never in a URL, and never appears in an error message.
  */
 
@@ -35,10 +36,10 @@ export function adAccountsFor(slug: string): string[] {
   return META_ADS_TOKEN ? (parseAdAccounts(META_AD_ACCOUNTS).get(slug) ?? []) : [];
 }
 
-async function accountInsights(accountId: string, token: string) {
+async function accountInsights(accountId: string, token: string, span: Span) {
   const params = new URLSearchParams({
     level: "campaign",
-    date_preset: "last_30d",
+    date_preset: `last_${span}d`,
     fields: "campaign_id,campaign_name,account_currency,spend,inline_link_clicks,actions",
     // shortcut: one page of 200 campaigns, plenty for campaigns with spend in 30 days; follow paging.next if that's ever exceeded.
     limit: "200",
@@ -68,11 +69,11 @@ async function accountInsights(accountId: string, token: string) {
   return parsed.data.data;
 }
 
-/** The business's campaigns with any spend in the last 30 days, biggest spend first. */
-export async function loadAds(accountIds: string[]): Promise<{ campaigns: CampaignFunnel[]; currency: string }> {
+/** The business's campaigns with any spend in the last `span` days, biggest spend first. */
+export async function loadAds(accountIds: string[], span: Span): Promise<{ campaigns: CampaignFunnel[]; currency: string }> {
   const token = env().META_ADS_TOKEN;
   if (!token) throw new MetaAdsError("Facebook ads aren't connected yet: see Integrations.");
-  const rows = (await Promise.all(accountIds.map((id) => accountInsights(id, token)))).flat();
+  const rows = (await Promise.all(accountIds.map((id) => accountInsights(id, token, span)))).flat();
   return {
     campaigns: rows.map(campaignFunnel).filter((c) => c.spend > 0).sort((a, b) => b.spend - a.spend),
     // shortcut: assumes one currency per business; show per-account currencies if a business ever mixes them.

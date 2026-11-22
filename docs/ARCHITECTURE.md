@@ -57,7 +57,7 @@ Every business is stored in JodyOS's own database and edited in JodyOS (`/busine
 
 ### Facebook ads (optional)
 
-When `META_ADS_TOKEN` (a Meta system user token with `ads_read`) and `META_AD_ACCOUNTS` (`business-short-name=ad-account-id, …`) are set, a business with ad accounts gets a Facebook ads panel under its website traffic: the last 30 days per campaign, from spend to link clicks, site visits (landing page views) and conversions (the site's Meta Pixel events, plus Facebook form leads). Read live from the Marketing API (`src/lib/meta-ads.ts`); the counting rules are pure and tested (`src/lib/meta-ads-model.ts`).
+When `META_ADS_TOKEN` (a Meta system user token with `ads_read`) and `META_AD_ACCOUNTS` (`business-short-name=ad-account-id, …`) are set, a business with ad accounts gets a Facebook ads panel under its website traffic: the same 7 days (or 30, switched there) per campaign, from spend to link clicks, site visits (landing page views) and conversions (the site's Meta Pixel events, plus Facebook form leads). Read live from the Marketing API (`src/lib/meta-ads.ts`); the counting rules are pure and tested (`src/lib/meta-ads-model.ts`).
 
 ### Live numbers (optional): OS Analytics
 

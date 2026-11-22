@@ -2,7 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { businessSites, businesses, siteTraffic } from "@/lib/db/schema";
 import { dayKey } from "@/lib/format";
 import { loadAllTraffic, loadTraffic, recordVisit } from "@/lib/traffic";
-import { daysEnding, fromOwnSite, isBot, siteHosts } from "@/lib/traffic-model";
+import { daysEnding, fromOwnSite, isBot, siteHosts, spanFrom } from "@/lib/traffic-model";
 import { useTestDatabase } from "./helpers/db";
 
 const browser = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0 Safari/537.36";
@@ -61,20 +61,36 @@ describe("traffic counts", () => {
 
   it("shows the last 30 days with empty days filled, against the 30 before", async () => {
     await ctx.db.insert(siteTraffic).values({ businessId: id, day: "2026-09-01", views: 10, visitors: 4, lastVisitAt: new Date("2026-09-01T10:00:00Z") });
-    const t = await loadTraffic(id, now, "UTC");
+    const t = await loadTraffic(id, now, "UTC", 30);
     expect(t.days).toHaveLength(30);
     expect(t.days.at(-1)).toEqual({ date: "2026-10-15", visitors: 1, views: 3 });
     expect(t.days.at(-3)).toEqual({ date: "2026-10-13", visitors: 0, views: 0 });
-    expect(t.last30).toEqual({ visitors: 2, views: 4 });
-    expect(t.previous30).toEqual({ visitors: 4, views: 10 });
+    expect(t.current).toEqual({ visitors: 2, views: 4 });
+    expect(t.previous).toEqual({ visitors: 4, views: 10 });
     expect(t.today).toEqual({ visitors: 1, views: 3 });
     expect(t.lastVisitAt?.toISOString()).toBe("2026-10-15T18:00:00.000Z");
   });
 
+  it("shows 7 days against the 7 before", async () => {
+    await ctx.db.insert(siteTraffic).values([
+      { businessId: id, day: "2026-10-05", views: 6, visitors: 3, lastVisitAt: new Date("2026-10-05T10:00:00Z") },
+      { businessId: id, day: "2026-09-20", views: 9, visitors: 9, lastVisitAt: new Date("2026-09-20T10:00:00Z") },
+    ]);
+    const t = await loadTraffic(id, now, "UTC", 7);
+    expect(t.days.map((d) => d.date)).toEqual(["2026-10-09", "2026-10-10", "2026-10-11", "2026-10-12", "2026-10-13", "2026-10-14", "2026-10-15"]);
+    expect(t.current).toEqual({ visitors: 2, views: 4 });
+    expect(t.previous).toEqual({ visitors: 3, views: 6 });
+  });
+
+  it("reads ?days= as 7 unless it's exactly 30", () => {
+    expect([undefined, "", "7", "14", "30x", ["30"]].map(spanFrom)).toEqual([7, 7, 7, 7, 7, 7]);
+    expect(spanFrom("30")).toBe(30);
+  });
+
   it("loads the same view for every business at once, leaving out those with no visits", async () => {
     const [{ id: quiet }] = await ctx.db.insert(businesses).values({ slug: "quiet", name: "Quiet" }).returning({ id: businesses.id });
-    const all = await loadAllTraffic(now, "UTC");
-    expect(all.get(id)).toEqual(await loadTraffic(id, now, "UTC"));
+    const all = await loadAllTraffic(now, "UTC", 7);
+    expect(all.get(id)).toEqual(await loadTraffic(id, now, "UTC", 7));
     expect(all.has(quiet)).toBe(false);
   });
 });

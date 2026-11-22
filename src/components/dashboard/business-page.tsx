@@ -1,17 +1,17 @@
 import Link from "next/link";
 import type { BusinessRecord, BusinessSite } from "@/lib/business-model";
-import { editHref } from "@/lib/business-href";
+import { businessHref, editHref } from "@/lib/business-href";
 import { dayLabel, quickLinks } from "@/lib/business-model";
 import { knowledgeSections } from "@/lib/business-view";
 import { costPer, funnelTotals, type CampaignFunnel } from "@/lib/meta-ads-model";
 import { formatMoney } from "@/lib/money";
 import type { SiteHealth } from "@/lib/site-health";
-import type { Traffic } from "@/lib/traffic-model";
+import { SPANS, type Span, type Traffic } from "@/lib/traffic-model";
 import { CopyButton } from "@/components/agents/embed-tools";
 import { BarChart, Delta } from "@/components/business-bits";
 import { CountUp } from "@/components/motion/count-up";
 import { buttonClass, cx } from "@/components/ui/primitives";
-import { Facts, LinkPills, Linked, Muted, Out, Tile, Tiles, Title } from "./ui";
+import { Facts, LinkPills, Linked, Muted, Out, SpanPills, Tile, Tiles, Title } from "./ui";
 
 /*
  * One business on the dashboard: its magic links, what it is (left), its
@@ -202,7 +202,7 @@ export function SiteSide({ record, site, health }: { record: BusinessRecord; sit
 
 /* ─── Traffic ─────────────────────────────────────────────────────── */
 
-export function TrafficPanel({ traffic, domain, code }: { traffic: Traffic; domain: string | null; code: string }) {
+export function TrafficPanel({ traffic, span, slug, domain, code }: { traffic: Traffic; span: Span; slug: string; domain: string | null; code: string }) {
   if (!traffic.lastVisitAt) {
     return (
       <section className="reveal">
@@ -217,18 +217,18 @@ export function TrafficPanel({ traffic, domain, code }: { traffic: Traffic; doma
       </section>
     );
   }
-  const { last30, previous30, today } = traffic;
+  const { current, previous, today } = traffic;
   return (
     <section className="reveal space-y-4">
-      <Title note="last 30 days">
+      <Title note={<SpanPills span={span} href={(s) => `${businessHref(slug)}${s === SPANS[0] ? "" : `&days=${s}`}`} />}>
         Website traffic
       </Title>
       <Tiles className="sm:grid-cols-3">
-        <Tile label="Visitors" value={<CountUp value={last30.visitors} />}>
-          <Delta current={last30.visitors} previous={previous30.visitors} />
+        <Tile label="Visitors" value={<CountUp value={current.visitors} />}>
+          <Delta current={current.visitors} previous={previous.visitors} days={span} />
         </Tile>
-        <Tile label="Page views" value={<CountUp value={last30.views} />}>
-          <Delta current={last30.views} previous={previous30.views} />
+        <Tile label="Page views" value={<CountUp value={current.views} />}>
+          <Delta current={current.views} previous={previous.views} days={span} />
         </Tile>
         <Tile label="Visitors today" value={<CountUp value={today.visitors} />} />
       </Tiles>
@@ -242,13 +242,13 @@ export function TrafficPanel({ traffic, domain, code }: { traffic: Traffic; doma
 const count = (n: number) => Math.round(n).toLocaleString("en-US");
 const money = (n: number | null, currency: string) => (n === null ? "–" : formatMoney(n, currency, n < 100 ? 2 : 0));
 
-/** Each campaign from ad to site visit to conversion, last 30 days. `ads` is an error line when Facebook didn't answer. */
-export function AdsPanel({ ads }: { ads: { campaigns: CampaignFunnel[]; currency: string } | string }) {
+/** Each campaign from ad to site visit to conversion, over the period the traffic shows. `ads` is an error line when Facebook didn't answer. */
+export function AdsPanel({ ads, span }: { ads: { campaigns: CampaignFunnel[]; currency: string } | string; span: Span }) {
   if (typeof ads === "string" || !ads.campaigns.length) {
     return (
       <section className="reveal">
-        <Title note="last 30 days">Facebook ads</Title>
-        <Muted>{typeof ads === "string" ? ads : "No ad spend in the last 30 days."}</Muted>
+        <Title note={`last ${span} days`}>Facebook ads</Title>
+        <Muted>{typeof ads === "string" ? ads : `No ad spend in the last ${span} days.`}</Muted>
       </section>
     );
   }
@@ -256,7 +256,7 @@ export function AdsPanel({ ads }: { ads: { campaigns: CampaignFunnel[]; currency
   const t = funnelTotals(campaigns);
   return (
     <section className="reveal space-y-4">
-      <Title note="last 30 days">Facebook ads</Title>
+      <Title note={`last ${span} days`}>Facebook ads</Title>
       <Tiles className="sm:grid-cols-4">
         <Tile label="Spent" value={<CountUp value={t.spend} currency={currency} digits={0} />} />
         <Tile label="Link clicks" value={<CountUp value={t.clicks} />}>
