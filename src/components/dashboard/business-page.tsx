@@ -1,6 +1,5 @@
-import Link from "next/link";
 import type { BusinessRecord, BusinessSite } from "@/lib/business-model";
-import { businessHref, editHref } from "@/lib/business-href";
+import { businessHref } from "@/lib/business-href";
 import { dayLabel, quickLinks } from "@/lib/business-model";
 import { knowledgeSections } from "@/lib/business-view";
 import { costPer, funnelTotals, type CampaignFunnel } from "@/lib/meta-ads-model";
@@ -10,7 +9,7 @@ import { SPANS, type Span, type Traffic } from "@/lib/traffic-model";
 import { CopyButton } from "@/components/agents/embed-tools";
 import { BarChart, Delta } from "@/components/business-bits";
 import { CountUp } from "@/components/motion/count-up";
-import { buttonClass, cx } from "@/components/ui/primitives";
+import { cx } from "@/components/ui/primitives";
 import { Facts, LinkPills, Linked, Muted, Out, SpanPills, Tile, Tiles, Title } from "./ui";
 
 /*
@@ -42,21 +41,13 @@ export function mainAddress(record: BusinessRecord): string | null {
 
 const MAGIC_LINKS_SHOWN = 8;
 
-/** One tap to the business's site, where it's edited, its logins, tools and profiles; adjusted on its edit page. */
+/** One tap to the business's site, where it's edited, its logins, tools and profiles. Changed on the Businesses page, not here. */
 export function BusinessMagicLinks({ record }: { record: BusinessRecord }) {
   const links = quickLinks(record);
   const more = links.slice(MAGIC_LINKS_SHOWN);
   return (
     <section className="animate-rise rounded-3xl bg-wash p-6">
-      <Title
-        note={
-          <Link href={editHref(record.slug, "links")} className="font-semibold text-ink underline decoration-1 underline-offset-4">
-            Adjust links
-          </Link>
-        }
-      >
-        Magic links
-      </Title>
+      <Title>Magic links</Title>
       {links.length ? <LinkPills links={links.slice(0, MAGIC_LINKS_SHOWN)} /> : <Muted>No links saved yet.</Muted>}
       {more.length ? (
         <details className="mt-3">
@@ -108,12 +99,7 @@ export function BusinessAbout({ record }: { record: BusinessRecord }) {
           ) : null}
         </>
       ) : (
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <Muted>Nothing written yet.</Muted>
-          <Link href={editHref(record.slug, "details")} className={buttonClass("primary", "min-h-9! px-4!")}>
-            Write about it
-          </Link>
-        </div>
+        <Muted>Nothing written yet.</Muted>
       )}
     </section>
   );

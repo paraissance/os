@@ -85,14 +85,9 @@ function NotFoundCard({ slug }: { slug: string }) {
   return (
     <div className="animate-rise rounded-3xl bg-wash p-6 sm:p-8">
       <h1 className="text-2xl font-extrabold">There is no business called “{slug}”.</h1>
-      <div className="mt-4 flex flex-wrap gap-2">
-        <Link href="/" className={buttonClass("light")}>
-          Back to all businesses
-        </Link>
-        <Link href="/businesses/new" className={buttonClass("primary")}>
-          + Add a business
-        </Link>
-      </div>
+      <Link href="/" className={buttonClass("light", "mt-4")}>
+        Back to all businesses
+      </Link>
     </div>
   );
 }
@@ -120,17 +115,12 @@ async function BusinessTab({ slug, span }: { slug: string; span: Span }) {
               {record.status === "paused" ? <Badge tone="neutral">Paused</Badge> : null}
             </h1>
           </div>
-          <div className="flex flex-wrap gap-2">
-            {website ? (
-              <a href={website} target="_blank" rel="noopener noreferrer" className={buttonClass("hero")}>
-                Visit website <span aria-hidden="true">↗</span>
-                <span className="sr-only">(opens in a new tab)</span>
-              </a>
-            ) : null}
-            <Link href={`/businesses/${record.slug}/edit`} className={buttonClass("heroSoft")}>
-              Edit details
-            </Link>
-          </div>
+          {website ? (
+            <a href={website} target="_blank" rel="noopener noreferrer" className={buttonClass("hero")}>
+              Visit website <span aria-hidden="true">↗</span>
+              <span className="sr-only">(opens in a new tab)</span>
+            </a>
+          ) : null}
         </div>
       </header>
 

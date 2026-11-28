@@ -12,10 +12,9 @@ import { getSettings } from "@/lib/settings";
 import { checkSite } from "@/lib/site-check";
 import { loadAllTraffic } from "@/lib/traffic";
 import { SPANS, type Span } from "@/lib/traffic-model";
-import { ImportForm } from "@/components/businesses/editors";
 import { Delta, Sparkline } from "@/components/business-bits";
 import { CountUp } from "@/components/motion/count-up";
-import { EmptyState, Skeleton, buttonClass, cx } from "@/components/ui/primitives";
+import { EmptyState, Skeleton, cx } from "@/components/ui/primitives";
 import { mainAddress } from "./business-page";
 import { AttentionList, SpanPills, Title } from "./ui";
 
@@ -27,10 +26,6 @@ import { AttentionList, SpanPills, Title } from "./ui";
 export function Overview({ span }: { span: Span }) {
   return (
     <div className="space-y-12">
-      {/* Only shows before any business is added. */}
-      <Suspense fallback={null}>
-        <Welcome />
-      </Suspense>
       {/* Usually empty, so no placeholder that would only flash and vanish. */}
       <Suspense fallback={null}>
         <Attention />
@@ -44,24 +39,6 @@ export function Overview({ span }: { span: Span }) {
 /** Live numbers from OS Analytics, when it is connected; null otherwise. */
 async function liveList() {
   return envStatus().osAnalytics ? settle(listBusinesses) : null;
-}
-
-/** Before any business is added: how to add them. Nothing once there are some. */
-async function Welcome() {
-  await requireUser();
-  const book = await loadBook();
-  if (book.businesses.length) return null;
-  return (
-    <div className="grid animate-rise gap-8 rounded-3xl bg-wash p-8 sm:p-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-center">
-      <div>
-        <p className="text-3xl font-extrabold tracking-[-0.02em]">Let&apos;s add your businesses.</p>
-        <Link href="/businesses/new" className={buttonClass("light", "mt-6")}>
-          + Add one business
-        </Link>
-      </div>
-      <ImportForm submitOnPick />
-    </div>
-  );
 }
 
 /** Business things only: renewals and payments coming due, and (when connected) big lead drops. Hidden when there's nothing. */
@@ -112,14 +89,11 @@ async function CardSite({ address }: { address: string }) {
   return health.live ? <SiteState state="live" /> : <SiteState state="down" title={health.problem ?? undefined} />;
 }
 
-/** The "add" tile takes up whatever is left of the last row, so a lone card never sits beside a gap. */
-const ADD_SPAN_TWO_COLUMNS = ["sm:col-span-2", "sm:col-span-1"];
-const ADD_SPAN_THREE_COLUMNS = ["xl:col-span-3", "xl:col-span-2", "xl:col-span-1"];
-
+/** Read-only: businesses are added and edited on the Businesses page. */
 async function BusinessCards({ span }: { span: Span }) {
   await requireUser();
   const [book, live, settings] = await Promise.all([loadBook(), liveList(), getSettings()]);
-  if (!book.businesses.length) return null;
+  if (!book.businesses.length) return <EmptyState title="No businesses yet." />;
   const today = requestNow();
   const traffic = await loadAllTraffic(today, settings.timezone, span);
   const liveBySlug = new Map(live?.ok ? live.data.businesses.map((b) => [b.slug, b]) : []);
@@ -130,15 +104,7 @@ async function BusinessCards({ span }: { span: Span }) {
 
   return (
     <section className="reveal">
-      <Title
-        note={
-          <Link href="/businesses" className="font-semibold text-ink underline decoration-1 underline-offset-4">
-            Edit or reorder
-          </Link>
-        }
-      >
-        Your businesses
-      </Title>
+      <Title>Your businesses</Title>
       <div className="-mt-2 mb-4 flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-muted">
           {active.length} active business{active.length === 1 ? "" : "es"} with {sites} site{sites === 1 ? "" : "s"}
@@ -199,17 +165,6 @@ async function BusinessCards({ span }: { span: Span }) {
               </li>
             );
           })}
-          <li className={cx(ADD_SPAN_TWO_COLUMNS[active.length % 2], ADD_SPAN_THREE_COLUMNS[active.length % 3])}>
-            <Link
-              href="/businesses/new"
-              className="shine lift flex h-full min-h-24 items-center justify-center gap-3 rounded-3xl bg-wash/50 p-6 font-semibold text-muted hover:bg-mist hover:text-ink"
-            >
-              <span aria-hidden="true" className="flex size-8 shrink-0 items-center justify-center rounded-full bg-wash text-lg">
-                +
-              </span>
-              Add a business
-            </Link>
-          </li>
         </ul>
       ) : (
         <EmptyState title="No active businesses." />
