@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Suspense, type ReactNode } from "react";
+import { Suspense, cache, type ReactNode } from "react";
 import { requireUser } from "@/lib/auth/current-user";
 import { businessHref } from "@/lib/business-href";
 import { bookAttention, sortAttention, type Attention } from "@/lib/business-model";
@@ -16,7 +16,12 @@ import { Delta, Sparkline } from "@/components/business-bits";
 import { CountUp } from "@/components/motion/count-up";
 import { EmptyState, Skeleton, cx } from "@/components/ui/primitives";
 import { mainAddress } from "./business-page";
-import { AttentionList, SpanPills, Title } from "./ui";
+import { AttentionList, SpanPills, Tile, Tiles, Title } from "./ui";
+
+/** One check per website per page load, shared by its card and the totals. Called with the address alone: the cache keys on every argument. */
+const siteHealth = cache((address: string) => checkSite(address, requestNow()));
+
+const total = (ns: number[]) => ns.reduce((a, n) => a + n, 0);
 
 /**
  * The dashboard home: the businesses and what needs doing, nothing else.
@@ -85,8 +90,28 @@ function SiteState({ state, title }: { state: "live" | "down" | "checking"; titl
 /** Each card checks its own website, so one slow site never holds up the page or the other cards. */
 async function CardSite({ address }: { address: string }) {
   await requireUser();
-  const health = await checkSite(address, requestNow());
+  const health = await siteHealth(address);
   return health.live ? <SiteState state="live" /> : <SiteState state="down" title={health.problem ?? undefined} />;
+}
+
+/** "6 / 7" once every website has answered; the other totals don't wait for it. */
+async function SitesLive({ addresses }: { addresses: string[] }) {
+  await requireUser();
+  const checks = await Promise.all(addresses.map((a) => siteHealth(a)));
+  const down = checks.filter((h) => !h.live).length;
+  return (
+    <Tile
+      label="Websites live"
+      value={
+        <>
+          {checks.length - down}
+          <span className="text-muted"> / {checks.length}</span>
+        </>
+      }
+    >
+      {down ? <span className="font-semibold text-down">{down} with a problem</span> : null}
+    </Tile>
+  );
 }
 
 /** Read-only: businesses are added and edited on the Businesses page. */
@@ -101,6 +126,10 @@ async function BusinessCards({ span }: { span: Span }) {
   const paused = book.businesses.filter((b) => b.status !== "active");
 
   const sites = book.businesses.reduce((n, b) => n + b.sites.length, 0);
+  const counted = active.flatMap((b) => traffic.get(b.id) ?? []);
+  const visitors = { now: total(counted.map((t) => t.current.visitors)), before: total(counted.map((t) => t.previous.visitors)) };
+  const addresses = active.flatMap((b) => mainAddress(b) ?? []);
+  const leads = active.flatMap((b) => liveBySlug.get(b.slug) ?? []);
 
   return (
     <section className="reveal">
@@ -111,6 +140,29 @@ async function BusinessCards({ span }: { span: Span }) {
         </p>
         <SpanPills span={span} href={(s) => (s === SPANS[0] ? "/" : `/?days=${s}`)} />
       </div>
+      {active.length ? (
+        <Tiles className={cx("mb-3", addresses.length > 0 && leads.length > 0 && "sm:grid-cols-3")}>
+          <Tile label={`Visitors, ${span} days`} value={<CountUp value={visitors.now} />}>
+            {visitors.now || visitors.before ? <Delta current={visitors.now} previous={visitors.before} days={span} /> : null}
+          </Tile>
+          {addresses.length ? (
+            <Suspense
+              fallback={
+                <Tile label="Websites live" value={<span aria-hidden="true" className="inline-block h-9 w-20 animate-shimmer rounded-full bg-mist align-middle" />}>
+                  Checking
+                </Tile>
+              }
+            >
+              <SitesLive addresses={addresses} />
+            </Suspense>
+          ) : null}
+          {leads.length ? (
+            <Tile label="Leads, 30 days" value={<CountUp value={total(leads.map((l) => l.last30.leads))} />}>
+              <Delta current={total(leads.map((l) => l.last30.leads))} previous={total(leads.map((l) => l.previous30.leads))} />
+            </Tile>
+          ) : null}
+        </Tiles>
+      ) : null}
       {active.length ? (
         <ul className="stagger grid grid-cols-[minmax(0,1fr)] gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {active.map((b) => {
